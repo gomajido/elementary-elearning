@@ -34,6 +34,16 @@ export const StudentRepository = {
     return row ?? null;
   },
 
+  async findByUserId(userId: string) {
+    const db = getDb();
+    const [row] = await db
+      .select()
+      .from(students)
+      .where(and(eq(students.userId, userId), isNull(students.deletedAt)))
+      .limit(1);
+    return row ?? null;
+  },
+
   async create(input: NewStudent) {
     const [row] = await StudentRepository.insertStatement(input);
     return row;
@@ -57,6 +67,12 @@ export const StudentRepository = {
       .leftJoin(classes, eq(students.currentClassId, classes.id))
       .where(isNull(students.deletedAt))
       .orderBy(students.lastName, students.firstName);
+  },
+
+  /** Unexecuted update statement for `db.batch([...])` composition — links a new user login to an existing student row. */
+  linkUserStatement(studentId: string, userId: string) {
+    const db = getDb();
+    return db.update(students).set({ userId, updatedAt: new Date() }).where(eq(students.id, studentId));
   },
 
   async listByClass(classId: string) {

@@ -6,6 +6,7 @@ import { RoleShell } from "@/components/layout/role-shell";
 const NAV_ITEMS = [
   { href: "/teacher/dashboard", label: "Dashboard" },
   { href: "/teacher/attendance", label: "Attendance" },
+  { href: "/teacher/courses", label: "Courses" },
 ];
 
 export default async function TeacherLayout({ children }: { children: ReactNode }) {

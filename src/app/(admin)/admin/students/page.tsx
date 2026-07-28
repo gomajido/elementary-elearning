@@ -1,8 +1,10 @@
 import { StudentService } from "@/server/services/student-service";
 import { AcademicService } from "@/server/services/academic-service";
 import { StudentForm } from "@/components/forms/student-form";
+import { GrantStudentAccessForm } from "@/components/forms/grant-student-access-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 export default async function StudentsPage() {
   const [studentRows, classes, academicYears] = await Promise.all([
@@ -35,6 +37,7 @@ export default async function StudentsPage() {
                 <TableHead>Class</TableHead>
                 <TableHead>DOB</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Portal access</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -49,11 +52,18 @@ export default async function StudentsPage() {
                   </TableCell>
                   <TableCell>{row.student.dateOfBirth}</TableCell>
                   <TableCell>{row.student.enrollmentStatus}</TableCell>
+                  <TableCell>
+                    {row.student.userId ? (
+                      <Badge variant="secondary">Active</Badge>
+                    ) : (
+                      <GrantStudentAccessForm studentId={row.student.id} />
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
               {studentRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     No students yet
                   </TableCell>
                 </TableRow>

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/rbac";
-import { StudentService, type GuardianInput } from "@/server/services/student-service";
+import { StudentService, StudentPortalError, type GuardianInput } from "@/server/services/student-service";
 
 export type CreateStudentState = { error?: string };
 
@@ -84,4 +84,34 @@ export async function createStudentAction(_prev: CreateStudentState, formData: F
 
   revalidatePath("/admin/students");
   return {};
+}
+
+export type GrantStudentAccessState = { error?: string; tempPassword?: string };
+
+const grantAccessSchema = z.object({
+  studentId: z.string().min(1),
+  email: z.string().email(),
+});
+
+export async function grantStudentPortalAccessAction(
+  _prev: GrantStudentAccessState,
+  formData: FormData
+): Promise<GrantStudentAccessState> {
+  await requireRole(["admin"]);
+  const parsed = grantAccessSchema.safeParse({
+    studentId: formData.get("studentId"),
+    email: formData.get("email"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+
+  try {
+    const { tempPassword } = await StudentService.grantPortalAccess(parsed.data.studentId, parsed.data.email);
+    // No revalidatePath — see guardian-controller.ts for why: it would
+    // swap this row's form for an "Active" badge before the one-time
+    // temp password is shown.
+    return { tempPassword };
+  } catch (err) {
+    if (err instanceof StudentPortalError) return { error: err.message };
+    throw err;
+  }
 }
