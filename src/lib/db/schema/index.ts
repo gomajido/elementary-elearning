@@ -1,3 +1,7 @@
-// Populated in RFC 0001 Phase 1 — schema tables added per domain file,
-// re-exported here for drizzle-kit and the db client to consume.
-export {};
+export * from "./users";
+export * from "./academics";
+export * from "./people";
+export * from "./attendance";
+export * from "./fees";
+export * from "./elearning";
+export * from "./quizzes";
