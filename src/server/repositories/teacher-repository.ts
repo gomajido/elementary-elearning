@@ -23,6 +23,16 @@ export const TeacherRepository = {
     return row ?? null;
   },
 
+  async findByUserId(userId: string) {
+    const db = getDb();
+    const [row] = await db
+      .select()
+      .from(teachers)
+      .where(and(eq(teachers.userId, userId), isNull(teachers.deletedAt)))
+      .limit(1);
+    return row ?? null;
+  },
+
   async create(input: NewTeacher) {
     const [row] = await TeacherRepository.insertStatement(input);
     return row;

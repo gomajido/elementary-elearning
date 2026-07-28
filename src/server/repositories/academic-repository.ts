@@ -65,6 +65,15 @@ export const ClassRepository = {
     return row ?? null;
   },
 
+  async listByClassTeacher(classTeacherId: string) {
+    const db = getDb();
+    return db
+      .select()
+      .from(classes)
+      .where(eq(classes.classTeacherId, classTeacherId))
+      .orderBy(classes.gradeLevel, classes.section);
+  },
+
   async create(input: {
     name: string;
     section?: string;

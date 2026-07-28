@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/admin/classes", label: "Classes" },
   { href: "/admin/subjects", label: "Subjects" },
   { href: "/admin/academic-years", label: "Academic years" },
+  { href: "/admin/attendance", label: "Attendance" },
 ];
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
