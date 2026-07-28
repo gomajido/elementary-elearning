@@ -100,12 +100,18 @@ Admin/teacher/parent views stay dense and professional (tables, forms). The **st
 
 ## Phased Roadmap
 
-1. **Foundation** — scaffold, D1/R2 bindings, deploy pipeline proven end-to-end; landing page; auth+RBAC+admin bootstrap; academic years/classes/subjects; teacher CRUD+assignment; student registration+guardian linking+management
-2. **Attendance + Fees** — daily register, attendance reports; fee structures, invoice generation, manual payment recording, receipts, outstanding balance report; parent portal (read-only)
-3. **E-learning content + assignments** — R2 presigned upload flow, course/content authoring+viewing, assignment submit+grade
-4. **Quizzes + grade reporting** — quiz builder, timed student quiz-taking, auto-grading, aggregate grade views
+1. **Foundation** — scaffold, D1/R2 bindings, deploy pipeline proven end-to-end; landing page; auth+RBAC+admin bootstrap; academic years/classes/subjects; teacher CRUD+assignment; student registration+guardian linking+management. **Done.** All local-dev; real Cloudflare D1/R2 provisioning + first deploy still pending (needs account login, see Post-MVP/Open Items).
+2. **Attendance + Fees** — daily register, attendance reports; fee structures, invoice generation, manual payment recording, receipts, outstanding balance report; parent portal (read-only). **Done.**
+3. **E-learning content + assignments** — course/content authoring+viewing, assignment submit+grade. **Done** for note/link content and text-based submissions; video/pdf content types and file-attachment submissions are intentionally left out of the UI until R2 is provisioned (the presign plumbing in `src/lib/r2/client.ts` is ready).
+4. **Quizzes + grade reporting** — quiz builder (multiple_choice/true_false/short_answer), timed* student quiz-taking, auto-grading, aggregate grade views across student/parent/teacher. **Done.** (*time limit field exists on the schema/builder; client-side countdown/auto-submit enforcement isn't wired up yet — noted under Open Items.)
 
-Post-MVP (not now, schema allows it later): CSV bulk import, SMS/email reminders, report-card PDF export, multi-tenant activation, analytics.
+All four phases verified end-to-end with headless-browser scripts covering the full role chain (admin setup → teacher authoring → student action → grading → cross-role visibility), not just unit-level checks.
+
+### Open items (not blocking, tracked for later)
+- Provision real Cloudflare D1 + R2 and do the first live deploy (local dev only so far)
+- Video/PDF course content and assignment file attachments (needs the R2 provisioning above)
+- Quiz time-limit enforcement (countdown + auto-submit) on the student-taking UI
+- Report-card PDF export, CSV bulk import, SMS/email reminders, multi-tenant activation, analytics — original Post-MVP scope, still deferred
 
 ## Key Risks / Gotchas
 
