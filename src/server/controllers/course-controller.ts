@@ -26,7 +26,7 @@ export async function createCourseAction(_prev: ActionState, formData: FormData)
     classId: formData.get("classId"),
     academicYearId: formData.get("academicYearId"),
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     await CourseService.createCourse({ teacherUserId: user.id, ...parsed.data });
@@ -64,7 +64,7 @@ export async function addContentItemAction(_prev: ActionState, formData: FormDat
     externalUrl: formData.get("externalUrl") || undefined,
     r2Key: formData.get("r2Key") || undefined,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     await CourseService.addContentItem({ teacherUserId: user.id, ...parsed.data });

@@ -10,7 +10,7 @@ export default async function SubjectsPage() {
     <div className="flex max-w-2xl flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Add subject</CardTitle>
+          <CardTitle>Tambah mata pelajaran</CardTitle>
         </CardHeader>
         <CardContent>
           <SubjectForm />
@@ -19,14 +19,14 @@ export default async function SubjectsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Subjects</CardTitle>
+          <CardTitle>Mata Pelajaran</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Code</TableHead>
+                <TableHead>Nama</TableHead>
+                <TableHead>Kode</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -39,7 +39,7 @@ export default async function SubjectsPage() {
               {subjects.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={2} className="text-center text-muted-foreground">
-                    No subjects yet
+                    Belum ada mata pelajaran
                   </TableCell>
                 </TableRow>
               )}

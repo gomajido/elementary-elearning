@@ -35,7 +35,7 @@ export default async function StudentCourseDetailPage({ params }: { params: Prom
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Content</CardTitle>
+          <CardTitle className="text-lg">Materi</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {detail.contentItems.map((item) => (
@@ -44,33 +44,33 @@ export default async function StudentCourseDetailPage({ params }: { params: Prom
               {item.bodyMarkdown && <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{item.bodyMarkdown}</p>}
               {item.externalUrl && (
                 <a href={item.externalUrl} target="_blank" rel="noreferrer" className="mt-1 block underline underline-offset-4">
-                  Open link
+                  Buka tautan
                 </a>
               )}
             </div>
           ))}
-          {detail.contentItems.length === 0 && <p className="text-muted-foreground">Nothing here yet.</p>}
+          {detail.contentItems.length === 0 && <p className="text-muted-foreground">Belum ada materi di sini.</p>}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Assignments</CardTitle>
+          <CardTitle className="text-lg">Tugas</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {assignments.map((a) => (
             <Link key={a.id} href={`/student/assignments/${a.id}`} className="rounded-lg border p-4 hover:bg-muted">
               <p className="text-base font-medium">{a.title}</p>
-              <p className="text-sm text-muted-foreground">Due {a.dueDate}</p>
+              <p className="text-sm text-muted-foreground">Tenggat {a.dueDate}</p>
             </Link>
           ))}
-          {assignments.length === 0 && <p className="text-muted-foreground">No assignments yet.</p>}
+          {assignments.length === 0 && <p className="text-muted-foreground">Belum ada tugas.</p>}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Quizzes</CardTitle>
+          <CardTitle className="text-lg">Kuis</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {quizzes.map(({ quiz, attemptsRemaining }) => (
@@ -78,17 +78,17 @@ export default async function StudentCourseDetailPage({ params }: { params: Prom
               <div>
                 <p className="text-base font-medium">{quiz.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  {attemptsRemaining > 0 ? `${attemptsRemaining} attempt(s) left` : "No attempts left"}
+                  {attemptsRemaining > 0 ? `Sisa ${attemptsRemaining} percobaan` : "Tidak ada percobaan tersisa"}
                 </p>
               </div>
               {attemptsRemaining > 0 && (
                 <form action={startAttemptAction.bind(null, quiz.id)}>
-                  <Button type="submit">Start quiz</Button>
+                  <Button type="submit">Mulai kuis</Button>
                 </form>
               )}
             </div>
           ))}
-          {quizzes.length === 0 && <p className="text-muted-foreground">No quizzes yet.</p>}
+          {quizzes.length === 0 && <p className="text-muted-foreground">Belum ada kuis.</p>}
         </CardContent>
       </Card>
     </div>

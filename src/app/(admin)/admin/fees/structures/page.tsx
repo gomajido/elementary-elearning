@@ -3,9 +3,10 @@ import { AcademicService } from "@/server/services/academic-service";
 import { FeeStructureForm } from "@/components/forms/fee-structure-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { FEE_FREQUENCY_LABELS, label } from "@/lib/labels";
 
 function formatCents(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`;
+  return `Rp${(cents / 100).toLocaleString("id-ID")}`;
 }
 
 export default async function FeeStructuresPage() {
@@ -18,7 +19,7 @@ export default async function FeeStructuresPage() {
     <div className="flex max-w-3xl flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Add fee</CardTitle>
+          <CardTitle>Tambah biaya</CardTitle>
         </CardHeader>
         <CardContent>
           <FeeStructureForm academicYears={academicYears} />
@@ -27,16 +28,16 @@ export default async function FeeStructuresPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Fee catalog</CardTitle>
+          <CardTitle>Katalog Biaya</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Frequency</TableHead>
-                <TableHead>Grade level</TableHead>
+                <TableHead>Nama</TableHead>
+                <TableHead>Jumlah</TableHead>
+                <TableHead>Frekuensi</TableHead>
+                <TableHead>Tingkat</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -44,14 +45,14 @@ export default async function FeeStructuresPage() {
                 <TableRow key={s.id}>
                   <TableCell>{s.name}</TableCell>
                   <TableCell>{formatCents(s.amountCents)}</TableCell>
-                  <TableCell className="capitalize">{s.frequency.replace("_", " ")}</TableCell>
-                  <TableCell>{s.gradeLevel ?? "All"}</TableCell>
+                  <TableCell>{label(FEE_FREQUENCY_LABELS, s.frequency)}</TableCell>
+                  <TableCell>{s.gradeLevel ?? "Semua"}</TableCell>
                 </TableRow>
               ))}
               {structures.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center text-muted-foreground">
-                    No fees yet
+                    Belum ada biaya
                   </TableCell>
                 </TableRow>
               )}

@@ -13,7 +13,7 @@ export default async function TeacherAttendancePage() {
   return (
     <Card className="max-w-md">
       <CardHeader>
-        <CardTitle>Your homeroom classes</CardTitle>
+        <CardTitle>Kelas perwalian Anda</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {classes.map((c) => (
@@ -23,12 +23,12 @@ export default async function TeacherAttendancePage() {
             className="rounded-md border p-3 text-sm hover:bg-muted"
           >
             {c.name}
-            {c.section ? ` ${c.section}` : ""} — take today&apos;s register
+            {c.section ? ` ${c.section}` : ""} — isi absensi hari ini
           </Link>
         ))}
         {classes.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            You are not assigned as homeroom teacher for any class.
+            Anda belum ditugaskan sebagai wali kelas untuk kelas manapun.
           </p>
         )}
       </CardContent>

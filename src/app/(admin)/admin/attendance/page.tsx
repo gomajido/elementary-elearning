@@ -11,7 +11,7 @@ export default async function AdminAttendanceOverviewPage() {
   return (
     <Card className="max-w-md">
       <CardHeader>
-        <CardTitle>Attendance by class</CardTitle>
+        <CardTitle>Kehadiran per kelas</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {classes.map((c) => (
@@ -21,10 +21,10 @@ export default async function AdminAttendanceOverviewPage() {
             className="rounded-md border p-3 text-sm hover:bg-muted"
           >
             {c.name}
-            {c.section ? ` ${c.section}` : ""} — today&apos;s register
+            {c.section ? ` ${c.section}` : ""} — absensi hari ini
           </Link>
         ))}
-        {classes.length === 0 && <p className="text-sm text-muted-foreground">No classes yet</p>}
+        {classes.length === 0 && <p className="text-sm text-muted-foreground">Belum ada kelas</p>}
       </CardContent>
     </Card>
   );

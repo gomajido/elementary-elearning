@@ -11,7 +11,7 @@ export default async function AcademicYearsPage() {
     <div className="flex max-w-3xl flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Add academic year</CardTitle>
+          <CardTitle>Tambah tahun ajaran</CardTitle>
         </CardHeader>
         <CardContent>
           <AcademicYearForm />
@@ -20,15 +20,15 @@ export default async function AcademicYearsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Academic years</CardTitle>
+          <CardTitle>Tahun Ajaran</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Start</TableHead>
-                <TableHead>End</TableHead>
+                <TableHead>Nama</TableHead>
+                <TableHead>Mulai</TableHead>
+                <TableHead>Selesai</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -38,13 +38,13 @@ export default async function AcademicYearsPage() {
                   <TableCell>{year.name}</TableCell>
                   <TableCell>{year.startDate}</TableCell>
                   <TableCell>{year.endDate}</TableCell>
-                  <TableCell>{year.isCurrent && <Badge>Current</Badge>}</TableCell>
+                  <TableCell>{year.isCurrent && <Badge>Aktif</Badge>}</TableCell>
                 </TableRow>
               ))}
               {years.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center text-muted-foreground">
-                    No academic years yet
+                    Belum ada tahun ajaran
                   </TableCell>
                 </TableRow>
               )}

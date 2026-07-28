@@ -28,7 +28,7 @@ export const QuizService = {
   }) {
     const teacher = await TeacherRepository.findByUserId(input.teacherUserId);
     const course = await CourseRepository.findById(input.courseId);
-    if (!teacher || !course || course.teacherId !== teacher.id) throw new QuizError("You do not own this course");
+    if (!teacher || !course || course.teacherId !== teacher.id) throw new QuizError("Anda bukan pemilik kursus ini");
 
     return QuizRepository.create({
       courseId: input.courseId,
@@ -58,15 +58,15 @@ export const QuizService = {
   }) {
     const teacher = await TeacherRepository.findByUserId(input.teacherUserId);
     const quiz = await QuizRepository.findById(input.quizId);
-    if (!quiz) throw new QuizError("Quiz not found");
+    if (!quiz) throw new QuizError("Kuis tidak ditemukan");
     const course = await CourseRepository.findById(quiz.courseId);
-    if (!teacher || !course || course.teacherId !== teacher.id) throw new QuizError("You do not own this quiz");
+    if (!teacher || !course || course.teacherId !== teacher.id) throw new QuizError("Anda bukan pemilik kuis ini");
 
     if (input.type !== "short_answer" && (!input.options || input.options.every((o) => !o.isCorrect))) {
-      throw new QuizError("Mark exactly one option as correct");
+      throw new QuizError("Tandai tepat satu pilihan sebagai benar");
     }
     if (input.type === "short_answer" && !input.correctAnswerText) {
-      throw new QuizError("Short-answer questions need a correct answer");
+      throw new QuizError("Soal isian singkat memerlukan jawaban yang benar");
     }
 
     const existing = await QuizQuestionRepository.listWithOptionsByQuiz(input.quizId);
@@ -96,18 +96,18 @@ export const QuizService = {
   async publishQuiz(teacherUserId: string, quizId: string) {
     const teacher = await TeacherRepository.findByUserId(teacherUserId);
     const quiz = await QuizRepository.findById(quizId);
-    if (!quiz) throw new QuizError("Quiz not found");
+    if (!quiz) throw new QuizError("Kuis tidak ditemukan");
     const course = await CourseRepository.findById(quiz.courseId);
-    if (!teacher || !course || course.teacherId !== teacher.id) throw new QuizError("You do not own this quiz");
+    if (!teacher || !course || course.teacherId !== teacher.id) throw new QuizError("Anda bukan pemilik kuis ini");
     await QuizRepository.publish(quizId);
   },
 
   async startAttempt(studentId: string, quizId: string) {
     const quiz = await QuizRepository.findById(quizId);
-    if (!quiz || !quiz.isPublished) throw new QuizError("Quiz not available");
+    if (!quiz || !quiz.isPublished) throw new QuizError("Kuis tidak tersedia");
 
     const attemptCount = await QuizAttemptRepository.countForStudent(quizId, studentId);
-    if (attemptCount >= quiz.maxAttempts) throw new QuizError("No attempts remaining");
+    if (attemptCount >= quiz.maxAttempts) throw new QuizError("Tidak ada kesempatan tersisa");
 
     const questions = await QuizQuestionRepository.listWithOptionsByQuiz(quizId);
     const maxPossibleScore = questions.reduce((sum, q) => sum + q.question.points, 0);
@@ -141,8 +141,8 @@ export const QuizService = {
     answers: { questionId: string; selectedOptionId?: string; shortAnswerText?: string }[]
   ) {
     const attempt = await QuizAttemptRepository.findById(attemptId);
-    if (!attempt || attempt.studentId !== studentId) throw new QuizError("Attempt not found");
-    if (attempt.status !== "in_progress") throw new QuizError("Attempt already submitted");
+    if (!attempt || attempt.studentId !== studentId) throw new QuizError("Percobaan tidak ditemukan");
+    if (attempt.status !== "in_progress") throw new QuizError("Percobaan sudah dikumpulkan");
 
     const questions = await QuizQuestionRepository.listWithOptionsByQuiz(attempt.quizId);
     let totalScore = 0;

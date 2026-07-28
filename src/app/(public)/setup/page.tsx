@@ -11,17 +11,17 @@ export default async function SetupPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>{adminExists ? "Setup complete" : "Create admin account"}</CardTitle>
+          <CardTitle>{adminExists ? "Pengaturan selesai" : "Buat akun admin"}</CardTitle>
           <CardDescription>
             {adminExists
-              ? "An admin account already exists for this school."
-              : "One-time setup — this creates the first admin account. Disabled after."}
+              ? "Akun admin untuk sekolah ini sudah ada."
+              : "Pengaturan sekali jalan — ini membuat akun admin pertama. Dinonaktifkan setelahnya."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {adminExists ? (
             <Link href="/login" className="text-sm underline underline-offset-4">
-              Go to sign in
+              Ke halaman masuk
             </Link>
           ) : (
             <BootstrapAdminForm />

@@ -25,14 +25,14 @@ export function TeacherAssignmentForm({
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-4 sm:items-end">
       <div className="flex flex-col gap-2">
-        <Label>Teacher</Label>
+        <Label>Guru</Label>
         <Select
           name="teacherId"
           required
           items={Object.fromEntries(teachers.map((t) => [t.id, `${t.firstName} ${t.lastName}`]))}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Teacher" />
+            <SelectValue placeholder="Guru" />
           </SelectTrigger>
           <SelectContent>
             {teachers.map((t) => (
@@ -44,14 +44,14 @@ export function TeacherAssignmentForm({
         </Select>
       </div>
       <div className="flex flex-col gap-2">
-        <Label>Class</Label>
+        <Label>Kelas</Label>
         <Select
           name="classId"
           required
           items={Object.fromEntries(classes.map((c) => [c.id, `${c.name}${c.section ? ` ${c.section}` : ""}`]))}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Class" />
+            <SelectValue placeholder="Kelas" />
           </SelectTrigger>
           <SelectContent>
             {classes.map((c) => (
@@ -64,10 +64,10 @@ export function TeacherAssignmentForm({
         </Select>
       </div>
       <div className="flex flex-col gap-2">
-        <Label>Subject</Label>
+        <Label>Mata pelajaran</Label>
         <Select name="subjectId" required items={Object.fromEntries(subjects.map((s) => [s.id, s.name]))}>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Subject" />
+            <SelectValue placeholder="Mata pelajaran" />
           </SelectTrigger>
           <SelectContent>
             {subjects.map((s) => (
@@ -79,14 +79,14 @@ export function TeacherAssignmentForm({
         </Select>
       </div>
       <div className="flex flex-col gap-2">
-        <Label>Academic year</Label>
+        <Label>Tahun ajaran</Label>
         <Select
           name="academicYearId"
           required
           items={Object.fromEntries(academicYears.map((y) => [y.id, y.name]))}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Year" />
+            <SelectValue placeholder="Tahun" />
           </SelectTrigger>
           <SelectContent>
             {academicYears.map((y) => (
@@ -99,7 +99,7 @@ export function TeacherAssignmentForm({
       </div>
       {state.error && <p className="text-sm text-destructive sm:col-span-4">{state.error}</p>}
       <Button type="submit" disabled={pending} className="sm:col-span-4 sm:w-fit">
-        {pending ? "Assigning…" : "Assign teacher"}
+        {pending ? "Menetapkan…" : "Tetapkan guru"}
       </Button>
     </form>
   );

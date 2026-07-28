@@ -6,6 +6,7 @@ import { addQuestionAction, type ActionState } from "@/server/controllers/quiz-c
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { QUESTION_TYPE_LABELS } from "@/lib/labels";
 
 const initialState: ActionState = {};
 
@@ -22,27 +23,27 @@ export function QuizQuestionForm({ quizId }: { quizId: string }) {
         {(["multiple_choice", "true_false", "short_answer"] as const).map((t) => (
           <label key={t} className="flex items-center gap-2">
             <input type="radio" name="type" value={t} checked={type === t} onChange={() => setType(t)} />
-            {t.replace("_", " ")}
+            {QUESTION_TYPE_LABELS[t]}
           </label>
         ))}
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="questionText">Question</Label>
+        <Label htmlFor="questionText">Pertanyaan</Label>
         <Input id="questionText" name="questionText" required />
       </div>
       <div className="flex flex-col gap-2 sm:w-32">
-        <Label htmlFor="points">Points</Label>
+        <Label htmlFor="points">Poin</Label>
         <Input id="points" name="points" type="number" min={1} defaultValue={1} required />
       </div>
 
       {type === "multiple_choice" && (
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium">Options — mark the correct one</p>
+          <p className="text-sm font-medium">Pilihan — tandai yang benar</p>
           {[1, 2, 3, 4].map((n) => (
             <div key={n} className="flex items-center gap-2">
               <input type="radio" name="correctOption" value={String(n)} required={n === 1} />
-              <Input name={`option${n}`} placeholder={`Option ${n}${n > 2 ? " (optional)" : ""}`} required={n <= 2} />
+              <Input name={`option${n}`} placeholder={`Pilihan ${n}${n > 2 ? " (opsional)" : ""}`} required={n <= 2} />
             </div>
           ))}
         </div>
@@ -52,25 +53,25 @@ export function QuizQuestionForm({ quizId }: { quizId: string }) {
         <div className="flex gap-4 text-sm">
           <label className="flex items-center gap-2">
             <input type="radio" name="correctBoolean" value="true" required />
-            True is correct
+            Benar adalah jawaban yang tepat
           </label>
           <label className="flex items-center gap-2">
             <input type="radio" name="correctBoolean" value="false" />
-            False is correct
+            Salah adalah jawaban yang tepat
           </label>
         </div>
       )}
 
       {type === "short_answer" && (
         <div className="flex flex-col gap-2">
-          <Label htmlFor="correctAnswerText">Correct answer</Label>
+          <Label htmlFor="correctAnswerText">Jawaban yang benar</Label>
           <Input id="correctAnswerText" name="correctAnswerText" required />
         </div>
       )}
 
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
       <Button type="submit" disabled={pending} className="w-fit">
-        {pending ? "Adding…" : "Add question"}
+        {pending ? "Menambahkan…" : "Tambah pertanyaan"}
       </Button>
     </form>
   );

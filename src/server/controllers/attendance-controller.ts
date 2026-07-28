@@ -34,7 +34,7 @@ export async function saveRegisterAction(_prev: SaveRegisterState, formData: For
   }));
 
   const parsed = saveRegisterSchema.safeParse({ classId, date, entries });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     await AttendanceService.saveRegister(user.id, parsed.data.classId, parsed.data.date, parsed.data.entries);

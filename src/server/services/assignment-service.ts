@@ -18,7 +18,7 @@ export const AssignmentService = {
   }) {
     const teacher = await TeacherRepository.findByUserId(input.teacherUserId);
     const course = await CourseRepository.findById(input.courseId);
-    if (!teacher || !course || course.teacherId !== teacher.id) throw new AssignmentError("You do not own this course");
+    if (!teacher || !course || course.teacherId !== teacher.id) throw new AssignmentError("Anda bukan pemilik kursus ini");
 
     return AssignmentRepository.create({
       courseId: input.courseId,
@@ -47,12 +47,12 @@ export const AssignmentService = {
 
   async submit(input: { assignmentId: string; studentId: string; textResponse?: string; attachmentR2Key?: string }) {
     const assignment = await AssignmentRepository.findById(input.assignmentId);
-    if (!assignment) throw new AssignmentError("Assignment not found");
+    if (!assignment) throw new AssignmentError("Tugas tidak ditemukan");
 
     const today = new Date().toISOString().slice(0, 10);
     const isLate = today > assignment.dueDate;
     if (isLate && !assignment.allowLateSubmission) {
-      throw new AssignmentError("This assignment no longer accepts submissions");
+      throw new AssignmentError("Tugas ini sudah tidak menerima pengumpulan");
     }
 
     return AssignmentSubmissionRepository.upsertSubmission({
@@ -71,13 +71,13 @@ export const AssignmentService = {
     feedback?: string;
   }) {
     const teacher = await TeacherRepository.findByUserId(input.teacherUserId);
-    if (!teacher) throw new AssignmentError("No teacher record for this account");
+    if (!teacher) throw new AssignmentError("Tidak ada data guru untuk akun ini");
     const submission = await AssignmentSubmissionRepository.findById(input.submissionId);
-    if (!submission) throw new AssignmentError("Submission not found");
+    if (!submission) throw new AssignmentError("Pengumpulan tidak ditemukan");
     const assignment = await AssignmentRepository.findById(submission.assignmentId);
     const course = assignment ? await CourseRepository.findById(assignment.courseId) : null;
-    if (!course || course.teacherId !== teacher.id) throw new AssignmentError("You do not own this assignment");
-    if (input.score > assignment!.maxScore) throw new AssignmentError(`Score cannot exceed ${assignment!.maxScore}`);
+    if (!course || course.teacherId !== teacher.id) throw new AssignmentError("Anda bukan pemilik tugas ini");
+    if (input.score > assignment!.maxScore) throw new AssignmentError(`Nilai tidak boleh melebihi ${assignment!.maxScore}`);
 
     await AssignmentSubmissionRepository.grade(input.submissionId, {
       score: input.score,

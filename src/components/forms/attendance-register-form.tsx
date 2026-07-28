@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ATTENDANCE_STATUSES, type AttendanceStatus } from "@/lib/db/schema";
+import { ATTENDANCE_STATUS_LABELS } from "@/lib/labels";
 
 const initialState: SaveRegisterState = {};
 
@@ -34,9 +35,9 @@ export function AttendanceRegisterForm({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Student</TableHead>
+            <TableHead>Siswa</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Notes</TableHead>
+            <TableHead>Catatan</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -54,7 +55,7 @@ export function AttendanceRegisterForm({
                 >
                   {ATTENDANCE_STATUSES.map((status) => (
                     <option key={status} value={status}>
-                      {status}
+                      {ATTENDANCE_STATUS_LABELS[status]}
                     </option>
                   ))}
                 </select>
@@ -67,7 +68,7 @@ export function AttendanceRegisterForm({
           {roster.length === 0 && (
             <TableRow>
               <TableCell colSpan={3} className="text-center text-muted-foreground">
-                No students in this class
+                Tidak ada siswa di kelas ini
               </TableCell>
             </TableRow>
           )}
@@ -75,9 +76,9 @@ export function AttendanceRegisterForm({
       </Table>
 
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-      {state.success && <p className="text-sm text-emerald-600">Register saved.</p>}
+      {state.success && <p className="text-sm text-emerald-600">Absensi tersimpan.</p>}
       <Button type="submit" disabled={pending} className="w-fit">
-        {pending ? "Saving…" : "Save register"}
+        {pending ? "Menyimpan…" : "Simpan absensi"}
       </Button>
     </form>
   );

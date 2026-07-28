@@ -9,9 +9,10 @@ import { StudentRepository } from "@/server/repositories/student-repository";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { ATTENDANCE_STATUS_LABELS, INVOICE_STATUS_LABELS, label } from "@/lib/labels";
 
 function formatCents(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`;
+  return `Rp${(cents / 100).toLocaleString("id-ID")}`;
 }
 
 const STATUS_VARIANT = { paid: "secondary", partial: "outline", unpaid: "destructive" } as const;
@@ -43,50 +44,50 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ st
 
       <Card>
         <CardHeader>
-          <CardTitle>Grades</CardTitle>
+          <CardTitle>Nilai</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          {[...grades.assignments.map((a) => ({ ...a, kind: "Assignment" })), ...grades.quizzes.map((q) => ({ ...q, kind: "Quiz" }))].map(
+          {[...grades.assignments.map((a) => ({ ...a, kind: "Tugas" })), ...grades.quizzes.map((q) => ({ ...q, kind: "Kuis" }))].map(
             (item, i) => (
               <div key={i} className="flex items-center justify-between rounded-md border p-3 text-sm">
                 <span>
                   {item.title} <span className="text-muted-foreground">({item.kind} — {item.courseTitle})</span>
                 </span>
-                <span>{item.score !== null ? `${item.score} / ${item.maxScore}` : "Not graded yet"}</span>
+                <span>{item.score !== null ? `${item.score} / ${item.maxScore}` : "Belum dinilai"}</span>
               </div>
             )
           )}
           {grades.assignments.length === 0 && grades.quizzes.length === 0 && (
-            <p className="text-sm text-muted-foreground">No grades yet</p>
+            <p className="text-sm text-muted-foreground">Belum ada nilai</p>
           )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Attendance</CardTitle>
+          <CardTitle>Kehadiran</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
+                <TableHead>Tanggal</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Notes</TableHead>
+                <TableHead>Catatan</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {attendance.map((record) => (
                 <TableRow key={record.id}>
                   <TableCell>{record.date}</TableCell>
-                  <TableCell className="capitalize">{record.status}</TableCell>
+                  <TableCell>{label(ATTENDANCE_STATUS_LABELS, record.status)}</TableCell>
                   <TableCell>{record.notes ?? "—"}</TableCell>
                 </TableRow>
               ))}
               {attendance.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    No attendance recorded yet
+                    Belum ada catatan kehadiran
                   </TableCell>
                 </TableRow>
               )}
@@ -97,15 +98,15 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ st
 
       <Card>
         <CardHeader>
-          <CardTitle>Fees</CardTitle>
+          <CardTitle>Biaya</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Invoice #</TableHead>
+                <TableHead>No. Tagihan</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead>Balance</TableHead>
+                <TableHead>Sisa Tagihan</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -116,14 +117,14 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ st
                   <TableCell>{formatCents(invoice.totalAmountCents)}</TableCell>
                   <TableCell>{formatCents(balanceCents)}</TableCell>
                   <TableCell>
-                    <Badge variant={STATUS_VARIANT[status]}>{status}</Badge>
+                    <Badge variant={STATUS_VARIANT[status]}>{label(INVOICE_STATUS_LABELS, status)}</Badge>
                   </TableCell>
                 </TableRow>
               ))}
               {invoices.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center text-muted-foreground">
-                    No invoices yet
+                    Belum ada tagihan
                   </TableCell>
                 </TableRow>
               )}

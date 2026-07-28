@@ -15,9 +15,9 @@ export function GradeSubmissionForm({ submissionId, maxScore }: { submissionId: 
     <form action={formAction} className="flex items-center gap-2">
       <input type="hidden" name="submissionId" value={submissionId} />
       <Input name="score" type="number" min={0} max={maxScore} placeholder={`/ ${maxScore}`} className="h-8 w-20" required />
-      <Input name="feedback" placeholder="Feedback (optional)" className="h-8 w-48" />
+      <Input name="feedback" placeholder="Masukan (opsional)" className="h-8 w-48" />
       <Button type="submit" disabled={pending} size="sm">
-        {pending ? "…" : "Grade"}
+        {pending ? "…" : "Nilai"}
       </Button>
       {state.error && <p className="text-xs text-destructive">{state.error}</p>}
     </form>

@@ -14,10 +14,10 @@ export function SubmitAssignmentForm({ assignmentId, defaultText }: { assignment
   return (
     <form action={formAction} className="flex flex-col gap-3">
       <input type="hidden" name="assignmentId" value={assignmentId} />
-      <Textarea name="textResponse" rows={5} defaultValue={defaultText} placeholder="Write your answer here…" required />
+      <Textarea name="textResponse" rows={5} defaultValue={defaultText} placeholder="Tulis jawabanmu di sini…" required />
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
       <Button type="submit" disabled={pending} size="lg" className="w-fit">
-        {pending ? "Submitting…" : "Submit"}
+        {pending ? "Mengirim…" : "Kirim"}
       </Button>
     </form>
   );

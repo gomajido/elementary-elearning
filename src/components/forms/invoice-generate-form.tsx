@@ -35,7 +35,7 @@ export function InvoiceGenerateForm({
             checked={target === "student"}
             onChange={() => setTarget("student")}
           />
-          Single student
+          Satu siswa
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -45,14 +45,14 @@ export function InvoiceGenerateForm({
             checked={target === "class"}
             onChange={() => setTarget("class")}
           />
-          Whole class
+          Satu kelas
         </label>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         {target === "student" ? (
           <div className="flex flex-col gap-2">
-            <Label>Student</Label>
+            <Label>Siswa</Label>
             <Select
               name="studentId"
               required
@@ -61,7 +61,7 @@ export function InvoiceGenerateForm({
               )}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select student" />
+                <SelectValue placeholder="Pilih siswa" />
               </SelectTrigger>
               <SelectContent>
                 {students.map((s) => (
@@ -74,14 +74,14 @@ export function InvoiceGenerateForm({
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            <Label>Class</Label>
+            <Label>Kelas</Label>
             <Select
               name="classId"
               required
               items={Object.fromEntries(classes.map((c) => [c.id, `${c.name}${c.section ? ` ${c.section}` : ""}`]))}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select class" />
+                <SelectValue placeholder="Pilih kelas" />
               </SelectTrigger>
               <SelectContent>
                 {classes.map((c) => (
@@ -96,14 +96,14 @@ export function InvoiceGenerateForm({
         )}
 
         <div className="flex flex-col gap-2">
-          <Label>Academic year</Label>
+          <Label>Tahun ajaran</Label>
           <Select
             name="academicYearId"
             required
             items={Object.fromEntries(academicYears.map((y) => [y.id, y.name]))}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select year" />
+              <SelectValue placeholder="Pilih tahun" />
             </SelectTrigger>
             <SelectContent>
               {academicYears.map((y) => (
@@ -116,33 +116,33 @@ export function InvoiceGenerateForm({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="issueDate">Issue date</Label>
+          <Label htmlFor="issueDate">Tanggal terbit</Label>
           <Input id="issueDate" name="issueDate" type="date" required />
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="dueDate">Due date</Label>
+          <Label htmlFor="dueDate">Jatuh tempo</Label>
           <Input id="dueDate" name="dueDate" type="date" required />
         </div>
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium">Fees to include</p>
+        <p className="mb-2 text-sm font-medium">Biaya yang disertakan</p>
         <div className="flex flex-col gap-2">
           {feeStructures.map((fee) => (
             <label key={fee.id} className="flex items-center gap-2 text-sm">
               <input type="checkbox" name="feeStructureIds" value={fee.id} />
-              {fee.name} — ${(fee.amountCents / 100).toFixed(2)}
+              {fee.name} — Rp{(fee.amountCents / 100).toLocaleString("id-ID")}
             </label>
           ))}
           {feeStructures.length === 0 && (
-            <p className="text-sm text-muted-foreground">No fee structures yet — add one first.</p>
+            <p className="text-sm text-muted-foreground">Belum ada katalog biaya — tambahkan dahulu.</p>
           )}
         </div>
       </div>
 
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
       <Button type="submit" disabled={pending} className="w-fit">
-        {pending ? "Generating…" : "Generate invoice"}
+        {pending ? "Membuat…" : "Buat tagihan"}
       </Button>
     </form>
   );

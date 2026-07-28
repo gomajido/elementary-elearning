@@ -20,7 +20,7 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     email: formData.get("email"),
     password: formData.get("password"),
   });
-  if (!parsed.success) return { error: "Enter a valid email and password" };
+  if (!parsed.success) return { error: "Masukkan email dan kata sandi yang valid" };
 
   try {
     const headerList = await headers();
@@ -44,7 +44,7 @@ export async function logoutAction() {
 
 const bootstrapSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(8, "Kata sandi minimal 8 karakter"),
 });
 
 export type BootstrapState = { error?: string };
@@ -55,7 +55,7 @@ export async function bootstrapAdminAction(_prev: BootstrapState, formData: Form
     email: formData.get("email"),
     password: formData.get("password"),
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     await AuthService.bootstrapAdmin(parsed.data.email, parsed.data.password);
@@ -68,7 +68,7 @@ export async function bootstrapAdminAction(_prev: BootstrapState, formData: Form
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(8, "New password must be at least 8 characters"),
+  newPassword: z.string().min(8, "Kata sandi baru minimal 8 karakter"),
 });
 
 export type ChangePasswordState = { error?: string };
@@ -84,7 +84,7 @@ export async function changePasswordAction(
     currentPassword: formData.get("currentPassword"),
     newPassword: formData.get("newPassword"),
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     await AuthService.changePassword(user.id, parsed.data.currentPassword, parsed.data.newPassword);

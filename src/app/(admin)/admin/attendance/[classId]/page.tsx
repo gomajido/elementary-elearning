@@ -4,6 +4,7 @@ import { todayIsoDate } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { ATTENDANCE_STATUS_LABELS, label } from "@/lib/labels";
 
 export default async function AdminClassAttendancePage({
   params,
@@ -35,20 +36,20 @@ export default async function AdminClassAttendancePage({
           {classRow?.section ? ` ${classRow.section}` : ""} — {date}
         </CardTitle>
         <div className="flex gap-2 pt-2">
-          <Badge variant="secondary">Present: {counts.present}</Badge>
-          <Badge variant="secondary">Absent: {counts.absent}</Badge>
-          <Badge variant="secondary">Late: {counts.late}</Badge>
-          <Badge variant="secondary">Excused: {counts.excused}</Badge>
-          {counts.unmarked > 0 && <Badge variant="outline">Unmarked: {counts.unmarked}</Badge>}
+          <Badge variant="secondary">Hadir: {counts.present}</Badge>
+          <Badge variant="secondary">Tidak Hadir: {counts.absent}</Badge>
+          <Badge variant="secondary">Terlambat: {counts.late}</Badge>
+          <Badge variant="secondary">Izin: {counts.excused}</Badge>
+          {counts.unmarked > 0 && <Badge variant="outline">Belum diisi: {counts.unmarked}</Badge>}
         </div>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Student</TableHead>
+              <TableHead>Siswa</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Notes</TableHead>
+              <TableHead>Catatan</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -57,14 +58,14 @@ export default async function AdminClassAttendancePage({
                 <TableCell>
                   {student.firstName} {student.lastName}
                 </TableCell>
-                <TableCell className="capitalize">{record?.status ?? "—"}</TableCell>
+                <TableCell>{record ? label(ATTENDANCE_STATUS_LABELS, record.status) : "—"}</TableCell>
                 <TableCell>{record?.notes ?? "—"}</TableCell>
               </TableRow>
             ))}
             {roster.length === 0 && (
               <TableRow>
                 <TableCell colSpan={3} className="text-center text-muted-foreground">
-                  No students in this class
+                  Tidak ada siswa di kelas ini
                 </TableCell>
               </TableRow>
             )}

@@ -28,7 +28,7 @@ export async function createAssignmentAction(_prev: ActionState, formData: FormD
     maxScore: formData.get("maxScore"),
     allowLateSubmission: formData.get("allowLateSubmission") === "on",
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     await AssignmentService.createAssignment({ teacherUserId: user.id, ...parsed.data });
@@ -52,10 +52,10 @@ export async function submitAssignmentAction(_prev: ActionState, formData: FormD
     assignmentId: formData.get("assignmentId"),
     textResponse: formData.get("textResponse") || undefined,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   const student = await StudentRepository.findByUserId(user.id);
-  if (!student) return { error: "No student record for this account" };
+  if (!student) return { error: "Tidak ada data siswa untuk akun ini" };
 
   try {
     await AssignmentService.submit({
@@ -85,7 +85,7 @@ export async function gradeSubmissionAction(_prev: ActionState, formData: FormDa
     score: formData.get("score"),
     feedback: formData.get("feedback") || undefined,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     const { assignmentId } = await AssignmentService.gradeSubmission({ teacherUserId: user.id, ...parsed.data });

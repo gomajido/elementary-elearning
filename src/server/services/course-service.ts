@@ -29,7 +29,7 @@ export const CourseService = {
     academicYearId: string;
   }) {
     const teacher = await TeacherRepository.findByUserId(input.teacherUserId);
-    if (!teacher) throw new CourseError("No teacher record for this account");
+    if (!teacher) throw new CourseError("Tidak ada data guru untuk akun ini");
     return CourseRepository.create({
       title: input.title,
       description: input.description,
@@ -57,9 +57,9 @@ export const CourseService = {
     externalUrl?: string;
   }) {
     const teacher = await TeacherRepository.findByUserId(input.teacherUserId);
-    if (!teacher) throw new CourseError("No teacher record for this account");
+    if (!teacher) throw new CourseError("Tidak ada data guru untuk akun ini");
     const course = await CourseRepository.findById(input.courseId);
-    if (!course || course.teacherId !== teacher.id) throw new CourseError("You do not own this course");
+    if (!course || course.teacherId !== teacher.id) throw new CourseError("Anda bukan pemilik kursus ini");
 
     return CourseRepository.createContentItem({
       courseId: input.courseId,
@@ -76,14 +76,14 @@ export const CourseService = {
     const student = await StudentRepository.findById(studentId);
     const course = await CourseRepository.findById(courseId);
     if (!student || !course || course.classId !== student.currentClassId || !course.isPublished) {
-      throw new CourseError("Not authorized to view this course");
+      throw new CourseError("Tidak berwenang melihat kursus ini");
     }
   },
 
   async publishCourse(teacherUserId: string, courseId: string) {
     const teacher = await TeacherRepository.findByUserId(teacherUserId);
     const course = await CourseRepository.findById(courseId);
-    if (!teacher || !course || course.teacherId !== teacher.id) throw new CourseError("You do not own this course");
+    if (!teacher || !course || course.teacherId !== teacher.id) throw new CourseError("Anda bukan pemilik kursus ini");
     await CourseRepository.publish(courseId);
   },
 };

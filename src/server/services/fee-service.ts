@@ -34,9 +34,9 @@ export const FeeService = {
     dueDate: string;
     lineItems: NewInvoiceLineItem[];
   }) {
-    if (input.lineItems.length === 0) throw new FeeError("Invoice needs at least one line item");
+    if (input.lineItems.length === 0) throw new FeeError("Tagihan memerlukan minimal satu item");
     const year = await AcademicYearRepository.findById(input.academicYearId);
-    if (!year) throw new FeeError("Academic year not found");
+    if (!year) throw new FeeError("Tahun ajaran tidak ditemukan");
     return InvoiceRepository.createWithLineItems({
       studentId: input.studentId,
       academicYearId: input.academicYearId,
@@ -55,9 +55,9 @@ export const FeeService = {
     dueDate: string;
     lineItems: NewInvoiceLineItem[];
   }) {
-    if (input.lineItems.length === 0) throw new FeeError("Invoice needs at least one line item");
+    if (input.lineItems.length === 0) throw new FeeError("Tagihan memerlukan minimal satu item");
     const year = await AcademicYearRepository.findById(input.academicYearId);
-    if (!year) throw new FeeError("Academic year not found");
+    if (!year) throw new FeeError("Tahun ajaran tidak ditemukan");
     const classStudents = await StudentRepository.listByClass(input.classId);
     const created = [];
     for (const student of classStudents) {
@@ -85,8 +85,8 @@ export const FeeService = {
     notes?: string;
   }) {
     const invoice = await InvoiceRepository.findById(input.invoiceId);
-    if (!invoice) throw new FeeError("Invoice not found");
-    if (input.amountCents <= 0) throw new FeeError("Payment amount must be positive");
+    if (!invoice) throw new FeeError("Tagihan tidak ditemukan");
+    if (input.amountCents <= 0) throw new FeeError("Jumlah pembayaran harus lebih dari nol");
 
     return PaymentRepository.create({
       invoiceId: input.invoiceId,

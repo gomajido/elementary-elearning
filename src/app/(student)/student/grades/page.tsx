@@ -14,11 +14,11 @@ export default async function StudentGradesPage() {
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <h1 className="text-2xl font-semibold">My Grades</h1>
+      <h1 className="text-2xl font-semibold">Nilai Saya</h1>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Assignments</CardTitle>
+          <CardTitle className="text-lg">Tugas</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {assignments.map((a, i) => (
@@ -27,17 +27,17 @@ export default async function StudentGradesPage() {
                 {a.title} <span className="text-sm font-normal text-muted-foreground">— {a.courseTitle}</span>
               </p>
               <p className="text-sm text-muted-foreground">
-                {a.score !== null ? `${a.score} / ${a.maxScore}` : "Not graded yet"}
+                {a.score !== null ? `${a.score} / ${a.maxScore}` : "Belum dinilai"}
               </p>
             </div>
           ))}
-          {assignments.length === 0 && <p className="text-muted-foreground">No graded assignments yet.</p>}
+          {assignments.length === 0 && <p className="text-muted-foreground">Belum ada tugas yang dinilai.</p>}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Quizzes</CardTitle>
+          <CardTitle className="text-lg">Kuis</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {quizzes.map((q, i) => (
@@ -50,7 +50,7 @@ export default async function StudentGradesPage() {
               </p>
             </div>
           ))}
-          {quizzes.length === 0 && <p className="text-muted-foreground">No completed quizzes yet.</p>}
+          {quizzes.length === 0 && <p className="text-muted-foreground">Belum ada kuis yang selesai.</p>}
         </CardContent>
       </Card>
     </div>

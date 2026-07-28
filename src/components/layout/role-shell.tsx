@@ -20,7 +20,7 @@ export function RoleShell({
       <header className="flex items-center justify-between border-b bg-background px-6 py-3">
         <div className="flex items-center gap-6">
           <div>
-            <p className="text-sm font-medium">{roleLabel} portal</p>
+            <p className="text-sm font-medium">Portal {roleLabel}</p>
             <p className="text-xs text-muted-foreground">{email}</p>
           </div>
           {navItems && (
@@ -35,7 +35,7 @@ export function RoleShell({
         </div>
         <form action={logoutAction}>
           <Button type="submit" variant="outline" size="sm">
-            Sign out
+            Keluar
           </Button>
         </form>
       </header>

@@ -12,7 +12,7 @@ export default async function StudentCoursesPage() {
 
   return (
     <div className="flex max-w-2xl flex-col gap-3">
-      <h1 className="text-2xl font-semibold">Your courses</h1>
+      <h1 className="text-2xl font-semibold">Kursus Kamu</h1>
       {courses.map(({ course, subjectName }) => (
         <Link key={course.id} href={`/student/courses/${course.id}`}>
           <Card className="transition-colors hover:bg-muted">
@@ -23,7 +23,9 @@ export default async function StudentCoursesPage() {
           </Card>
         </Link>
       ))}
-      {courses.length === 0 && <p className="text-base text-muted-foreground">No courses yet — check back soon!</p>}
+      {courses.length === 0 && (
+        <p className="text-base text-muted-foreground">Belum ada kursus — cek lagi nanti, ya!</p>
+      )}
     </div>
   );
 }

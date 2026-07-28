@@ -4,10 +4,10 @@ export default function TeacherDashboardPage() {
   return (
     <Card className="max-w-md">
       <CardHeader>
-        <CardTitle>Teacher dashboard</CardTitle>
+        <CardTitle>Dasbor Guru</CardTitle>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground">
-        Class roster, attendance, and course tools land here in later phases.
+        Gunakan menu di atas untuk kehadiran kelas dan kursus Anda.
       </CardContent>
     </Card>
   );

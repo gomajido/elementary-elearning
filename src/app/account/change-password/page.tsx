@@ -9,11 +9,11 @@ export default async function ChangePasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Change your password</CardTitle>
+          <CardTitle>Ubah kata sandi Anda</CardTitle>
           <CardDescription>
             {user.mustChangePassword
-              ? "Your account was created with a temporary password. Set a new one to continue."
-              : "Update your password below."}
+              ? "Akun Anda dibuat dengan kata sandi sementara. Buat kata sandi baru untuk melanjutkan."
+              : "Perbarui kata sandi Anda di bawah ini."}
           </CardDescription>
         </CardHeader>
         <CardContent>

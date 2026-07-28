@@ -21,16 +21,16 @@ export default async function GuardiansPage() {
   return (
     <Card className="max-w-4xl">
       <CardHeader>
-        <CardTitle>Guardians</CardTitle>
+        <CardTitle>Wali</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Children</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Portal access</TableHead>
+              <TableHead>Nama</TableHead>
+              <TableHead>Anak</TableHead>
+              <TableHead>Kontak</TableHead>
+              <TableHead>Akses Portal</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -43,7 +43,7 @@ export default async function GuardiansPage() {
                 <TableCell>{guardian.phone ?? guardian.email ?? "—"}</TableCell>
                 <TableCell>
                   {guardian.userId ? (
-                    <Badge variant="secondary">Active</Badge>
+                    <Badge variant="secondary">Aktif</Badge>
                   ) : (
                     <GrantGuardianAccessForm guardianId={guardian.id} defaultEmail={guardian.email ?? undefined} />
                   )}
@@ -53,7 +53,7 @@ export default async function GuardiansPage() {
             {guardians.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-muted-foreground">
-                  No guardians yet
+                  Belum ada wali
                 </TableCell>
               </TableRow>
             )}

@@ -4,10 +4,10 @@ export default function StudentDashboardPage() {
   return (
     <Card className="max-w-md">
       <CardHeader>
-        <CardTitle className="text-2xl">Welcome!</CardTitle>
+        <CardTitle className="text-2xl">Selamat datang!</CardTitle>
       </CardHeader>
       <CardContent className="text-base text-muted-foreground">
-        Your courses and quizzes will show up here soon.
+        Lihat kursus dan kuismu di menu Kursus.
       </CardContent>
     </Card>
   );

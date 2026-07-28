@@ -31,7 +31,7 @@ export default async function QuizAttemptPage({ params }: { params: Promise<{ at
     <Card className="max-w-2xl">
       <CardHeader>
         <CardTitle className="text-xl">
-          {detail.quiz?.title} — Score: {detail.attempt.totalScore} / {detail.attempt.maxPossibleScore}
+          {detail.quiz?.title} — Nilai: {detail.attempt.totalScore} / {detail.attempt.maxPossibleScore}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -43,11 +43,11 @@ export default async function QuizAttemptPage({ params }: { params: Promise<{ at
               <p className="font-medium">
                 {i + 1}. {question.questionText}{" "}
                 <span className={answer?.isCorrect ? "text-emerald-600" : "text-destructive"}>
-                  {answer?.isCorrect ? "✓ Correct" : "✗ Incorrect"}
+                  {answer?.isCorrect ? "✓ Benar" : "✗ Salah"}
                 </span>
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Your answer: {question.type === "short_answer" ? answer?.shortAnswerText : chosenOption?.optionText}
+                Jawabanmu: {question.type === "short_answer" ? answer?.shortAnswerText : chosenOption?.optionText}
               </p>
             </div>
           );

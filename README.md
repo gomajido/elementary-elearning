@@ -1,6 +1,8 @@
-# Madani Elementary School Management System
+# SD Madani — Elementary School Management System
 
 Student registration, student management, attendance, fees/payments, teacher management, and e-learning (courses, assignments, quizzes) for an elementary school. Built with Next.js, Drizzle ORM, and Postgres.
+
+**UI language: Bahasa Indonesia.** All screens (landing page, admin/teacher/student/parent portals, error/status messages) are in Indonesian — the school's actual users. DB enum values (`role`, `status`, etc.) stay in English as internal identifiers; only what's displayed is translated, centrally in `src/lib/labels.ts`. Code, comments, commits, and this README stay in English.
 
 See [`docs/rfc/0001-school-management-system.md`](docs/rfc/0001-school-management-system.md) for the original architecture/design decisions, and [`docs/rfc/0002-postgres-and-local-docker.md`](docs/rfc/0002-postgres-and-local-docker.md) for why the data layer runs on Postgres rather than Cloudflare D1.
 

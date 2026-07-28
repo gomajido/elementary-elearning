@@ -19,7 +19,7 @@ export default async function ClassesPage() {
     <div className="flex max-w-4xl flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Add class</CardTitle>
+          <CardTitle>Tambah kelas</CardTitle>
         </CardHeader>
         <CardContent>
           <ClassForm academicYears={academicYears} teachers={teachers} />
@@ -28,17 +28,17 @@ export default async function ClassesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Classes</CardTitle>
+          <CardTitle>Kelas</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Class</TableHead>
-                <TableHead>Grade</TableHead>
-                <TableHead>Academic year</TableHead>
-                <TableHead>Class teacher</TableHead>
-                <TableHead>Capacity</TableHead>
+                <TableHead>Kelas</TableHead>
+                <TableHead>Tingkat</TableHead>
+                <TableHead>Tahun ajaran</TableHead>
+                <TableHead>Wali kelas</TableHead>
+                <TableHead>Kapasitas</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -59,7 +59,7 @@ export default async function ClassesPage() {
               {classRows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    No classes yet
+                    Belum ada kelas
                   </TableCell>
                 </TableRow>
               )}
@@ -70,7 +70,7 @@ export default async function ClassesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Assign teacher to class/subject</CardTitle>
+          <CardTitle>Tetapkan guru ke kelas/mata pelajaran</CardTitle>
         </CardHeader>
         <CardContent>
           <TeacherAssignmentForm
@@ -84,15 +84,15 @@ export default async function ClassesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Assignments</CardTitle>
+          <CardTitle>Penugasan</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Teacher</TableHead>
-                <TableHead>Class</TableHead>
-                <TableHead>Subject</TableHead>
+                <TableHead>Guru</TableHead>
+                <TableHead>Kelas</TableHead>
+                <TableHead>Mata Pelajaran</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -111,7 +111,7 @@ export default async function ClassesPage() {
               {assignmentRows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    No assignments yet
+                    Belum ada penugasan
                   </TableCell>
                 </TableRow>
               )}

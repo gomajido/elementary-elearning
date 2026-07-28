@@ -10,9 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 
 const initialState: ActionState = {};
 
-// Video/PDF upload needs a provisioned R2 bucket (see RFC 0001 task:
-// "Provision real Cloudflare D1 + R2") — only note/link are offered here
-// until that's set up, so nothing in this form is a dead end.
+// Video/PDF upload needs the storage upload UI wired up (see RFC 0002 —
+// S3-compatible client exists in lib/storage/client.ts but isn't hooked to
+// any form yet) — only note/link are offered here, so nothing dead-ends.
 export function ContentItemForm({ courseId }: { courseId: string }) {
   const [state, formAction, pending] = useActionState(addContentItemAction, initialState);
   const [type, setType] = useState<"note" | "link">("note");
@@ -23,20 +23,20 @@ export function ContentItemForm({ courseId }: { courseId: string }) {
       <div className="flex gap-4">
         <label className="flex items-center gap-2 text-sm">
           <input type="radio" name="type" value="note" checked={type === "note"} onChange={() => setType("note")} />
-          Note
+          Catatan
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input type="radio" name="type" value="link" checked={type === "link"} onChange={() => setType("link")} />
-          Link
+          Tautan
         </label>
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="title">Title</Label>
+        <Label htmlFor="title">Judul</Label>
         <Input id="title" name="title" required />
       </div>
       {type === "note" ? (
         <div className="flex flex-col gap-2">
-          <Label htmlFor="bodyMarkdown">Content</Label>
+          <Label htmlFor="bodyMarkdown">Isi</Label>
           <Textarea id="bodyMarkdown" name="bodyMarkdown" rows={4} required />
         </div>
       ) : (
@@ -47,7 +47,7 @@ export function ContentItemForm({ courseId }: { courseId: string }) {
       )}
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
       <Button type="submit" disabled={pending} className="w-fit">
-        {pending ? "Adding…" : "Add content"}
+        {pending ? "Menambahkan…" : "Tambah materi"}
       </Button>
     </form>
   );

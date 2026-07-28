@@ -10,10 +10,10 @@ export function Hero() {
       <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">{schoolConfig.tagline}</p>
       <div className="mt-8 flex justify-center gap-3">
         <Button size="lg" nativeButton={false} render={<Link href="#contact" />}>
-          Enquire about admissions
+          Tanya Info Pendaftaran
         </Button>
         <Button size="lg" variant="outline" nativeButton={false} render={<Link href="/login" />}>
-          Sign in
+          Masuk
         </Button>
       </div>
     </section>

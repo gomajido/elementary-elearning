@@ -5,6 +5,7 @@ import { GrantStudentAccessForm } from "@/components/forms/grant-student-access-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { ENROLLMENT_STATUS_LABELS, label } from "@/lib/labels";
 
 export default async function StudentsPage() {
   const [studentRows, classes, academicYears] = await Promise.all([
@@ -17,7 +18,7 @@ export default async function StudentsPage() {
     <div className="flex max-w-4xl flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Register student</CardTitle>
+          <CardTitle>Daftarkan siswa</CardTitle>
         </CardHeader>
         <CardContent>
           <StudentForm classes={classes} academicYears={academicYears} />
@@ -26,18 +27,18 @@ export default async function StudentsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Students</CardTitle>
+          <CardTitle>Siswa</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Admission #</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Class</TableHead>
-                <TableHead>DOB</TableHead>
+                <TableHead>No. Induk</TableHead>
+                <TableHead>Nama</TableHead>
+                <TableHead>Kelas</TableHead>
+                <TableHead>Tgl Lahir</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Portal access</TableHead>
+                <TableHead>Akses Portal</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -51,10 +52,10 @@ export default async function StudentsPage() {
                     {row.className ? `${row.className}${row.classSection ? ` ${row.classSection}` : ""}` : "—"}
                   </TableCell>
                   <TableCell>{row.student.dateOfBirth}</TableCell>
-                  <TableCell>{row.student.enrollmentStatus}</TableCell>
+                  <TableCell>{label(ENROLLMENT_STATUS_LABELS, row.student.enrollmentStatus)}</TableCell>
                   <TableCell>
                     {row.student.userId ? (
-                      <Badge variant="secondary">Active</Badge>
+                      <Badge variant="secondary">Aktif</Badge>
                     ) : (
                       <GrantStudentAccessForm studentId={row.student.id} />
                     )}
@@ -64,7 +65,7 @@ export default async function StudentsPage() {
               {studentRows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    No students yet
+                    Belum ada siswa
                   </TableCell>
                 </TableRow>
               )}

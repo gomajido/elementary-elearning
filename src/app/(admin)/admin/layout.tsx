@@ -4,15 +4,15 @@ import { requireRole } from "@/lib/auth/rbac";
 import { RoleShell } from "@/components/layout/role-shell";
 
 const NAV_ITEMS = [
-  { href: "/admin/dashboard", label: "Dashboard" },
-  { href: "/admin/students", label: "Students" },
-  { href: "/admin/guardians", label: "Guardians" },
-  { href: "/admin/teachers", label: "Teachers" },
-  { href: "/admin/classes", label: "Classes" },
-  { href: "/admin/subjects", label: "Subjects" },
-  { href: "/admin/academic-years", label: "Academic years" },
-  { href: "/admin/attendance", label: "Attendance" },
-  { href: "/admin/fees", label: "Fees" },
+  { href: "/admin/dashboard", label: "Dasbor" },
+  { href: "/admin/students", label: "Siswa" },
+  { href: "/admin/guardians", label: "Wali" },
+  { href: "/admin/teachers", label: "Guru" },
+  { href: "/admin/classes", label: "Kelas" },
+  { href: "/admin/subjects", label: "Mata Pelajaran" },
+  { href: "/admin/academic-years", label: "Tahun Ajaran" },
+  { href: "/admin/attendance", label: "Kehadiran" },
+  { href: "/admin/fees", label: "Biaya" },
 ];
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {

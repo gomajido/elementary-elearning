@@ -8,7 +8,7 @@ import { test, expect, type Page } from "@playwright/test";
  * assignment, and the parent views the child's attendance/fees/grades —
  * with an explicit check that a parent can't view an unrelated student
  * (the RBAC boundary that matters most for a system holding minors' data,
- * per RFC 0001 "Verification Approach").
+ * per RFC 0001 "Verification Approach"). UI is Bahasa Indonesia.
  *
  * Uses a random suffix per run so it doesn't collide with prior runs and
  * doesn't require resetting the database first.
@@ -50,18 +50,18 @@ let quizUrl: string;
 test.describe.serial("golden path across all four roles", () => {
   test("admin bootstraps and sets up the school", async ({ page }) => {
     await page.goto("/setup");
-    const alreadySetUp = await page.getByText("Setup complete").isVisible().catch(() => false);
+    const alreadySetUp = await page.getByText("Pengaturan selesai").isVisible().catch(() => false);
     if (!alreadySetUp) {
       await page.fill('input[name="email"]', ADMIN_EMAIL);
       await page.fill('input[name="password"]', ADMIN_PASSWORD);
-      await submit(page, "Create admin account");
+      await submit(page, "Buat akun admin");
       await page.waitForURL("**/login");
     }
 
     await page.goto("/login");
     await page.fill('input[name="email"]', ADMIN_EMAIL);
     await page.fill('input[name="password"]', ADMIN_PASSWORD);
-    await submit(page, "Sign in");
+    await submit(page, "Masuk");
     await expect(page).toHaveURL(/\/admin\/dashboard/);
 
     await page.goto("/admin/academic-years");
@@ -69,12 +69,12 @@ test.describe.serial("golden path across all four roles", () => {
     await page.fill('input[name="startDate"]', "2026-09-01");
     await page.fill('input[name="endDate"]', "2027-07-31");
     await page.check('input[name="isCurrent"]');
-    await submit(page, "Add academic year");
+    await submit(page, "Tambah tahun ajaran");
     await expect(page.getByText(`${RUN}/${RUN}`).first()).toBeVisible();
 
     await page.goto("/admin/subjects");
     await page.fill('input[name="name"]', `Mathematics-${RUN}`);
-    await submit(page, "Add subject");
+    await submit(page, "Tambah mata pelajaran");
     await expect(page.getByText(`Mathematics-${RUN}`)).toBeVisible();
 
     await page.goto("/admin/teachers");
@@ -82,17 +82,17 @@ test.describe.serial("golden path across all four roles", () => {
     await page.fill('input[name="lastName"]', `Doe-${RUN}`);
     await page.fill('input[name="employeeNumber"]', `EMP-${RUN}`);
     await page.fill('input[name="email"]', TEACHER_EMAIL);
-    await submit(page, "Create teacher account");
-    await expect(page.getByText("Temporary password")).toBeVisible();
+    await submit(page, "Buat akun guru");
+    await expect(page.getByText("Kata sandi sementara")).toBeVisible();
     teacherTempPassword = (await page.locator("code").first().textContent())!;
 
     await page.goto("/admin/classes");
     await page.fill('input[name="name"]', `Primary-${RUN}`);
     await page.fill('input[name="section"]', "A");
     await page.fill('input[name="gradeLevel"]', "3");
-    await selectOption(page, "Academic year", `${RUN}/${RUN}`);
-    await selectOption(page, "Class teacher (optional)", `Doe-${RUN}`);
-    await submit(page, "Add class");
+    await selectOption(page, "Tahun ajaran", `${RUN}/${RUN}`);
+    await selectOption(page, "Wali kelas (opsional)", `Doe-${RUN}`);
+    await submit(page, "Tambah kelas");
     await expect(page.getByText(`Primary-${RUN}`).first()).toBeVisible();
 
     await page.goto("/admin/students");
@@ -101,26 +101,26 @@ test.describe.serial("golden path across all four roles", () => {
     await page.fill('input[name="lastName"]', `Bello-${RUN}`);
     await page.fill('input[name="dateOfBirth"]', "2018-05-10");
     await page.fill('input[name="enrollmentDate"]', "2026-09-01");
-    await selectOption(page, "Class", `Primary-${RUN}`);
-    await selectOption(page, "Academic year", `${RUN}/${RUN}`);
+    await selectOption(page, "Kelas", `Primary-${RUN}`);
+    await selectOption(page, "Tahun ajaran", `${RUN}/${RUN}`);
     await page.fill('input[name="guardian1FirstName"]', "Fatima");
     await page.fill('input[name="guardian1LastName"]', `Bello-${RUN}`);
-    await selectOption(page, "Relationship", "mother");
+    await selectOption(page, "Hubungan", "Ibu");
     await page.fill('input[name="guardian1Email"]', GUARDIAN_EMAIL);
-    await submit(page, "Register student");
+    await submit(page, "Daftarkan siswa");
     await expect(page.getByText(`ADM-${RUN}`)).toBeVisible();
 
     // Grant portal access to the student
     await page.fill('input[name="email"]', STUDENT_EMAIL);
-    await submit(page, "Grant access");
-    await expect(page.getByText("Temp password")).toBeVisible();
+    await submit(page, "Beri akses");
+    await expect(page.getByText("Kata sandi sementara")).toBeVisible();
     studentTempPassword = (await page.locator("code").first().textContent())!;
 
     // Grant portal access to the guardian
     await page.goto("/admin/guardians");
     await page.fill('input[name="email"]', GUARDIAN_EMAIL);
-    await submit(page, "Grant access");
-    await expect(page.getByText("Temp password")).toBeVisible();
+    await submit(page, "Beri akses");
+    await expect(page.getByText("Kata sandi sementara")).toBeVisible();
     guardianTempPassword = (await page.locator("code").first().textContent())!;
   });
 
@@ -128,19 +128,19 @@ test.describe.serial("golden path across all four roles", () => {
     await page.goto("/login");
     await page.fill('input[name="email"]', TEACHER_EMAIL);
     await page.fill('input[name="password"]', teacherTempPassword);
-    await submit(page, "Sign in");
+    await submit(page, "Masuk");
     await expect(page).toHaveURL(/\/account\/change-password/);
     await page.fill('input[name="currentPassword"]', teacherTempPassword);
     await page.fill('input[name="newPassword"]', "newteacherpass1");
-    await submit(page, "Save new password");
+    await submit(page, "Simpan kata sandi baru");
     await expect(page).toHaveURL(/\/teacher\/dashboard/);
 
     await page.goto("/teacher/courses");
     await page.fill('input[name="title"]', `Fractions-${RUN}`);
-    await selectOption(page, "Subject", `Mathematics-${RUN}`);
-    await selectOption(page, "Class", `Primary-${RUN}`);
-    await selectOption(page, "Academic year", `${RUN}/${RUN}`);
-    await submit(page, "Create course");
+    await selectOption(page, "Mata pelajaran", `Mathematics-${RUN}`);
+    await selectOption(page, "Kelas", `Primary-${RUN}`);
+    await selectOption(page, "Tahun ajaran", `${RUN}/${RUN}`);
+    await submit(page, "Buat kursus");
     await expect(page.getByText(`Fractions-${RUN}`)).toBeVisible();
     await page.getByText(`Fractions-${RUN}`).click();
     await expect(page).toHaveURL(/\/teacher\/courses\//);
@@ -148,21 +148,21 @@ test.describe.serial("golden path across all four roles", () => {
 
     await page.fill('input[name="title"]', "Intro note");
     await page.fill('textarea[name="bodyMarkdown"]', "A fraction represents part of a whole.");
-    await submit(page, "Add content");
+    await submit(page, "Tambah materi");
     await expect(page.getByText("Intro note")).toBeVisible();
 
-    const assignmentForm = page.locator("form", { has: page.getByRole("button", { name: "Create assignment" }) });
+    const assignmentForm = page.locator("form", { has: page.getByRole("button", { name: "Buat tugas" }) });
     await assignmentForm.locator('input[name="title"]').fill(`Worksheet-${RUN}`);
     await assignmentForm.locator('input[name="dueDate"]').fill("2026-12-31");
     await assignmentForm.locator('input[name="maxScore"]').fill("10");
-    await submit(page, "Create assignment");
+    await submit(page, "Buat tugas");
     await expect(page.getByText(`Worksheet-${RUN}`)).toBeVisible();
     const assignmentHref = await page.getByRole("link", { name: new RegExp(`Worksheet-${RUN}`) }).getAttribute("href");
     assignmentId = assignmentHref!.split("/").pop()!;
 
-    const quizForm = page.locator("form", { has: page.getByRole("button", { name: "Create quiz" }) });
+    const quizForm = page.locator("form", { has: page.getByRole("button", { name: "Buat kuis" }) });
     await quizForm.locator('input[name="title"]').fill(`Quiz-${RUN}`);
-    await submit(page, "Create quiz");
+    await submit(page, "Buat kuis");
     await expect(page.getByText(`Quiz-${RUN}`)).toBeVisible();
     await page.getByRole("link", { name: new RegExp(`Quiz-${RUN}`) }).click();
     await expect(page).toHaveURL(/\/teacher\/quizzes\//);
@@ -173,47 +173,47 @@ test.describe.serial("golden path across all four roles", () => {
     await page.fill('input[name="option1"]', "1/6");
     await page.fill('input[name="option2"]', "3/4");
     await page.check('input[name="correctOption"][value="2"]');
-    await submit(page, "Add question");
+    await submit(page, "Tambah pertanyaan");
     await expect(page.getByText("What is 1/2 + 1/4?")).toBeVisible();
 
-    await submit(page, "Publish quiz");
-    await expect(page.getByText("Published")).toBeVisible();
+    await submit(page, "Terbitkan kuis");
+    await expect(page.getByText("Diterbitkan")).toBeVisible();
 
     await page.goto(courseUrl);
-    await submit(page, "Publish course");
-    await expect(page.getByText("Published")).toBeVisible();
+    await submit(page, "Terbitkan kursus");
+    await expect(page.getByText("Diterbitkan")).toBeVisible();
   });
 
   test("student submits the assignment and takes the quiz", async ({ page }) => {
     await page.goto("/login");
     await page.fill('input[name="email"]', STUDENT_EMAIL);
     await page.fill('input[name="password"]', studentTempPassword);
-    await submit(page, "Sign in");
+    await submit(page, "Masuk");
     await expect(page).toHaveURL(/\/account\/change-password/);
     await page.fill('input[name="currentPassword"]', studentTempPassword);
     await page.fill('input[name="newPassword"]', "newstudentpass1");
-    await submit(page, "Save new password");
+    await submit(page, "Simpan kata sandi baru");
     await expect(page).toHaveURL(/\/student\/dashboard/);
 
     await page.goto(`/student/assignments/${assignmentId}`);
     await page.fill('textarea[name="textResponse"]', "3/4");
-    await submit(page, "Submit");
-    await expect(page.getByText(/Submitted|you can resubmit/)).toBeVisible();
+    await submit(page, "Kirim");
+    await expect(page.getByText(/Sudah dikumpulkan|kumpulkan ulang/)).toBeVisible();
 
     await page.goto(courseUrl.replace("/teacher/courses/", "/student/courses/"));
-    await submit(page, "Start quiz");
+    await submit(page, "Mulai kuis");
     await expect(page).toHaveURL(/\/student\/quizzes\/attempt\//);
     await page.getByText("3/4", { exact: true }).click();
-    await submit(page, "Submit quiz");
-    await expect(page.getByText(/Score: \d+ \/ \d+/)).toBeVisible();
-    await expect(page.getByText("Score: 2 / 2")).toBeVisible();
+    await submit(page, "Kirim kuis");
+    await expect(page.getByText(/Nilai: \d+ \/ \d+/)).toBeVisible();
+    await expect(page.getByText("Nilai: 2 / 2")).toBeVisible();
   });
 
   test("teacher grades the assignment and sees the quiz result", async ({ page }) => {
     await page.goto("/login");
     await page.fill('input[name="email"]', TEACHER_EMAIL);
     await page.fill('input[name="password"]', "newteacherpass1");
-    await submit(page, "Sign in");
+    await submit(page, "Masuk");
     await expect(page).toHaveURL(/\/teacher\/dashboard/);
 
     await page.goto(quizUrl);
@@ -222,30 +222,30 @@ test.describe.serial("golden path across all four roles", () => {
 
     await page.goto(`/teacher/assignments/${assignmentId}`);
     await page.fill('input[name="score"]', "8");
-    await submit(page, "Grade");
-    await expect(page.getByText("graded")).toBeVisible();
+    await submit(page, "Nilai");
+    await expect(page.getByText("Dinilai")).toBeVisible();
   });
 
   test("parent sees the child's attendance/fees/grades but not an unrelated student", async ({ page }) => {
     await page.goto("/login");
     await page.fill('input[name="email"]', GUARDIAN_EMAIL);
     await page.fill('input[name="password"]', guardianTempPassword);
-    await submit(page, "Sign in");
+    await submit(page, "Masuk");
     await expect(page).toHaveURL(/\/account\/change-password/);
     await page.fill('input[name="currentPassword"]', guardianTempPassword);
     await page.fill('input[name="newPassword"]', "newguardianpass1");
-    await submit(page, "Save new password");
+    await submit(page, "Simpan kata sandi baru");
     await expect(page).toHaveURL(/\/parent\/dashboard/);
 
     await expect(page.getByText(`Bello-${RUN}`)).toBeVisible();
     await page.getByText(`Bello-${RUN}`).click();
     await expect(page).toHaveURL(/\/parent\/children\//);
-    await expect(page.getByText("Grades")).toBeVisible();
+    await expect(page.getByText("Nilai")).toBeVisible();
     await expect(page.getByText(`Worksheet-${RUN}`)).toBeVisible();
     await expect(page.getByText("8 / 10")).toBeVisible();
 
     // RBAC boundary: a nonexistent/unrelated student id must 404, not leak data.
     await page.goto("/parent/children/00000000-0000-0000-0000-000000000000");
-    await expect(page.getByText(/404|not found/i)).toBeVisible();
+    await expect(page.getByText(/404|tidak ditemukan/i).first()).toBeVisible();
   });
 });

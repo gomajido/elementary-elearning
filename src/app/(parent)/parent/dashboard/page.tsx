@@ -11,7 +11,7 @@ export default async function ParentDashboardPage() {
   return (
     <Card className="max-w-md">
       <CardHeader>
-        <CardTitle>Your children</CardTitle>
+        <CardTitle>Anak Anda</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {children.map((child) => (
@@ -24,7 +24,7 @@ export default async function ParentDashboardPage() {
           </Link>
         ))}
         {children.length === 0 && (
-          <p className="text-sm text-muted-foreground">No children linked to your account yet.</p>
+          <p className="text-sm text-muted-foreground">Belum ada anak yang terhubung ke akun Anda.</p>
         )}
       </CardContent>
     </Card>

@@ -36,7 +36,7 @@ export async function createStudentAction(_prev: CreateStudentState, formData: F
 
   const raw = Object.fromEntries(formData.entries());
   const parsed = studentSchema.safeParse(raw);
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
   const data = parsed.data;
 
   const guardians: GuardianInput[] = [
@@ -77,7 +77,7 @@ export async function createStudentAction(_prev: CreateStudentState, formData: F
     });
   } catch (err) {
     if (err instanceof Error && /UNIQUE/i.test(err.message)) {
-      return { error: "Admission number already in use" };
+      return { error: "Nomor induk sudah digunakan" };
     }
     throw err;
   }
@@ -102,7 +102,7 @@ export async function grantStudentPortalAccessAction(
     studentId: formData.get("studentId"),
     email: formData.get("email"),
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     const { tempPassword } = await StudentService.grantPortalAccess(parsed.data.studentId, parsed.data.email);

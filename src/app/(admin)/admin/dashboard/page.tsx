@@ -4,10 +4,10 @@ export default function AdminDashboardPage() {
   return (
     <Card className="max-w-md">
       <CardHeader>
-        <CardTitle>Admin dashboard</CardTitle>
+        <CardTitle>Dasbor Admin</CardTitle>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground">
-        Student, teacher, class, and fee management modules land here in Phase 1.
+        Gunakan menu di atas untuk mengelola siswa, guru, kelas, kehadiran, dan biaya.
       </CardContent>
     </Card>
   );

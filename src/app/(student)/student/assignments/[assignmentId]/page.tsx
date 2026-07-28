@@ -36,7 +36,7 @@ export default async function StudentAssignmentDetailPage({
       <CardHeader>
         <CardTitle className="text-xl">{detail.assignment.title}</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Due {detail.assignment.dueDate} · {detail.assignment.maxScore} points
+          Tenggat {detail.assignment.dueDate} · {detail.assignment.maxScore} poin
         </p>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -44,9 +44,9 @@ export default async function StudentAssignmentDetailPage({
 
         {submission?.status === "graded" ? (
           <div className="rounded-lg border p-4">
-            <Badge variant="secondary">Graded</Badge>
+            <Badge variant="secondary">Dinilai</Badge>
             <p className="mt-2 text-lg font-medium">
-              Score: {submission.score} / {detail.assignment.maxScore}
+              Nilai: {submission.score} / {detail.assignment.maxScore}
             </p>
             {submission.feedback && <p className="mt-1 text-muted-foreground">{submission.feedback}</p>}
           </div>
@@ -54,7 +54,7 @@ export default async function StudentAssignmentDetailPage({
           <>
             {submission && (
               <p className="text-sm text-muted-foreground">
-                Submitted {submission.status === "late" ? "(late)" : ""} — you can resubmit below.
+                Sudah dikumpulkan {submission.status === "late" ? "(terlambat)" : ""} — kamu bisa kumpulkan ulang di bawah.
               </p>
             )}
             <SubmitAssignmentForm assignmentId={assignmentId} defaultText={submission?.textResponse ?? undefined} />

@@ -15,24 +15,24 @@ export function AcademicYearForm() {
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-4 sm:items-end">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="name">Nama</Label>
         <Input id="name" name="name" placeholder="2026/2027" required />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="startDate">Start date</Label>
+        <Label htmlFor="startDate">Tanggal mulai</Label>
         <Input id="startDate" name="startDate" type="date" required />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="endDate">End date</Label>
+        <Label htmlFor="endDate">Tanggal selesai</Label>
         <Input id="endDate" name="endDate" type="date" required />
       </div>
       <div className="flex items-center gap-2 pb-2">
         <input id="isCurrent" name="isCurrent" type="checkbox" className="size-4" />
-        <Label htmlFor="isCurrent">Set as current year</Label>
+        <Label htmlFor="isCurrent">Jadikan tahun aktif</Label>
       </div>
       {state.error && <p className="text-sm text-destructive sm:col-span-4">{state.error}</p>}
       <Button type="submit" disabled={pending} className="sm:col-span-4 sm:w-fit">
-        {pending ? "Adding…" : "Add academic year"}
+        {pending ? "Menambahkan…" : "Tambah tahun ajaran"}
       </Button>
     </form>
   );

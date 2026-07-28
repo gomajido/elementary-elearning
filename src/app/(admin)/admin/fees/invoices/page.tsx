@@ -7,9 +7,10 @@ import { InvoiceGenerateForm } from "@/components/forms/invoice-generate-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { INVOICE_STATUS_LABELS, label } from "@/lib/labels";
 
 function formatCents(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`;
+  return `Rp${(cents / 100).toLocaleString("id-ID")}`;
 }
 
 const STATUS_VARIANT = { paid: "secondary", partial: "outline", unpaid: "destructive" } as const;
@@ -27,7 +28,7 @@ export default async function InvoicesPage() {
     <div className="flex max-w-4xl flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Generate invoice</CardTitle>
+          <CardTitle>Buat tagihan</CardTitle>
         </CardHeader>
         <CardContent>
           <InvoiceGenerateForm
@@ -41,16 +42,16 @@ export default async function InvoicesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Invoices</CardTitle>
+          <CardTitle>Tagihan</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Invoice #</TableHead>
-                <TableHead>Student</TableHead>
+                <TableHead>No. Tagihan</TableHead>
+                <TableHead>Siswa</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead>Balance</TableHead>
+                <TableHead>Sisa Tagihan</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -68,14 +69,14 @@ export default async function InvoicesPage() {
                   <TableCell>{formatCents(invoice.totalAmountCents)}</TableCell>
                   <TableCell>{formatCents(balanceCents)}</TableCell>
                   <TableCell>
-                    <Badge variant={STATUS_VARIANT[status]}>{status}</Badge>
+                    <Badge variant={STATUS_VARIANT[status]}>{label(INVOICE_STATUS_LABELS, status)}</Badge>
                   </TableCell>
                 </TableRow>
               ))}
               {invoices.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    No invoices yet
+                    Belum ada tagihan
                   </TableCell>
                 </TableRow>
               )}

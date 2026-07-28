@@ -29,11 +29,11 @@ export const AttendanceService = {
     entries: { studentId: string; status: AttendanceUpsert["status"]; notes?: string }[]
   ) {
     const teacher = await TeacherRepository.findByUserId(teacherUserId);
-    if (!teacher) throw new AttendanceError("No teacher record for this account");
+    if (!teacher) throw new AttendanceError("Tidak ada data guru untuk akun ini");
 
     const classRow = await ClassRepository.findById(classId);
     if (!classRow || classRow.classTeacherId !== teacher.id) {
-      throw new AttendanceError("You are not the homeroom teacher for this class");
+      throw new AttendanceError("Anda bukan wali kelas untuk kelas ini");
     }
 
     await AttendanceRepository.saveRegister(

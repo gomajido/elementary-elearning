@@ -6,7 +6,7 @@ import { RoleShell } from "@/components/layout/role-shell";
 export default async function ParentLayout({ children }: { children: ReactNode }) {
   const user = await requireRole(["parent"]);
   return (
-    <RoleShell roleLabel="Parent" email={user.email}>
+    <RoleShell roleLabel="Orang Tua" email={user.email}>
       {children}
     </RoleShell>
   );

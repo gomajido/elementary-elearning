@@ -19,7 +19,7 @@ export const GuardianService = {
   async assertGuardianOwnsStudent(userId: string, studentId: string) {
     const { children } = await GuardianService.childrenForGuardianUser(userId);
     if (!children.some((c) => c.id === studentId)) {
-      throw new GuardianPortalError("Not authorized to view this student");
+      throw new GuardianPortalError("Tidak berwenang melihat siswa ini");
     }
   },
 
@@ -30,11 +30,11 @@ export const GuardianService = {
    */
   async grantPortalAccess(guardianId: string, email: string) {
     const guardian = await GuardianRepository.findById(guardianId);
-    if (!guardian) throw new GuardianPortalError("Guardian not found");
-    if (guardian.userId) throw new GuardianPortalError("This guardian already has portal access");
+    if (!guardian) throw new GuardianPortalError("Wali tidak ditemukan");
+    if (guardian.userId) throw new GuardianPortalError("Wali ini sudah memiliki akses portal");
 
     const existingUser = await UserRepository.findByEmail(email);
-    if (existingUser) throw new GuardianPortalError("A user with this email already exists");
+    if (existingUser) throw new GuardianPortalError("Pengguna dengan email ini sudah ada");
 
     const db = getDb();
     const userId = crypto.randomUUID();

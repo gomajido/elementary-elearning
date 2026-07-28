@@ -18,7 +18,7 @@ export async function grantPortalAccessAction(_prev: GrantAccessState, formData:
     guardianId: formData.get("guardianId"),
     email: formData.get("email"),
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     const { tempPassword } = await GuardianService.grantPortalAccess(parsed.data.guardianId, parsed.data.email);

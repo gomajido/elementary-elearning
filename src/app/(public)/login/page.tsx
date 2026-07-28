@@ -17,8 +17,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Sign in</CardTitle>
-          <CardDescription>Use the email and password given to you by the school office.</CardDescription>
+          <CardTitle>Masuk</CardTitle>
+          <CardDescription>Gunakan email dan kata sandi yang diberikan oleh pihak sekolah.</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="flex flex-col gap-4">
@@ -27,12 +27,12 @@ export default function LoginPage() {
               <Input id="email" name="email" type="email" autoComplete="username" required />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Kata Sandi</Label>
               <Input id="password" name="password" type="password" autoComplete="current-password" required />
             </div>
             {state.error && <p className="text-sm text-destructive">{state.error}</p>}
             <Button type="submit" disabled={pending} className="mt-2">
-              {pending ? "Signing in…" : "Sign in"}
+              {pending ? "Sedang masuk…" : "Masuk"}
             </Button>
           </form>
         </CardContent>

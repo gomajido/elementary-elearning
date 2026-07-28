@@ -7,6 +7,7 @@ import { PublishQuizButton } from "@/components/forms/publish-quiz-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { QUIZ_ATTEMPT_STATUS_LABELS, label } from "@/lib/labels";
 
 export default async function TeacherQuizDetailPage({ params }: { params: Promise<{ quizId: string }> }) {
   await requireRole(["teacher"]);
@@ -22,7 +23,7 @@ export default async function TeacherQuizDetailPage({ params }: { params: Promis
         <h1 className="text-xl font-semibold">{detail.quiz.title}</h1>
         <div className="flex items-center gap-2">
           <Badge variant={detail.quiz.isPublished ? "secondary" : "outline"}>
-            {detail.quiz.isPublished ? "Published" : "Draft"}
+            {detail.quiz.isPublished ? "Diterbitkan" : "Draf"}
           </Badge>
           <PublishQuizButton quizId={quizId} isPublished={detail.quiz.isPublished} />
         </div>
@@ -30,16 +31,16 @@ export default async function TeacherQuizDetailPage({ params }: { params: Promis
 
       <Card>
         <CardHeader>
-          <CardTitle>Questions</CardTitle>
+          <CardTitle>Pertanyaan</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {detail.questions.map(({ question, options }, i) => (
             <div key={question.id} className="rounded-md border p-3 text-sm">
               <p className="font-medium">
-                {i + 1}. {question.questionText} ({question.points} pts)
+                {i + 1}. {question.questionText} ({question.points} poin)
               </p>
               {question.type === "short_answer" ? (
-                <p className="mt-1 text-muted-foreground">Answer: {question.correctAnswerText}</p>
+                <p className="mt-1 text-muted-foreground">Jawaban: {question.correctAnswerText}</p>
               ) : (
                 <ul className="mt-1 list-disc pl-5 text-muted-foreground">
                   {options.map((o) => (
@@ -51,21 +52,21 @@ export default async function TeacherQuizDetailPage({ params }: { params: Promis
               )}
             </div>
           ))}
-          {detail.questions.length === 0 && <p className="text-sm text-muted-foreground">No questions yet</p>}
+          {detail.questions.length === 0 && <p className="text-sm text-muted-foreground">Belum ada pertanyaan</p>}
           <QuizQuestionForm quizId={quizId} />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Results</CardTitle>
+          <CardTitle>Hasil</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Score</TableHead>
+                <TableHead>Siswa</TableHead>
+                <TableHead>Nilai</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -78,13 +79,13 @@ export default async function TeacherQuizDetailPage({ params }: { params: Promis
                   <TableCell>
                     {attempt.totalScore ?? "—"} / {attempt.maxPossibleScore}
                   </TableCell>
-                  <TableCell className="capitalize">{attempt.status.replace("_", " ")}</TableCell>
+                  <TableCell>{label(QUIZ_ATTEMPT_STATUS_LABELS, attempt.status)}</TableCell>
                 </TableRow>
               ))}
               {results.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    No attempts yet
+                    Belum ada percobaan
                   </TableCell>
                 </TableRow>
               )}

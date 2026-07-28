@@ -22,7 +22,7 @@ export const TeacherService = {
     hireDate?: string;
   }) {
     const existing = await UserRepository.findByEmail(input.email);
-    if (existing) throw new TeacherRegistrationError("A user with this email already exists");
+    if (existing) throw new TeacherRegistrationError("Pengguna dengan email ini sudah ada");
 
     const db = getDb();
     const userId = crypto.randomUUID();

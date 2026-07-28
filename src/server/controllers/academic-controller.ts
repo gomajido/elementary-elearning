@@ -23,7 +23,7 @@ export async function createAcademicYearAction(_prev: ActionState, formData: For
     endDate: formData.get("endDate"),
     isCurrent: formData.get("isCurrent") === "on",
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   await AcademicService.createAcademicYear(parsed.data);
   revalidatePath("/admin/academic-years");
@@ -41,7 +41,7 @@ export async function createSubjectAction(_prev: ActionState, formData: FormData
     name: formData.get("name"),
     code: formData.get("code") || undefined,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   await AcademicService.createSubject(parsed.data);
   revalidatePath("/admin/subjects");
@@ -67,7 +67,7 @@ export async function createClassAction(_prev: ActionState, formData: FormData):
     classTeacherId: formData.get("classTeacherId") || undefined,
     capacity: formData.get("capacity") || undefined,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   await AcademicService.createClass(parsed.data);
   revalidatePath("/admin/classes");
@@ -89,12 +89,12 @@ export async function assignTeacherAction(_prev: ActionState, formData: FormData
     subjectId: formData.get("subjectId"),
     academicYearId: formData.get("academicYearId"),
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     await AcademicService.assignTeacherToClassSubject(parsed.data);
   } catch {
-    return { error: "This class already has a teacher assigned for that subject and year" };
+    return { error: "Kelas ini sudah memiliki guru untuk mata pelajaran dan tahun tersebut" };
   }
   revalidatePath("/admin/classes");
   return {};

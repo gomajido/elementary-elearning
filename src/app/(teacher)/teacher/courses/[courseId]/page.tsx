@@ -11,6 +11,7 @@ import { QuizForm } from "@/components/forms/quiz-form";
 import { PublishCourseButton } from "@/components/forms/publish-course-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CONTENT_ITEM_TYPE_LABELS, label } from "@/lib/labels";
 
 export default async function TeacherCourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
   await requireRole(["teacher"]);
@@ -27,10 +28,10 @@ export default async function TeacherCourseDetailPage({ params }: { params: Prom
         <h1 className="text-xl font-semibold">{detail.course.title}</h1>
         <div className="flex items-center gap-2">
           <Badge variant={detail.course.isPublished ? "secondary" : "outline"}>
-            {detail.course.isPublished ? "Published" : "Draft"}
+            {detail.course.isPublished ? "Diterbitkan" : "Draf"}
           </Badge>
           <Link href={`/teacher/gradebook/${courseId}`} className="text-sm underline underline-offset-4">
-            Gradebook
+            Buku Nilai
           </Link>
           <PublishCourseButton courseId={courseId} isPublished={detail.course.isPublished} />
         </div>
@@ -38,13 +39,13 @@ export default async function TeacherCourseDetailPage({ params }: { params: Prom
 
       <Card>
         <CardHeader>
-          <CardTitle>Content</CardTitle>
+          <CardTitle>Materi</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {detail.contentItems.map((item) => (
             <div key={item.id} className="rounded-md border p-3 text-sm">
               <p className="font-medium">
-                {item.title} <span className="text-muted-foreground">({item.type})</span>
+                {item.title} <span className="text-muted-foreground">({label(CONTENT_ITEM_TYPE_LABELS, item.type)})</span>
               </p>
               {item.bodyMarkdown && <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{item.bodyMarkdown}</p>}
               {item.externalUrl && (
@@ -54,14 +55,14 @@ export default async function TeacherCourseDetailPage({ params }: { params: Prom
               )}
             </div>
           ))}
-          {detail.contentItems.length === 0 && <p className="text-sm text-muted-foreground">No content yet</p>}
+          {detail.contentItems.length === 0 && <p className="text-sm text-muted-foreground">Belum ada materi</p>}
           <ContentItemForm courseId={courseId} />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Assignments</CardTitle>
+          <CardTitle>Tugas</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {assignments.map((a) => (
@@ -70,25 +71,25 @@ export default async function TeacherCourseDetailPage({ params }: { params: Prom
               href={`/teacher/assignments/${a.id}`}
               className="rounded-md border p-3 text-sm hover:bg-muted"
             >
-              {a.title} — due {a.dueDate} — {a.maxScore} pts
+              {a.title} — tenggat {a.dueDate} — {a.maxScore} poin
             </Link>
           ))}
-          {assignments.length === 0 && <p className="text-sm text-muted-foreground">No assignments yet</p>}
+          {assignments.length === 0 && <p className="text-sm text-muted-foreground">Belum ada tugas</p>}
           <AssignmentForm courseId={courseId} />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Quizzes</CardTitle>
+          <CardTitle>Kuis</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {quizzes.map((q) => (
             <Link key={q.id} href={`/teacher/quizzes/${q.id}`} className="rounded-md border p-3 text-sm hover:bg-muted">
-              {q.title} — max {q.maxAttempts} attempt{q.maxAttempts > 1 ? "s" : ""}
+              {q.title} — maks {q.maxAttempts} percobaan
             </Link>
           ))}
-          {quizzes.length === 0 && <p className="text-sm text-muted-foreground">No quizzes yet</p>}
+          {quizzes.length === 0 && <p className="text-sm text-muted-foreground">Belum ada kuis</p>}
           <QuizForm courseId={courseId} />
         </CardContent>
       </Card>

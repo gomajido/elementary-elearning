@@ -26,7 +26,7 @@ export async function createFeeStructureAction(_prev: ActionState, formData: For
     frequency: formData.get("frequency"),
     gradeLevel: formData.get("gradeLevel") || undefined,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   await FeeService.createFeeStructure(parsed.data);
   revalidatePath("/admin/fees/structures");
@@ -40,7 +40,7 @@ const invoiceSchema = z.object({
   academicYearId: z.string().min(1),
   issueDate: z.string().min(1),
   dueDate: z.string().min(1),
-  feeStructureIds: z.array(z.string()).min(1, "Select at least one fee"),
+  feeStructureIds: z.array(z.string()).min(1, "Pilih minimal satu biaya"),
 });
 
 export async function generateInvoiceAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -54,7 +54,7 @@ export async function generateInvoiceAction(_prev: ActionState, formData: FormDa
     dueDate: formData.get("dueDate"),
     feeStructureIds: formData.getAll("feeStructureIds").map(String),
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
   const data = parsed.data;
 
   const structures = await FeeService.listFeeStructures();
@@ -65,7 +65,7 @@ export async function generateInvoiceAction(_prev: ActionState, formData: FormDa
 
   try {
     if (data.target === "student") {
-      if (!data.studentId) return { error: "Select a student" };
+      if (!data.studentId) return { error: "Pilih siswa" };
       await FeeService.generateInvoiceForStudent({
         studentId: data.studentId,
         academicYearId: data.academicYearId,
@@ -74,7 +74,7 @@ export async function generateInvoiceAction(_prev: ActionState, formData: FormDa
         lineItems,
       });
     } else {
-      if (!data.classId) return { error: "Select a class" };
+      if (!data.classId) return { error: "Pilih kelas" };
       await FeeService.generateInvoicesForClass({
         classId: data.classId,
         academicYearId: data.academicYearId,
@@ -111,7 +111,7 @@ export async function recordPaymentAction(_prev: ActionState, formData: FormData
     paidAt: formData.get("paidAt"),
     notes: formData.get("notes") || undefined,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     await FeeService.recordPayment({ ...parsed.data, recordedByUserId: user.id });

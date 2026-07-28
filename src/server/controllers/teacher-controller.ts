@@ -27,7 +27,7 @@ export async function createTeacherAction(_prev: CreateTeacherState, formData: F
     phone: formData.get("phone") || undefined,
     hireDate: formData.get("hireDate") || undefined,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     const { tempPassword } = await TeacherService.registerTeacher(parsed.data);
@@ -36,7 +36,7 @@ export async function createTeacherAction(_prev: CreateTeacherState, formData: F
   } catch (err) {
     if (err instanceof TeacherRegistrationError) return { error: err.message };
     if (err instanceof Error && /UNIQUE/i.test(err.message)) {
-      return { error: "Employee number already in use" };
+      return { error: "Nomor pegawai sudah digunakan" };
     }
     throw err;
   }

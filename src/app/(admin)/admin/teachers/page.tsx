@@ -10,7 +10,7 @@ export default async function TeachersPage() {
     <div className="flex max-w-3xl flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Add teacher</CardTitle>
+          <CardTitle>Tambah guru</CardTitle>
         </CardHeader>
         <CardContent>
           <TeacherForm />
@@ -19,15 +19,15 @@ export default async function TeachersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Teachers</CardTitle>
+          <CardTitle>Guru</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Employee #</TableHead>
-                <TableHead>Phone</TableHead>
+                <TableHead>Nama</TableHead>
+                <TableHead>No. Pegawai</TableHead>
+                <TableHead>Telepon</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -43,7 +43,7 @@ export default async function TeachersPage() {
               {teachers.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    No teachers yet
+                    Belum ada guru
                   </TableCell>
                 </TableRow>
               )}

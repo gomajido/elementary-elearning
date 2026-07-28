@@ -15,16 +15,16 @@ export function ChangePasswordForm() {
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="currentPassword">Current password</Label>
+        <Label htmlFor="currentPassword">Kata sandi saat ini</Label>
         <Input id="currentPassword" name="currentPassword" type="password" autoComplete="current-password" required />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="newPassword">New password</Label>
+        <Label htmlFor="newPassword">Kata sandi baru</Label>
         <Input id="newPassword" name="newPassword" type="password" autoComplete="new-password" minLength={8} required />
       </div>
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
       <Button type="submit" disabled={pending} className="mt-2">
-        {pending ? "Saving…" : "Save new password"}
+        {pending ? "Menyimpan…" : "Simpan kata sandi baru"}
       </Button>
     </form>
   );

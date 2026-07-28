@@ -15,16 +15,16 @@ export function SubjectForm() {
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-3 sm:items-end">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="name">Subject name</Label>
-        <Input id="name" name="name" placeholder="Mathematics" required />
+        <Label htmlFor="name">Nama mata pelajaran</Label>
+        <Input id="name" name="name" placeholder="Matematika" required />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="code">Code (optional)</Label>
-        <Input id="code" name="code" placeholder="MATH" />
+        <Label htmlFor="code">Kode (opsional)</Label>
+        <Input id="code" name="code" placeholder="MTK" />
       </div>
       {state.error && <p className="text-sm text-destructive sm:col-span-3">{state.error}</p>}
       <Button type="submit" disabled={pending} className="sm:w-fit">
-        {pending ? "Adding…" : "Add subject"}
+        {pending ? "Menambahkan…" : "Tambah mata pelajaran"}
       </Button>
     </form>
   );

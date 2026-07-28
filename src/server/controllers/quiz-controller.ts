@@ -28,7 +28,7 @@ export async function createQuizAction(_prev: ActionState, formData: FormData): 
     timeLimitMinutes: formData.get("timeLimitMinutes") || undefined,
     maxAttempts: formData.get("maxAttempts") || undefined,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
   try {
     await QuizService.createQuiz({ teacherUserId: user.id, ...parsed.data });
@@ -58,7 +58,7 @@ const questionSchema = z.object({
 export async function addQuestionAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireRole(["teacher"]);
   const parsed = questionSchema.safeParse(Object.fromEntries(formData.entries()));
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
   const data = parsed.data;
 
   let options: { text: string; isCorrect: boolean }[] | undefined;
@@ -67,8 +67,8 @@ export async function addQuestionAction(_prev: ActionState, formData: FormData):
     options = texts.map((text, i) => ({ text, isCorrect: String(i + 1) === data.correctOption }));
   } else if (data.type === "true_false") {
     options = [
-      { text: "True", isCorrect: data.correctBoolean === "true" },
-      { text: "False", isCorrect: data.correctBoolean === "false" },
+      { text: "Benar", isCorrect: data.correctBoolean === "true" },
+      { text: "Salah", isCorrect: data.correctBoolean === "false" },
     ];
   }
 
@@ -100,7 +100,7 @@ export async function publishQuizAction(quizId: string) {
 export async function startAttemptAction(quizId: string) {
   const user = await requireRole(["student"]);
   const student = await StudentRepository.findByUserId(user.id);
-  if (!student) throw new QuizError("No student record for this account");
+  if (!student) throw new QuizError("Tidak ada data siswa untuk akun ini");
 
   const attempt = await QuizService.startAttempt(student.id, quizId);
   redirect(`/student/quizzes/attempt/${attempt.id}`);
@@ -111,7 +111,7 @@ export type SubmitAttemptState = { error?: string; result?: { totalScore: number
 export async function submitAttemptAction(_prev: SubmitAttemptState, formData: FormData): Promise<SubmitAttemptState> {
   const user = await requireRole(["student"]);
   const student = await StudentRepository.findByUserId(user.id);
-  if (!student) return { error: "No student record for this account" };
+  if (!student) return { error: "Tidak ada data siswa untuk akun ini" };
 
   const attemptId = String(formData.get("attemptId"));
   const questionIds = formData.getAll("questionId").map(String);

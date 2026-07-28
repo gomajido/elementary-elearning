@@ -95,11 +95,11 @@ export const StudentService = {
    */
   async grantPortalAccess(studentId: string, email: string) {
     const student = await StudentRepository.findById(studentId);
-    if (!student) throw new StudentPortalError("Student not found");
-    if (student.userId) throw new StudentPortalError("This student already has portal access");
+    if (!student) throw new StudentPortalError("Siswa tidak ditemukan");
+    if (student.userId) throw new StudentPortalError("Siswa ini sudah memiliki akses portal");
 
     const existingUser = await UserRepository.findByEmail(email);
-    if (existingUser) throw new StudentPortalError("A user with this email already exists");
+    if (existingUser) throw new StudentPortalError("Pengguna dengan email ini sudah ada");
 
     const db = getDb();
     const userId = crypto.randomUUID();

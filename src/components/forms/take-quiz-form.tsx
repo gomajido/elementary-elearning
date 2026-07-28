@@ -26,10 +26,10 @@ export function TakeQuizForm({ attemptId, questions }: { attemptId: string; ques
             <input type="hidden" name="questionId" value={question.id} />
             <p className="text-lg font-medium">
               {i + 1}. {question.questionText}{" "}
-              <span className="text-sm font-normal text-muted-foreground">({question.points} pts)</span>
+              <span className="text-sm font-normal text-muted-foreground">({question.points} poin)</span>
             </p>
             {question.type === "short_answer" ? (
-              <Input name={`text_${question.id}`} placeholder="Your answer" className="h-11" />
+              <Input name={`text_${question.id}`} placeholder="Jawabanmu" className="h-11" />
             ) : (
               <div className="flex flex-col gap-2">
                 {options.map((opt) => (
@@ -48,7 +48,7 @@ export function TakeQuizForm({ attemptId, questions }: { attemptId: string; ques
       ))}
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
       <Button type="submit" disabled={pending} size="lg" className="w-fit">
-        {pending ? "Submitting…" : "Submit quiz"}
+        {pending ? "Mengirim…" : "Kirim kuis"}
       </Button>
     </form>
   );

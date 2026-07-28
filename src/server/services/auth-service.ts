@@ -9,10 +9,10 @@ export const AuthService = {
   /** Verifies credentials and opens a new session. Throws AuthError on failure. */
   async login(email: string, password: string, meta?: { userAgent?: string; ipAddress?: string }) {
     const user = await UserRepository.findByEmail(email);
-    if (!user || !user.isActive) throw new AuthError("Invalid email or password");
+    if (!user || !user.isActive) throw new AuthError("Email atau kata sandi salah");
 
     const valid = await verifyPassword(password, user.passwordHash);
-    if (!valid) throw new AuthError("Invalid email or password");
+    if (!valid) throw new AuthError("Email atau kata sandi salah");
 
     const token = generateSessionToken();
     const tokenHash = await hashToken(token);
@@ -49,7 +49,7 @@ export const AuthService = {
    */
   async bootstrapAdmin(email: string, password: string) {
     const existingAdmins = await UserRepository.countByRole("admin");
-    if (existingAdmins > 0) throw new AuthError("Admin account already exists");
+    if (existingAdmins > 0) throw new AuthError("Akun admin sudah ada");
 
     const passwordHash = await hashPassword(password);
     return UserRepository.create({ email, passwordHash, role: "admin" });
@@ -57,10 +57,10 @@ export const AuthService = {
 
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
     const user = await UserRepository.findById(userId);
-    if (!user) throw new AuthError("Not found");
+    if (!user) throw new AuthError("Tidak ditemukan");
 
     const valid = await verifyPassword(currentPassword, user.passwordHash);
-    if (!valid) throw new AuthError("Current password is incorrect");
+    if (!valid) throw new AuthError("Kata sandi saat ini salah");
 
     const passwordHash = await hashPassword(newPassword);
     await UserRepository.updatePassword(userId, passwordHash);

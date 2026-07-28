@@ -6,9 +6,10 @@ import { RecordPaymentForm } from "@/components/forms/record-payment-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { INVOICE_STATUS_LABELS, PAYMENT_METHOD_LABELS, label } from "@/lib/labels";
 
 function formatCents(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`;
+  return `Rp${(cents / 100).toLocaleString("id-ID")}`;
 }
 
 const STATUS_VARIANT = { paid: "secondary", partial: "outline", unpaid: "destructive" } as const;
@@ -28,9 +29,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             {detail.invoice.invoiceNumber} — {student?.firstName} {student?.lastName}
           </CardTitle>
           <div className="flex gap-2 pt-2">
-            <Badge variant={STATUS_VARIANT[detail.status]}>{detail.status}</Badge>
+            <Badge variant={STATUS_VARIANT[detail.status]}>{label(INVOICE_STATUS_LABELS, detail.status)}</Badge>
             <span className="text-sm text-muted-foreground">
-              Issued {detail.invoice.issueDate} · Due {detail.invoice.dueDate}
+              Terbit {detail.invoice.issueDate} · Jatuh tempo {detail.invoice.dueDate}
             </span>
           </div>
         </CardHeader>
@@ -38,8 +39,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Line item</TableHead>
-                <TableHead>Amount</TableHead>
+                <TableHead>Item</TableHead>
+                <TableHead>Jumlah</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -54,11 +55,11 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                 <TableCell className="font-medium">{formatCents(detail.invoice.totalAmountCents)}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell>Paid</TableCell>
+                <TableCell>Terbayar</TableCell>
                 <TableCell>{formatCents(detail.paidCents)}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Balance</TableCell>
+                <TableCell className="font-medium">Sisa Tagihan</TableCell>
                 <TableCell className="font-medium">{formatCents(detail.balanceCents)}</TableCell>
               </TableRow>
             </TableBody>
@@ -68,7 +69,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
       <Card>
         <CardHeader>
-          <CardTitle>Record payment</CardTitle>
+          <CardTitle>Catat pembayaran</CardTitle>
         </CardHeader>
         <CardContent>
           <RecordPaymentForm invoiceId={invoiceId} />
@@ -77,16 +78,16 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
       <Card>
         <CardHeader>
-          <CardTitle>Payments</CardTitle>
+          <CardTitle>Pembayaran</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Receipt #</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>No. Kuitansi</TableHead>
+                <TableHead>Jumlah</TableHead>
+                <TableHead>Metode</TableHead>
+                <TableHead>Tanggal</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -94,14 +95,14 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                 <TableRow key={p.id}>
                   <TableCell>{p.receiptNumber}</TableCell>
                   <TableCell>{formatCents(p.amountCents)}</TableCell>
-                  <TableCell className="capitalize">{p.method.replace("_", " ")}</TableCell>
+                  <TableCell>{label(PAYMENT_METHOD_LABELS, p.method)}</TableCell>
                   <TableCell>{p.paidAt}</TableCell>
                 </TableRow>
               ))}
               {detail.payments.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center text-muted-foreground">
-                    No payments recorded yet
+                    Belum ada pembayaran tercatat
                   </TableCell>
                 </TableRow>
               )}

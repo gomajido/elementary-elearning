@@ -6,6 +6,7 @@ import { GradeSubmissionForm } from "@/components/forms/grade-submission-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { SUBMISSION_STATUS_LABELS, label } from "@/lib/labels";
 
 export default async function TeacherAssignmentDetailPage({
   params,
@@ -23,18 +24,18 @@ export default async function TeacherAssignmentDetailPage({
     <Card className="max-w-3xl">
       <CardHeader>
         <CardTitle>
-          {detail.assignment.title} — due {detail.assignment.dueDate} — {detail.assignment.maxScore} pts
+          {detail.assignment.title} — tenggat {detail.assignment.dueDate} — {detail.assignment.maxScore} poin
         </CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Student</TableHead>
+              <TableHead>Siswa</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Response</TableHead>
-              <TableHead>Score</TableHead>
-              <TableHead>Grade</TableHead>
+              <TableHead>Jawaban</TableHead>
+              <TableHead>Nilai</TableHead>
+              <TableHead>Penilaian</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -44,7 +45,9 @@ export default async function TeacherAssignmentDetailPage({
                   {student.firstName} {student.lastName}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={submission.status === "graded" ? "secondary" : "outline"}>{submission.status}</Badge>
+                  <Badge variant={submission.status === "graded" ? "secondary" : "outline"}>
+                    {label(SUBMISSION_STATUS_LABELS, submission.status)}
+                  </Badge>
                 </TableCell>
                 <TableCell className="max-w-xs truncate">{submission.textResponse ?? "—"}</TableCell>
                 <TableCell>{submission.score ?? "—"}</TableCell>
@@ -56,7 +59,7 @@ export default async function TeacherAssignmentDetailPage({
             {submissions.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  No submissions yet
+                  Belum ada pengumpulan
                 </TableCell>
               </TableRow>
             )}

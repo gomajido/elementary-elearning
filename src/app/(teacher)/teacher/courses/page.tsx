@@ -20,7 +20,7 @@ export default async function TeacherCoursesPage() {
     <div className="flex max-w-3xl flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Create course</CardTitle>
+          <CardTitle>Buat kursus</CardTitle>
         </CardHeader>
         <CardContent>
           <CourseForm subjects={subjects} classes={classes} academicYears={academicYears} />
@@ -29,7 +29,7 @@ export default async function TeacherCoursesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Your courses</CardTitle>
+          <CardTitle>Kursus Anda</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {courses.map(({ course, subjectName, className, classSection }) => (
@@ -43,11 +43,11 @@ export default async function TeacherCoursesPage() {
                 {classSection ? ` ${classSection}` : ""}
               </span>
               <Badge variant={course.isPublished ? "secondary" : "outline"}>
-                {course.isPublished ? "Published" : "Draft"}
+                {course.isPublished ? "Diterbitkan" : "Draf"}
               </Badge>
             </Link>
           ))}
-          {courses.length === 0 && <p className="text-sm text-muted-foreground">No courses yet</p>}
+          {courses.length === 0 && <p className="text-sm text-muted-foreground">Belum ada kursus</p>}
         </CardContent>
       </Card>
     </div>

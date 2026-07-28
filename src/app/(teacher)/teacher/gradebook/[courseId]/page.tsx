@@ -17,15 +17,15 @@ export default async function TeacherGradebookPage({ params }: { params: Promise
   return (
     <Card className="max-w-3xl">
       <CardHeader>
-        <CardTitle>Gradebook — {detail.course.title}</CardTitle>
+        <CardTitle>Buku Nilai — {detail.course.title}</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Student</TableHead>
-              <TableHead>Assignments</TableHead>
-              <TableHead>Quizzes</TableHead>
+              <TableHead>Siswa</TableHead>
+              <TableHead>Tugas</TableHead>
+              <TableHead>Kuis</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -43,7 +43,7 @@ export default async function TeacherGradebookPage({ params }: { params: Promise
             {rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={3} className="text-center text-muted-foreground">
-                  No students in this class
+                  Tidak ada siswa di kelas ini
                 </TableCell>
               </TableRow>
             )}

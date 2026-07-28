@@ -12,7 +12,7 @@ export function PublishQuizButton({ quizId, isPublished }: { quizId: string; isP
 
   return (
     <Button size="sm" disabled={pending} onClick={() => startTransition(() => publishQuizAction(quizId))}>
-      {pending ? "Publishing…" : "Publish quiz"}
+      {pending ? "Menerbitkan…" : "Terbitkan kuis"}
     </Button>
   );
 }
