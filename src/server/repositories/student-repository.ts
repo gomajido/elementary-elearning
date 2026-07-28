@@ -116,6 +116,44 @@ export const GuardianRepository = {
     const db = getDb();
     return db.insert(studentGuardians).values(input).returning();
   },
+
+  async findById(id: string) {
+    const db = getDb();
+    const [row] = await db.select().from(guardians).where(eq(guardians.id, id)).limit(1);
+    return row ?? null;
+  },
+
+  async findByUserId(userId: string) {
+    const db = getDb();
+    const [row] = await db.select().from(guardians).where(eq(guardians.userId, userId)).limit(1);
+    return row ?? null;
+  },
+
+  /** All guardians, with their linked students' names (comma-joined-friendly array). */
+  async listWithStudents() {
+    const db = getDb();
+    return db
+      .select({ guardian: guardians, student: students })
+      .from(guardians)
+      .leftJoin(studentGuardians, eq(studentGuardians.guardianId, guardians.id))
+      .leftJoin(students, eq(students.id, studentGuardians.studentId))
+      .orderBy(guardians.lastName, guardians.firstName);
+  },
+
+  async listChildrenForGuardian(guardianId: string) {
+    const db = getDb();
+    return db
+      .select({ student: students })
+      .from(studentGuardians)
+      .innerJoin(students, eq(students.id, studentGuardians.studentId))
+      .where(eq(studentGuardians.guardianId, guardianId));
+  },
+
+  /** Unexecuted update statement for `db.batch([...])` composition — links a new user login to an existing guardian row. */
+  linkUserStatement(guardianId: string, userId: string) {
+    const db = getDb();
+    return db.update(guardians).set({ userId, updatedAt: new Date() }).where(eq(guardians.id, guardianId));
+  },
 };
 
 export type NewEnrollment = {

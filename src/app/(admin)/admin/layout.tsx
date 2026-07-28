@@ -6,6 +6,7 @@ import { RoleShell } from "@/components/layout/role-shell";
 const NAV_ITEMS = [
   { href: "/admin/dashboard", label: "Dashboard" },
   { href: "/admin/students", label: "Students" },
+  { href: "/admin/guardians", label: "Guardians" },
   { href: "/admin/teachers", label: "Teachers" },
   { href: "/admin/classes", label: "Classes" },
   { href: "/admin/subjects", label: "Subjects" },
