@@ -4,8 +4,11 @@ import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth/rbac";
 import { CourseService, CourseError } from "@/server/services/course-service";
 import { AssignmentService } from "@/server/services/assignment-service";
+import { QuizService } from "@/server/services/quiz-service";
 import { StudentRepository } from "@/server/repositories/student-repository";
+import { startAttemptAction } from "@/server/controllers/quiz-controller";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default async function StudentCourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
   const user = await requireRole(["student"]);
@@ -24,6 +27,7 @@ export default async function StudentCourseDetailPage({ params }: { params: Prom
   const detail = await CourseService.courseDetail(courseId);
   if (!detail) notFound();
   const assignments = await AssignmentService.listForCourse(courseId);
+  const quizzes = await QuizService.publishedQuizzesForStudent(courseId, student.id);
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
@@ -61,6 +65,30 @@ export default async function StudentCourseDetailPage({ params }: { params: Prom
             </Link>
           ))}
           {assignments.length === 0 && <p className="text-muted-foreground">No assignments yet.</p>}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Quizzes</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          {quizzes.map(({ quiz, attemptsRemaining }) => (
+            <div key={quiz.id} className="flex items-center justify-between rounded-lg border p-4">
+              <div>
+                <p className="text-base font-medium">{quiz.title}</p>
+                <p className="text-sm text-muted-foreground">
+                  {attemptsRemaining > 0 ? `${attemptsRemaining} attempt(s) left` : "No attempts left"}
+                </p>
+              </div>
+              {attemptsRemaining > 0 && (
+                <form action={startAttemptAction.bind(null, quiz.id)}>
+                  <Button type="submit">Start quiz</Button>
+                </form>
+              )}
+            </div>
+          ))}
+          {quizzes.length === 0 && <p className="text-muted-foreground">No quizzes yet.</p>}
         </CardContent>
       </Card>
     </div>

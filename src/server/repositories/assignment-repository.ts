@@ -1,7 +1,7 @@
 import { eq, and } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
-import { assignments, assignmentSubmissions, students, type SubmissionStatus } from "@/lib/db/schema";
+import { assignments, assignmentSubmissions, students, courses, type SubmissionStatus } from "@/lib/db/schema";
 
 export const AssignmentRepository = {
   async listByCourse(courseId: string) {
@@ -52,6 +52,26 @@ export const AssignmentSubmissionRepository = {
   async listForStudent(studentId: string) {
     const db = getDb();
     return db.select().from(assignmentSubmissions).where(eq(assignmentSubmissions.studentId, studentId));
+  },
+
+  async listSubmissionsForCourse(courseId: string) {
+    const db = getDb();
+    return db
+      .select({ submission: assignmentSubmissions, assignment: assignments, student: students })
+      .from(assignmentSubmissions)
+      .innerJoin(assignments, eq(assignmentSubmissions.assignmentId, assignments.id))
+      .innerJoin(students, eq(assignmentSubmissions.studentId, students.id))
+      .where(eq(assignments.courseId, courseId));
+  },
+
+  async listForStudentWithDetails(studentId: string) {
+    const db = getDb();
+    return db
+      .select({ submission: assignmentSubmissions, assignment: assignments, courseTitle: courses.title })
+      .from(assignmentSubmissions)
+      .innerJoin(assignments, eq(assignmentSubmissions.assignmentId, assignments.id))
+      .innerJoin(courses, eq(assignments.courseId, courses.id))
+      .where(eq(assignmentSubmissions.studentId, studentId));
   },
 
   async upsertSubmission(input: {

@@ -6,19 +6,12 @@ import { headers } from "next/headers";
 
 import { AuthService, AuthError } from "@/server/services/auth-service";
 import { setSessionCookie, clearSessionCookie, getSessionToken, getCurrentUser } from "@/lib/auth/session";
-import type { Role } from "@/lib/db/schema";
+import { ROLE_HOME } from "@/lib/auth/roles";
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 });
-
-const ROLE_HOME: Record<Role, string> = {
-  admin: "/admin/dashboard",
-  teacher: "/teacher/dashboard",
-  student: "/student/dashboard",
-  parent: "/parent/dashboard",
-};
 
 export type LoginState = { error?: string };
 

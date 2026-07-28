@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth/rbac";
 import { GuardianService, GuardianPortalError } from "@/server/services/guardian-service";
 import { AttendanceService } from "@/server/services/attendance-service";
 import { FeeService } from "@/server/services/fee-service";
+import { GradeService } from "@/server/services/grade-service";
 import { StudentRepository } from "@/server/repositories/student-repository";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -26,10 +27,11 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ st
     throw err;
   }
 
-  const [student, attendance, invoices] = await Promise.all([
+  const [student, attendance, invoices, grades] = await Promise.all([
     StudentRepository.findById(studentId),
     AttendanceService.historyForStudent(studentId),
     FeeService.invoicesForStudent(studentId),
+    GradeService.gradesForStudent(studentId),
   ]);
   if (!student) notFound();
 
@@ -38,6 +40,27 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ st
       <h1 className="text-xl font-semibold">
         {student.firstName} {student.lastName}
       </h1>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Grades</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          {[...grades.assignments.map((a) => ({ ...a, kind: "Assignment" })), ...grades.quizzes.map((q) => ({ ...q, kind: "Quiz" }))].map(
+            (item, i) => (
+              <div key={i} className="flex items-center justify-between rounded-md border p-3 text-sm">
+                <span>
+                  {item.title} <span className="text-muted-foreground">({item.kind} — {item.courseTitle})</span>
+                </span>
+                <span>{item.score !== null ? `${item.score} / ${item.maxScore}` : "Not graded yet"}</span>
+              </div>
+            )
+          )}
+          {grades.assignments.length === 0 && grades.quizzes.length === 0 && (
+            <p className="text-sm text-muted-foreground">No grades yet</p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
