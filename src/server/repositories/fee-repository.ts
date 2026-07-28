@@ -2,7 +2,6 @@ import { eq, desc } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
 import { feeStructures, invoices, invoiceLineItems, payments, students } from "@/lib/db/schema";
-import type { BatchItem } from "drizzle-orm/batch";
 
 export const FeeStructureRepository = {
   async list() {
@@ -37,7 +36,7 @@ export const InvoiceRepository = {
     return db.select().from(invoiceLineItems).where(eq(invoiceLineItems.invoiceId, invoiceId));
   },
 
-  /** Invoice + its line items + all payments, in one atomic `db.batch()` write. */
+  /** Invoice + its line items, in one atomic transaction. */
   async createWithLineItems(input: {
     studentId: string;
     academicYearId: string;
@@ -50,33 +49,26 @@ export const InvoiceRepository = {
     const invoiceId = crypto.randomUUID();
     const totalAmountCents = input.lineItems.reduce((sum, li) => sum + li.amountCents, 0);
 
-    const statements: BatchItem<"sqlite">[] = [
-      db
-        .insert(invoices)
-        .values({
-          id: invoiceId,
-          studentId: input.studentId,
-          academicYearId: input.academicYearId,
-          invoiceNumber: input.invoiceNumber,
-          issueDate: input.issueDate,
-          dueDate: input.dueDate,
-          totalAmountCents,
-        })
-        .returning(),
-      ...input.lineItems.map((li) =>
-        db
-          .insert(invoiceLineItems)
-          .values({
-            invoiceId,
-            feeStructureId: li.feeStructureId,
-            description: li.description,
-            amountCents: li.amountCents,
-          })
-          .returning()
-      ),
-    ];
+    await db.transaction(async (tx) => {
+      await tx.insert(invoices).values({
+        id: invoiceId,
+        studentId: input.studentId,
+        academicYearId: input.academicYearId,
+        invoiceNumber: input.invoiceNumber,
+        issueDate: input.issueDate,
+        dueDate: input.dueDate,
+        totalAmountCents,
+      });
+      await tx.insert(invoiceLineItems).values(
+        input.lineItems.map((li) => ({
+          invoiceId,
+          feeStructureId: li.feeStructureId,
+          description: li.description,
+          amountCents: li.amountCents,
+        }))
+      );
+    });
 
-    await db.batch(statements as unknown as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
     return InvoiceRepository.findById(invoiceId);
   },
 

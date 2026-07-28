@@ -2,7 +2,6 @@ import { getDb } from "@/lib/db";
 import { hashPassword, generateTempPassword } from "@/lib/auth/password";
 import { UserRepository } from "@/server/repositories/user-repository";
 import { GuardianRepository } from "@/server/repositories/student-repository";
-import type { BatchItem } from "drizzle-orm/batch";
 
 export class GuardianPortalError extends Error {}
 
@@ -27,7 +26,7 @@ export const GuardianService = {
   /**
    * Grants portal access to an existing guardian record (created during
    * student registration, no login yet). Atomic user-insert + guardian-link
-   * update via `db.batch()` — RFC 0001 "Key Risks / Gotchas".
+   * update in one transaction.
    */
   async grantPortalAccess(guardianId: string, email: string) {
     const guardian = await GuardianRepository.findById(guardianId);
@@ -42,11 +41,10 @@ export const GuardianService = {
     const tempPassword = generateTempPassword();
     const passwordHash = await hashPassword(tempPassword);
 
-    const statements: BatchItem<"sqlite">[] = [
-      UserRepository.insertStatement({ id: userId, email, passwordHash, role: "parent", mustChangePassword: true }),
-      GuardianRepository.linkUserStatement(guardianId, userId),
-    ];
-    await db.batch(statements as unknown as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
+    await db.transaction(async (tx) => {
+      await UserRepository.create({ id: userId, email, passwordHash, role: "parent", mustChangePassword: true }, tx);
+      await GuardianRepository.linkUser(guardianId, userId, tx);
+    });
 
     return { tempPassword };
   },

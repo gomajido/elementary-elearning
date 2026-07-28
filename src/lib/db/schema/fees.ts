@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer } from "drizzle-orm/pg-core";
 
 import { id, schoolId, timestamps } from "./_shared";
 import { students } from "./people";
@@ -9,7 +9,7 @@ export const FEE_FREQUENCIES = ["termly", "annual", "one_time", "monthly"] as co
 export type FeeFrequency = (typeof FEE_FREQUENCIES)[number];
 
 // Fee catalog — what can be charged. amountCents to avoid float rounding.
-export const feeStructures = sqliteTable("fee_structures", {
+export const feeStructures = pgTable("fee_structures", {
   id: id(),
   name: text("name").notNull(), // e.g. "Tuition Term 1"
   academicYearId: text("academic_year_id")
@@ -28,7 +28,7 @@ export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 // Charges issued to a student for a period. `status`/balance are always
 // derived from summing `payments` — never a mutable stored field, to avoid
 // drift (see RFC 0001 "Payments").
-export const invoices = sqliteTable("invoices", {
+export const invoices = pgTable("invoices", {
   id: id(),
   studentId: text("student_id")
     .notNull()
@@ -44,7 +44,7 @@ export const invoices = sqliteTable("invoices", {
   ...timestamps,
 });
 
-export const invoiceLineItems = sqliteTable("invoice_line_items", {
+export const invoiceLineItems = pgTable("invoice_line_items", {
   id: id(),
   invoiceId: text("invoice_id")
     .notNull()
@@ -60,7 +60,7 @@ export const PAYMENT_METHODS = ["bank_transfer", "cash", "cheque", "other"] as c
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 // Append-only ledger — the source of truth for invoice balance/status.
-export const payments = sqliteTable("payments", {
+export const payments = pgTable("payments", {
   id: id(),
   invoiceId: text("invoice_id")
     .notNull()

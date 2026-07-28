@@ -1,10 +1,10 @@
-import { sqliteTable, text, integer, unique } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, boolean, timestamp, unique } from "drizzle-orm/pg-core";
 
 import { id, schoolId, timestamps } from "./_shared";
 import { subjects, classes, teachers, academicYears } from "./academics";
 import { students } from "./people";
 
-export const courses = sqliteTable("courses", {
+export const courses = pgTable("courses", {
   id: id(),
   title: text("title").notNull(),
   description: text("description"),
@@ -18,7 +18,7 @@ export const courses = sqliteTable("courses", {
   academicYearId: text("academic_year_id")
     .notNull()
     .references(() => academicYears.id),
-  isPublished: integer("is_published", { mode: "boolean" }).notNull().default(false),
+  isPublished: boolean("is_published").notNull().default(false),
   schoolId: schoolId(),
   ...timestamps,
 });
@@ -26,7 +26,7 @@ export const courses = sqliteTable("courses", {
 export const CONTENT_ITEM_TYPES = ["video", "pdf", "note", "link"] as const;
 export type ContentItemType = (typeof CONTENT_ITEM_TYPES)[number];
 
-export const courseContentItems = sqliteTable("course_content_items", {
+export const courseContentItems = pgTable("course_content_items", {
   id: id(),
   courseId: text("course_id")
     .notNull()
@@ -42,7 +42,7 @@ export const courseContentItems = sqliteTable("course_content_items", {
   ...timestamps,
 });
 
-export const assignments = sqliteTable("assignments", {
+export const assignments = pgTable("assignments", {
   id: id(),
   courseId: text("course_id")
     .notNull()
@@ -51,9 +51,7 @@ export const assignments = sqliteTable("assignments", {
   instructions: text("instructions"), // markdown
   dueDate: text("due_date").notNull(), // YYYY-MM-DD
   maxScore: integer("max_score").notNull(),
-  allowLateSubmission: integer("allow_late_submission", { mode: "boolean" })
-    .notNull()
-    .default(true),
+  allowLateSubmission: boolean("allow_late_submission").notNull().default(true),
   attachmentR2Key: text("attachment_r2_key"),
   schoolId: schoolId(),
   ...timestamps,
@@ -62,7 +60,7 @@ export const assignments = sqliteTable("assignments", {
 export const SUBMISSION_STATUSES = ["submitted", "late", "graded", "missing"] as const;
 export type SubmissionStatus = (typeof SUBMISSION_STATUSES)[number];
 
-export const assignmentSubmissions = sqliteTable(
+export const assignmentSubmissions = pgTable(
   "assignment_submissions",
   {
     id: id(),
@@ -72,14 +70,14 @@ export const assignmentSubmissions = sqliteTable(
     studentId: text("student_id")
       .notNull()
       .references(() => students.id),
-    submittedAt: integer("submitted_at", { mode: "timestamp" }),
+    submittedAt: timestamp("submitted_at", { mode: "date" }),
     textResponse: text("text_response"),
     attachmentR2Key: text("attachment_r2_key"),
     status: text("status").notNull().$type<SubmissionStatus>().default("missing"),
     score: integer("score"),
     feedback: text("feedback"),
     gradedByTeacherId: text("graded_by_teacher_id").references(() => teachers.id),
-    gradedAt: integer("graded_at", { mode: "timestamp" }),
+    gradedAt: timestamp("graded_at", { mode: "date" }),
     schoolId: schoolId(),
     ...timestamps,
   },

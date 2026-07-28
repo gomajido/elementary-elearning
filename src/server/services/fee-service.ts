@@ -5,7 +5,7 @@ import { AcademicYearRepository } from "@/server/repositories/academic-repositor
 export class FeeError extends Error {}
 
 /** Balance/status are always derived from summing payments — see RFC 0001 "Payments". */
-function summarizeInvoice(totalAmountCents: number, paymentAmounts: number[]) {
+export function summarizeInvoice(totalAmountCents: number, paymentAmounts: number[]) {
   const paidCents = paymentAmounts.reduce((sum, a) => sum + a, 0);
   const balanceCents = totalAmountCents - paidCents;
   const status: "paid" | "partial" | "unpaid" = balanceCents <= 0 ? "paid" : paidCents > 0 ? "partial" : "unpaid";

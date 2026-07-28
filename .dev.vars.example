@@ -1,7 +1,0 @@
-# Copy to .dev.vars for local `wrangler dev` / `next dev` (untracked).
-# Prod equivalents are set via `wrangler secret put <NAME>`.
-
-R2_ACCOUNT_ID=
-R2_BUCKET_NAME=madani-elearning-content
-R2_ACCESS_KEY_ID=
-R2_SECRET_ACCESS_KEY=

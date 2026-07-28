@@ -1,6 +1,6 @@
 import { eq, isNull, and } from "drizzle-orm";
 
-import { getDb } from "@/lib/db";
+import { getDb, type Queryable } from "@/lib/db";
 import { students, guardians, studentGuardians, enrollments, classes } from "@/lib/db/schema";
 
 export type NewStudent = {
@@ -44,15 +44,9 @@ export const StudentRepository = {
     return row ?? null;
   },
 
-  async create(input: NewStudent) {
-    const [row] = await StudentRepository.insertStatement(input);
+  async create(input: NewStudent, tx: Queryable = getDb()) {
+    const [row] = await tx.insert(students).values(input).returning();
     return row;
-  },
-
-  /** Unexecuted insert statement for `db.batch([...])` composition. */
-  insertStatement(input: NewStudent) {
-    const db = getDb();
-    return db.insert(students).values(input).returning();
   },
 
   async listWithDetails() {
@@ -69,10 +63,8 @@ export const StudentRepository = {
       .orderBy(students.lastName, students.firstName);
   },
 
-  /** Unexecuted update statement for `db.batch([...])` composition — links a new user login to an existing student row. */
-  linkUserStatement(studentId: string, userId: string) {
-    const db = getDb();
-    return db.update(students).set({ userId, updatedAt: new Date() }).where(eq(students.id, studentId));
+  async linkUser(studentId: string, userId: string, tx: Queryable = getDb()) {
+    await tx.update(students).set({ userId, updatedAt: new Date() }).where(eq(students.id, studentId));
   },
 
   async listByClass(classId: string) {
@@ -113,24 +105,14 @@ export type NewStudentGuardianLink = {
 };
 
 export const GuardianRepository = {
-  async create(input: NewGuardian) {
-    const [row] = await GuardianRepository.insertStatement(input);
+  async create(input: NewGuardian, tx: Queryable = getDb()) {
+    const [row] = await tx.insert(guardians).values(input).returning();
     return row;
   },
 
-  insertStatement(input: NewGuardian) {
-    const db = getDb();
-    return db.insert(guardians).values(input).returning();
-  },
-
-  async linkToStudent(input: NewStudentGuardianLink) {
-    const [row] = await GuardianRepository.linkInsertStatement(input);
+  async linkToStudent(input: NewStudentGuardianLink, tx: Queryable = getDb()) {
+    const [row] = await tx.insert(studentGuardians).values(input).returning();
     return row;
-  },
-
-  linkInsertStatement(input: NewStudentGuardianLink) {
-    const db = getDb();
-    return db.insert(studentGuardians).values(input).returning();
   },
 
   async findById(id: string) {
@@ -165,10 +147,8 @@ export const GuardianRepository = {
       .where(eq(studentGuardians.guardianId, guardianId));
   },
 
-  /** Unexecuted update statement for `db.batch([...])` composition — links a new user login to an existing guardian row. */
-  linkUserStatement(guardianId: string, userId: string) {
-    const db = getDb();
-    return db.update(guardians).set({ userId, updatedAt: new Date() }).where(eq(guardians.id, guardianId));
+  async linkUser(guardianId: string, userId: string, tx: Queryable = getDb()) {
+    await tx.update(guardians).set({ userId, updatedAt: new Date() }).where(eq(guardians.id, guardianId));
   },
 };
 
@@ -181,13 +161,8 @@ export type NewEnrollment = {
 };
 
 export const EnrollmentRepository = {
-  async create(input: NewEnrollment) {
-    const [row] = await EnrollmentRepository.insertStatement(input);
+  async create(input: NewEnrollment, tx: Queryable = getDb()) {
+    const [row] = await tx.insert(enrollments).values(input).returning();
     return row;
-  },
-
-  insertStatement(input: NewEnrollment) {
-    const db = getDb();
-    return db.insert(enrollments).values(input).returning();
   },
 };

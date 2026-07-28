@@ -1,4 +1,4 @@
-import { text, integer } from "drizzle-orm/sqlite-core";
+import { text, timestamp } from "drizzle-orm/pg-core";
 
 /**
  * Common columns every top-level table carries — see RFC 0001 "Core DB
@@ -14,14 +14,14 @@ export const id = () =>
 export const schoolId = () => text("school_id").notNull().default("default");
 
 export const timestamps = {
-  createdAt: integer("created_at", { mode: "timestamp" })
+  createdAt: timestamp("created_at", { mode: "date" })
     .notNull()
     .$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
+  updatedAt: timestamp("updated_at", { mode: "date" })
     .notNull()
     .$defaultFn(() => new Date()),
 };
 
 export const softDelete = {
-  deletedAt: integer("deleted_at", { mode: "timestamp" }),
+  deletedAt: timestamp("deleted_at", { mode: "date" }),
 };

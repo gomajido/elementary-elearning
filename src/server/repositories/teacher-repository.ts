@@ -1,6 +1,6 @@
 import { eq, isNull, and } from "drizzle-orm";
 
-import { getDb } from "@/lib/db";
+import { getDb, type Queryable } from "@/lib/db";
 import { teachers } from "@/lib/db/schema";
 
 export const TeacherRepository = {
@@ -33,15 +33,9 @@ export const TeacherRepository = {
     return row ?? null;
   },
 
-  async create(input: NewTeacher) {
-    const [row] = await TeacherRepository.insertStatement(input);
+  async create(input: NewTeacher, tx: Queryable = getDb()) {
+    const [row] = await tx.insert(teachers).values(input).returning();
     return row;
-  },
-
-  /** Unexecuted insert statement for `db.batch([...])` composition. */
-  insertStatement(input: NewTeacher) {
-    const db = getDb();
-    return db.insert(teachers).values(input).returning();
   },
 };
 

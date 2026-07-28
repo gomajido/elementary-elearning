@@ -1,10 +1,10 @@
-import { sqliteTable, text, integer, unique } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, boolean, timestamp, unique } from "drizzle-orm/pg-core";
 
 import { id, schoolId, timestamps } from "./_shared";
 import { courses } from "./elearning";
 import { students } from "./people";
 
-export const quizzes = sqliteTable("quizzes", {
+export const quizzes = pgTable("quizzes", {
   id: id(),
   courseId: text("course_id")
     .notNull()
@@ -13,12 +13,10 @@ export const quizzes = sqliteTable("quizzes", {
   instructions: text("instructions"),
   timeLimitMinutes: integer("time_limit_minutes"),
   maxAttempts: integer("max_attempts").notNull().default(1),
-  shuffleQuestions: integer("shuffle_questions", { mode: "boolean" })
-    .notNull()
-    .default(false),
-  availableFrom: integer("available_from", { mode: "timestamp" }),
-  availableUntil: integer("available_until", { mode: "timestamp" }),
-  isPublished: integer("is_published", { mode: "boolean" }).notNull().default(false),
+  shuffleQuestions: boolean("shuffle_questions").notNull().default(false),
+  availableFrom: timestamp("available_from", { mode: "date" }),
+  availableUntil: timestamp("available_until", { mode: "date" }),
+  isPublished: boolean("is_published").notNull().default(false),
   schoolId: schoolId(),
   ...timestamps,
 });
@@ -26,7 +24,7 @@ export const quizzes = sqliteTable("quizzes", {
 export const QUESTION_TYPES = ["multiple_choice", "true_false", "short_answer"] as const;
 export type QuestionType = (typeof QUESTION_TYPES)[number];
 
-export const quizQuestions = sqliteTable("quiz_questions", {
+export const quizQuestions = pgTable("quiz_questions", {
   id: id(),
   quizId: text("quiz_id")
     .notNull()
@@ -43,13 +41,13 @@ export const quizQuestions = sqliteTable("quiz_questions", {
 });
 
 // For multiple_choice / true_false question types.
-export const quizQuestionOptions = sqliteTable("quiz_question_options", {
+export const quizQuestionOptions = pgTable("quiz_question_options", {
   id: id(),
   questionId: text("question_id")
     .notNull()
     .references(() => quizQuestions.id),
   optionText: text("option_text").notNull(),
-  isCorrect: integer("is_correct", { mode: "boolean" }).notNull().default(false),
+  isCorrect: boolean("is_correct").notNull().default(false),
   orderIndex: integer("order_index").notNull().default(0),
   schoolId: schoolId(),
 });
@@ -57,7 +55,7 @@ export const quizQuestionOptions = sqliteTable("quiz_question_options", {
 export const ATTEMPT_STATUSES = ["in_progress", "submitted", "auto_graded"] as const;
 export type AttemptStatus = (typeof ATTEMPT_STATUSES)[number];
 
-export const quizAttempts = sqliteTable("quiz_attempts", {
+export const quizAttempts = pgTable("quiz_attempts", {
   id: id(),
   quizId: text("quiz_id")
     .notNull()
@@ -65,8 +63,8 @@ export const quizAttempts = sqliteTable("quiz_attempts", {
   studentId: text("student_id")
     .notNull()
     .references(() => students.id),
-  startedAt: integer("started_at", { mode: "timestamp" }).notNull(),
-  submittedAt: integer("submitted_at", { mode: "timestamp" }),
+  startedAt: timestamp("started_at", { mode: "date" }).notNull(),
+  submittedAt: timestamp("submitted_at", { mode: "date" }),
   attemptNumber: integer("attempt_number").notNull().default(1),
   totalScore: integer("total_score"),
   maxPossibleScore: integer("max_possible_score").notNull(),
@@ -75,7 +73,7 @@ export const quizAttempts = sqliteTable("quiz_attempts", {
   createdAt: timestamps.createdAt,
 });
 
-export const quizAnswers = sqliteTable(
+export const quizAnswers = pgTable(
   "quiz_answers",
   {
     id: id(),
@@ -87,7 +85,7 @@ export const quizAnswers = sqliteTable(
       .references(() => quizQuestions.id),
     selectedOptionId: text("selected_option_id").references(() => quizQuestionOptions.id),
     shortAnswerText: text("short_answer_text"),
-    isCorrect: integer("is_correct", { mode: "boolean" }),
+    isCorrect: boolean("is_correct"),
     pointsAwarded: integer("points_awarded"),
     schoolId: schoolId(),
     createdAt: timestamps.createdAt,

@@ -1,6 +1,6 @@
 import { eq, and, isNull } from "drizzle-orm";
 
-import { getDb } from "@/lib/db";
+import { getDb, type Queryable } from "@/lib/db";
 import { users, type Role } from "@/lib/db/schema";
 
 export type NewUser = {
@@ -38,19 +38,9 @@ export const UserRepository = {
     return rows.length;
   },
 
-  async create(input: NewUser) {
-    const [user] = await UserRepository.insertStatement(input);
-    return user;
-  },
-
-  /**
-   * Unexecuted insert statement, for composing atomic multi-table writes
-   * via `db.batch([...])` — D1 has no real multi-statement transactions,
-   * see RFC 0001 "Key Risks / Gotchas".
-   */
-  insertStatement(input: NewUser) {
-    const db = getDb();
-    return db
+  /** Pass `tx` (from `db.transaction(async (tx) => ...)`) to compose atomic multi-table writes. */
+  async create(input: NewUser, tx: Queryable = getDb()) {
+    const [user] = await tx
       .insert(users)
       .values({
         id: input.id,
@@ -60,6 +50,7 @@ export const UserRepository = {
         mustChangePassword: input.mustChangePassword ?? false,
       })
       .returning();
+    return user;
   },
 
   async updateLastLoginAt(id: string) {

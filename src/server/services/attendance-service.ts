@@ -18,8 +18,8 @@ export const AttendanceService = {
   },
 
   /**
-   * Saves a whole day's register for a class in one atomic `db.batch()` —
-   * see RFC 0001 "Key Risks / Gotchas". Only the class's own homeroom
+   * Saves a whole day's register for a class in one atomic upsert (see
+   * `AttendanceRepository.saveRegister`). Only the class's own homeroom
    * teacher may record its attendance.
    */
   async saveRegister(

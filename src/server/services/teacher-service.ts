@@ -10,9 +10,8 @@ export const TeacherService = {
 
   /**
    * Creates the login (role=teacher, temp password) and teacher record in
-   * one atomic `db.batch()` — D1 has no multi-statement transactions, see
-   * RFC 0001 "Key Risks / Gotchas". Returns the temp password once; there's
-   * no email delivery in MVP, so the admin must share it out-of-band.
+   * one atomic transaction. Returns the temp password once; there's no
+   * email delivery in MVP, so the admin must share it out-of-band.
    */
   async registerTeacher(input: {
     email: string;
@@ -31,24 +30,25 @@ export const TeacherService = {
     const tempPassword = generateTempPassword();
     const passwordHash = await hashPassword(tempPassword);
 
-    const [[user], [teacher]] = await db.batch([
-      UserRepository.insertStatement({
-        id: userId,
-        email: input.email,
-        passwordHash,
-        role: "teacher",
-        mustChangePassword: true,
-      }),
-      TeacherRepository.insertStatement({
-        id: teacherId,
-        userId,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        employeeNumber: input.employeeNumber,
-        phone: input.phone,
-        hireDate: input.hireDate,
-      }),
-    ]);
+    const { user, teacher } = await db.transaction(async (tx) => {
+      const user = await UserRepository.create(
+        { id: userId, email: input.email, passwordHash, role: "teacher", mustChangePassword: true },
+        tx
+      );
+      const teacher = await TeacherRepository.create(
+        {
+          id: teacherId,
+          userId,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          employeeNumber: input.employeeNumber,
+          phone: input.phone,
+          hireDate: input.hireDate,
+        },
+        tx
+      );
+      return { user, teacher };
+    });
 
     return { user, teacher, tempPassword };
   },

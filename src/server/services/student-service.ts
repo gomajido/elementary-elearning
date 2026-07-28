@@ -6,9 +6,6 @@ import {
 } from "@/server/repositories/student-repository";
 import { UserRepository } from "@/server/repositories/user-repository";
 import { hashPassword, generateTempPassword } from "@/lib/auth/password";
-import type { BatchItem } from "drizzle-orm/batch";
-
-type NonEmptyBatch = [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]];
 
 export class StudentPortalError extends Error {}
 
@@ -30,9 +27,9 @@ export const StudentService = {
 
   /**
    * Registers a student, links one or more guardians, and creates the
-   * current-year enrollment record — all in one atomic `db.batch()` (see
-   * RFC 0001 "Key Risks / Gotchas"). No user/login account is created here;
-   * guardian portal accounts land in Phase 2 with the parent portal.
+   * current-year enrollment record — all in one atomic transaction. No
+   * user/login account is created here; guardian portal accounts are
+   * granted separately (see GuardianService.grantPortalAccess).
    */
   async registerStudent(input: {
     admissionNumber: string;
@@ -48,39 +45,45 @@ export const StudentService = {
     const db = getDb();
     const studentId = crypto.randomUUID();
 
-    const statements: BatchItem<"sqlite">[] = [
-      StudentRepository.insertStatement({
-        id: studentId,
-        admissionNumber: input.admissionNumber,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        dateOfBirth: input.dateOfBirth,
-        gender: input.gender,
-        currentClassId: input.classId,
-        enrollmentDate: input.enrollmentDate,
-      }),
-      EnrollmentRepository.insertStatement({
-        studentId,
-        classId: input.classId,
-        academicYearId: input.academicYearId,
-        enrolledAt: input.enrollmentDate,
-      }),
-    ];
-
-    for (const guardian of input.guardians) {
-      const guardianId = crypto.randomUUID();
-      statements.push(
-        GuardianRepository.insertStatement({ id: guardianId, ...guardian }),
-        GuardianRepository.linkInsertStatement({
-          studentId,
-          guardianId,
-          isPrimaryContact: guardian.isPrimaryContact,
-          isBillingContact: guardian.isBillingContact,
-        })
+    await db.transaction(async (tx) => {
+      await StudentRepository.create(
+        {
+          id: studentId,
+          admissionNumber: input.admissionNumber,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          dateOfBirth: input.dateOfBirth,
+          gender: input.gender,
+          currentClassId: input.classId,
+          enrollmentDate: input.enrollmentDate,
+        },
+        tx
       );
-    }
+      await EnrollmentRepository.create(
+        {
+          studentId,
+          classId: input.classId,
+          academicYearId: input.academicYearId,
+          enrolledAt: input.enrollmentDate,
+        },
+        tx
+      );
 
-    await db.batch(statements as unknown as NonEmptyBatch);
+      for (const guardian of input.guardians) {
+        const guardianId = crypto.randomUUID();
+        await GuardianRepository.create({ id: guardianId, ...guardian }, tx);
+        await GuardianRepository.linkToStudent(
+          {
+            studentId,
+            guardianId,
+            isPrimaryContact: guardian.isPrimaryContact,
+            isBillingContact: guardian.isBillingContact,
+          },
+          tx
+        );
+      }
+    });
+
     return StudentRepository.findById(studentId);
   },
 
@@ -103,11 +106,10 @@ export const StudentService = {
     const tempPassword = generateTempPassword();
     const passwordHash = await hashPassword(tempPassword);
 
-    const statements: BatchItem<"sqlite">[] = [
-      UserRepository.insertStatement({ id: userId, email, passwordHash, role: "student", mustChangePassword: true }),
-      StudentRepository.linkUserStatement(studentId, userId),
-    ];
-    await db.batch(statements as unknown as NonEmptyBatch);
+    await db.transaction(async (tx) => {
+      await UserRepository.create({ id: userId, email, passwordHash, role: "student", mustChangePassword: true }, tx);
+      await StudentRepository.linkUser(studentId, userId, tx);
+    });
 
     return { tempPassword };
   },

@@ -2,7 +2,7 @@ import { eq, desc } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
 import { academicYears, subjects, classes, teachers, teacherSubjectAssignments } from "@/lib/db/schema";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 
 export const AcademicYearRepository = {
   async list() {

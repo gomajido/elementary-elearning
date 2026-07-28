@@ -10,7 +10,7 @@ import type { QuestionType } from "@/lib/db/schema";
 
 export class QuizError extends Error {}
 
-function normalize(s: string): string {
+export function normalize(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
 

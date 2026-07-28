@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
 import { attendanceRecords, students, type AttendanceStatus } from "@/lib/db/schema";
@@ -36,19 +36,25 @@ export const AttendanceRepository = {
       .orderBy(attendanceRecords.date);
   },
 
-  /** Atomic upsert of a whole day's register — one class's submission is one logical unit. */
+  /**
+   * Atomic upsert of a whole day's register — one class's submission is one
+   * logical unit. Postgres supports a multi-row INSERT ... ON CONFLICT, so
+   * the whole register saves in a single statement (each row's update
+   * values come from its own proposed row via `excluded.*`).
+   */
   async saveRegister(entries: AttendanceUpsert[]) {
     if (entries.length === 0) return;
     const db = getDb();
-    const statements = entries.map((entry) =>
-      db
-        .insert(attendanceRecords)
-        .values(entry)
-        .onConflictDoUpdate({
-          target: [attendanceRecords.studentId, attendanceRecords.date],
-          set: { status: entry.status, notes: entry.notes, recordedByTeacherId: entry.recordedByTeacherId },
-        })
-    );
-    await db.batch(statements as unknown as [typeof statements[number], ...typeof statements]);
+    await db
+      .insert(attendanceRecords)
+      .values(entries)
+      .onConflictDoUpdate({
+        target: [attendanceRecords.studentId, attendanceRecords.date],
+        set: {
+          status: sql`excluded.status`,
+          notes: sql`excluded.notes`,
+          recordedByTeacherId: sql`excluded.recorded_by_teacher_id`,
+        },
+      });
   },
 };

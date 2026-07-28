@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, unique } from "drizzle-orm/sqlite-core";
+import { pgTable, text, boolean, timestamp, unique } from "drizzle-orm/pg-core";
 
 import { id, schoolId, timestamps } from "./_shared";
 import { users } from "./users";
@@ -20,7 +20,7 @@ export const GUARDIAN_RELATIONSHIP_TYPES = [
 ] as const;
 export type GuardianRelationshipType = (typeof GUARDIAN_RELATIONSHIP_TYPES)[number];
 
-export const students = sqliteTable("students", {
+export const students = pgTable("students", {
   id: id(),
   // Nullable: young students don't necessarily have their own login —
   // see RFC 0001 "Roles & accounts".
@@ -40,10 +40,10 @@ export const students = sqliteTable("students", {
   medicalNotes: text("medical_notes"),
   schoolId: schoolId(),
   ...timestamps,
-  deletedAt: integer("deleted_at", { mode: "timestamp" }),
+  deletedAt: timestamp("deleted_at", { mode: "date" }),
 });
 
-export const guardians = sqliteTable("guardians", {
+export const guardians = pgTable("guardians", {
   id: id(),
   userId: text("user_id").unique().references(() => users.id), // nullable — not every guardian gets portal access
   firstName: text("first_name").notNull(),
@@ -59,7 +59,7 @@ export const guardians = sqliteTable("guardians", {
 });
 
 // Many-to-many: siblings share guardians.
-export const studentGuardians = sqliteTable(
+export const studentGuardians = pgTable(
   "student_guardians",
   {
     id: id(),
@@ -69,12 +69,8 @@ export const studentGuardians = sqliteTable(
     guardianId: text("guardian_id")
       .notNull()
       .references(() => guardians.id),
-    isPrimaryContact: integer("is_primary_contact", { mode: "boolean" })
-      .notNull()
-      .default(false),
-    isBillingContact: integer("is_billing_contact", { mode: "boolean" })
-      .notNull()
-      .default(false), // who fees/invoices are addressed to
+    isPrimaryContact: boolean("is_primary_contact").notNull().default(false),
+    isBillingContact: boolean("is_billing_contact").notNull().default(false), // who fees/invoices are addressed to
     createdAt: timestamps.createdAt,
   },
   (t) => [unique().on(t.studentId, t.guardianId)]
@@ -92,7 +88,7 @@ export type EnrollmentRecordStatus = (typeof ENROLLMENT_RECORD_STATUSES)[number]
 // Per-academic-year class membership history — the source of truth for
 // promotion tracking. `students.currentClassId` is a denormalized pointer
 // kept in sync for fast lookups, updated whenever a new "active" row lands.
-export const enrollments = sqliteTable(
+export const enrollments = pgTable(
   "enrollments",
   {
     id: id(),
