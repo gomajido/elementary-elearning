@@ -47,6 +47,14 @@ async function deriveBits(password: string, salt: Uint8Array, iterations: number
   return new Uint8Array(bits);
 }
 
+const TEMP_PASSWORD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"; // no ambiguous chars
+
+/** Admin-provisioned accounts (teacher/student/parent) get one of these, shown once on-screen. */
+export function generateTempPassword(length = 12): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(length));
+  return Array.from(bytes, (b) => TEMP_PASSWORD_ALPHABET[b % TEMP_PASSWORD_ALPHABET.length]).join("");
+}
+
 function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;

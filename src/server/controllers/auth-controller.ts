@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
 import { AuthService, AuthError } from "@/server/services/auth-service";
-import { setSessionCookie, clearSessionCookie, getSessionToken } from "@/lib/auth/session";
+import { setSessionCookie, clearSessionCookie, getSessionToken, getCurrentUser } from "@/lib/auth/session";
 import type { Role } from "@/lib/db/schema";
 
 const loginSchema = z.object({
@@ -71,4 +71,33 @@ export async function bootstrapAdminAction(_prev: BootstrapState, formData: Form
     throw err;
   }
   redirect("/login");
+}
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8, "New password must be at least 8 characters"),
+});
+
+export type ChangePasswordState = { error?: string };
+
+export async function changePasswordAction(
+  _prev: ChangePasswordState,
+  formData: FormData
+): Promise<ChangePasswordState> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  const parsed = changePasswordSchema.safeParse({
+    currentPassword: formData.get("currentPassword"),
+    newPassword: formData.get("newPassword"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+
+  try {
+    await AuthService.changePassword(user.id, parsed.data.currentPassword, parsed.data.newPassword);
+  } catch (err) {
+    if (err instanceof AuthError) return { error: err.message };
+    throw err;
+  }
+  redirect(ROLE_HOME[user.role]);
 }

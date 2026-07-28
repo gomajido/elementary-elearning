@@ -55,9 +55,14 @@ export const AuthService = {
     return UserRepository.create({ email, passwordHash, role: "admin" });
   },
 
-  /** Admin-provisioned accounts (teacher/student/parent) get a temp password. */
-  async createUserWithTempPassword(email: string, tempPassword: string, role: "teacher" | "student" | "parent") {
-    const passwordHash = await hashPassword(tempPassword);
-    return UserRepository.create({ email, passwordHash, role, mustChangePassword: true });
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await UserRepository.findById(userId);
+    if (!user) throw new AuthError("Not found");
+
+    const valid = await verifyPassword(currentPassword, user.passwordHash);
+    if (!valid) throw new AuthError("Current password is incorrect");
+
+    const passwordHash = await hashPassword(newPassword);
+    await UserRepository.updatePassword(userId, passwordHash);
   },
 };
