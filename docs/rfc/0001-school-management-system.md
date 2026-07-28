@@ -75,7 +75,7 @@ No persisted `grades` table for MVP — grade summaries are computed at read tim
 2. Login generates a random 32-byte token; only its SHA-256 hash is stored in `sessions`; the raw token is set as an httpOnly/secure/sameSite=lax cookie.
 3. Two-layer check: `middleware.ts` does a cheap cookie-presence redirect; `getCurrentUser()` does the authoritative per-request D1-backed validation inside layouts/actions.
 4. `requireRole(user, [...])` centralizes RBAC checks, called at the top of every protected page/action.
-5. A daily cron trigger prunes expired sessions.
+5. Expired sessions are pruned lazily (delete-where-expired, run opportunistically on each login) rather than via a Worker Cron Trigger — OpenNext's Next.js integration doesn't cleanly expose a `scheduled()` handler without a custom Worker entrypoint, which isn't worth the complexity for MVP session-table housekeeping.
 6. Cookies are always set-then-redirect (never set-and-read within the same request) — same-request cookie propagation is a known rough edge on Workers.
 
 ## UI/UX Guidelines (kid users, age 5-12)

@@ -22,9 +22,6 @@
       "bucket_name": "madani-elearning-content"
     }
   ],
-  "triggers": {
-    "crons": ["0 3 * * *"]
-  },
   "observability": {
     "enabled": true
   }

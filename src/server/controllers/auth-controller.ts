@@ -1,0 +1,74 @@
+"use server";
+
+import { z } from "zod";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+
+import { AuthService, AuthError } from "@/server/services/auth-service";
+import { setSessionCookie, clearSessionCookie, getSessionToken } from "@/lib/auth/session";
+import type { Role } from "@/lib/db/schema";
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
+const ROLE_HOME: Record<Role, string> = {
+  admin: "/admin/dashboard",
+  teacher: "/teacher/dashboard",
+  student: "/student/dashboard",
+  parent: "/parent/dashboard",
+};
+
+export type LoginState = { error?: string };
+
+export async function loginAction(_prev: LoginState, formData: FormData): Promise<LoginState> {
+  const parsed = loginSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) return { error: "Enter a valid email and password" };
+
+  try {
+    const headerList = await headers();
+    const { token, user } = await AuthService.login(parsed.data.email, parsed.data.password, {
+      userAgent: headerList.get("user-agent") ?? undefined,
+    });
+    await setSessionCookie(token);
+    redirect(user.mustChangePassword ? "/account/change-password" : ROLE_HOME[user.role]);
+  } catch (err) {
+    if (err instanceof AuthError) return { error: err.message };
+    throw err;
+  }
+}
+
+export async function logoutAction() {
+  const token = await getSessionToken();
+  if (token) await AuthService.logout(token);
+  await clearSessionCookie();
+  redirect("/login");
+}
+
+const bootstrapSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+export type BootstrapState = { error?: string };
+
+/** One-time first-run setup — see AuthService.bootstrapAdmin. */
+export async function bootstrapAdminAction(_prev: BootstrapState, formData: FormData): Promise<BootstrapState> {
+  const parsed = bootstrapSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+
+  try {
+    await AuthService.bootstrapAdmin(parsed.data.email, parsed.data.password);
+  } catch (err) {
+    if (err instanceof AuthError) return { error: err.message };
+    throw err;
+  }
+  redirect("/login");
+}
