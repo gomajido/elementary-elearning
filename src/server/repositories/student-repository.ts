@@ -59,6 +59,15 @@ export const StudentRepository = {
       .orderBy(students.lastName, students.firstName);
   },
 
+  async listByClass(classId: string) {
+    const db = getDb();
+    return db
+      .select()
+      .from(students)
+      .where(and(eq(students.currentClassId, classId), isNull(students.deletedAt)))
+      .orderBy(students.lastName, students.firstName);
+  },
+
   async listGuardiansForStudent(studentId: string) {
     const db = getDb();
     return db
