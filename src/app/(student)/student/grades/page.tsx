@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 import { requireRole } from "@/lib/auth/rbac";
 import { GradeService } from "@/server/services/grade-service";
 import { StudentRepository } from "@/server/repositories/student-repository";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default async function StudentGradesPage() {
   const user = await requireRole(["student"]);
@@ -14,7 +16,12 @@ export default async function StudentGradesPage() {
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Nilai Saya</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Nilai Saya</h1>
+        <Button variant="outline" size="sm" render={<Link href="/student/report-card" />}>
+          Lihat Rapor
+        </Button>
+      </div>
 
       <Card>
         <CardHeader>

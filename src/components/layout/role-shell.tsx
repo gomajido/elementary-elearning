@@ -56,7 +56,7 @@ export function RoleShell({
   return (
     <div className="flex min-h-screen bg-muted/30">
       {navItems && (
-        <aside className="hidden w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
+        <aside className="hidden w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex print:hidden">
           <div className="border-b border-sidebar-border px-4 py-4">
             <div className="mb-2 inline-block rounded-md bg-white p-1.5">
               <Image src={logo} alt="Madani Islamic School" className="h-8 w-auto object-contain" />
@@ -69,7 +69,7 @@ export function RoleShell({
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b bg-background px-4 py-3 md:px-6">
+        <header className="flex items-center justify-between border-b bg-background px-4 py-3 md:px-6 print:hidden">
           <div className="flex items-center gap-3">
             {navItems && (
               <Sheet>
@@ -107,7 +107,7 @@ export function RoleShell({
             </Button>
           </form>
         </header>
-        <main className="flex-1 p-4 md:p-6">
+        <main className="flex-1 p-4 md:p-6 print:p-0">
           <div className="mx-auto w-full max-w-5xl">{children}</div>
         </main>
       </div>

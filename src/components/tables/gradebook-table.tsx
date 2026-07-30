@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 import type { GradeService } from "@/server/services/grade-service";
 import { TableToolbar } from "@/components/tables/table-toolbar";
 import { TablePagination, TABLE_PAGE_SIZE } from "@/components/tables/table-pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 type GradebookRow = Awaited<ReturnType<typeof GradeService.gradebookForCourse>>[number];
 
@@ -36,6 +38,7 @@ export function GradebookTable({ rows }: { rows: GradebookRow[] }) {
             <TableHead>Siswa</TableHead>
             <TableHead>Tugas</TableHead>
             <TableHead>Kuis</TableHead>
+            <TableHead>Aksi</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -46,11 +49,16 @@ export function GradebookTable({ rows }: { rows: GradebookRow[] }) {
               </TableCell>
               <TableCell>{row.assignmentMax > 0 ? `${row.assignmentTotal} / ${row.assignmentMax}` : "—"}</TableCell>
               <TableCell>{row.quizMax > 0 ? `${row.quizTotal} / ${row.quizMax}` : "—"}</TableCell>
+              <TableCell>
+                <Button variant="outline" size="sm" render={<Link href={`/teacher/students/${row.student.id}/report-card`} />}>
+                  Rapor
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
           {filtered.length === 0 && (
             <TableRow>
-              <TableCell colSpan={3} className="text-center text-muted-foreground">
+              <TableCell colSpan={4} className="text-center text-muted-foreground">
                 {rows.length === 0 ? "Tidak ada siswa di kelas ini" : "Tidak ditemukan"}
               </TableCell>
             </TableRow>

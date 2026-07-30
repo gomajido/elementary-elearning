@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 import type { StudentService } from "@/server/services/student-service";
 import { TableToolbar } from "@/components/tables/table-toolbar";
@@ -10,6 +11,7 @@ import { deleteStudentAction } from "@/server/controllers/student-controller";
 import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ENROLLMENT_STATUS_LABELS, label } from "@/lib/labels";
 
 type StudentRow = Awaited<ReturnType<typeof StudentService.listStudentsWithDetails>>[number];
@@ -98,14 +100,19 @@ export function StudentsTable({
                 )}
               </TableCell>
               <TableCell>
-                <StudentRowActions
-                  student={row.student}
-                  classes={classes}
-                  photoStorageKey={photoByStudentId[row.student.id]?.storageKey}
-                  photoUpdatedAt={photoByStudentId[row.student.id]?.updatedAt}
-                  hasPortalAccess={!!row.student.userId}
-                  onDelete={() => deleteStudentAction(row.student.id)}
-                />
+                <div className="flex items-center gap-1.5">
+                  <Button variant="outline" size="sm" render={<Link href={`/admin/students/${row.student.id}/report-card`} />}>
+                    Rapor
+                  </Button>
+                  <StudentRowActions
+                    student={row.student}
+                    classes={classes}
+                    photoStorageKey={photoByStudentId[row.student.id]?.storageKey}
+                    photoUpdatedAt={photoByStudentId[row.student.id]?.updatedAt}
+                    hasPortalAccess={!!row.student.userId}
+                    onDelete={() => deleteStudentAction(row.student.id)}
+                  />
+                </div>
               </TableCell>
             </TableRow>
           ))}

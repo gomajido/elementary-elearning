@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 import { requireRole } from "@/lib/auth/rbac";
 import { GuardianService, GuardianPortalError } from "@/server/services/guardian-service";
@@ -11,6 +12,7 @@ import { SubmitPaymentProofDialog } from "@/components/forms/submit-payment-proo
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { INVOICE_STATUS_LABELS, label } from "@/lib/labels";
 
 function formatCents(cents: number) {
@@ -40,9 +42,14 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ st
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <h1 className="text-xl font-semibold">
-        {student.firstName} {student.lastName}
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">
+          {student.firstName} {student.lastName}
+        </h1>
+        <Button variant="outline" size="sm" render={<Link href={`/parent/children/${studentId}/report-card`} />}>
+          Lihat Rapor
+        </Button>
+      </div>
 
       <Card>
         <CardHeader>

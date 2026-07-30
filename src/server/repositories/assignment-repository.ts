@@ -106,7 +106,13 @@ export const AssignmentSubmissionRepository = {
   async listForStudentWithDetails(studentId: string) {
     const db = getDb();
     return db
-      .select({ submission: assignmentSubmissions, assignment: assignments, courseTitle: courses.title })
+      .select({
+        submission: assignmentSubmissions,
+        assignment: assignments,
+        courseTitle: courses.title,
+        subjectId: courses.subjectId,
+        academicYearId: courses.academicYearId,
+      })
       .from(assignmentSubmissions)
       .innerJoin(assignments, eq(assignmentSubmissions.assignmentId, assignments.id))
       .innerJoin(courses, eq(assignments.courseId, courses.id))

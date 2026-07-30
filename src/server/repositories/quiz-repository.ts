@@ -162,7 +162,13 @@ export const QuizAttemptRepository = {
   async listForStudentWithDetails(studentId: string) {
     const db = getDb();
     return db
-      .select({ attempt: quizAttempts, quiz: quizzes, courseTitle: courses.title })
+      .select({
+        attempt: quizAttempts,
+        quiz: quizzes,
+        courseTitle: courses.title,
+        subjectId: courses.subjectId,
+        academicYearId: courses.academicYearId,
+      })
       .from(quizAttempts)
       .innerJoin(quizzes, eq(quizAttempts.quizId, quizzes.id))
       .innerJoin(courses, eq(quizzes.courseId, courses.id))

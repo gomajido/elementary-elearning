@@ -176,4 +176,16 @@ export const CourseService = {
     await CourseService.assertTeacherOwnsCourse(teacherUserId, courseId);
     await CourseRepository.publish(courseId);
   },
+
+  /** Verifies the logged-in teacher teaches a course in this student's class. */
+  async assertTeacherCanViewStudent(teacherUserId: string, studentId: string) {
+    const teacher = await TeacherRepository.findByUserId(teacherUserId);
+    const student = await StudentRepository.findById(studentId);
+    if (!teacher || !student?.currentClassId) throw new CourseError("Tidak berwenang melihat siswa ini");
+    const courses = await CourseRepository.listByTeacher(teacher.id);
+    if (!courses.some((c) => c.course.classId === student.currentClassId)) {
+      throw new CourseError("Tidak berwenang melihat siswa ini");
+    }
+    return { teacher, student };
+  },
 };
