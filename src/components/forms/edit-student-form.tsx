@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { updateStudentAction, type UpdateStudentState } from "@/server/controllers/student-controller";
 import { PhotoUploadField } from "@/components/forms/photo-upload-field";
@@ -14,6 +14,7 @@ import { ENROLLMENT_STATUSES, GENDERS, type EnrollmentStatus, type Gender } from
 const initialState: UpdateStudentState = {};
 
 export function EditStudentForm({
+  onSuccess,
   student,
   classes,
   photoStorageKey,
@@ -33,8 +34,13 @@ export function EditStudentForm({
   classes: { id: string; name: string; section: string | null }[];
   photoStorageKey?: string | null;
   photoUpdatedAt?: Date | null;
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(updateStudentAction, initialState);
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state, onSuccess]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

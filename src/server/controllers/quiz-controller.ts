@@ -9,8 +9,8 @@ import { QuizService, QuizError } from "@/server/services/quiz-service";
 import { StudentRepository } from "@/server/repositories/student-repository";
 import { QUESTION_TYPES } from "@/lib/db/schema";
 
-/** `ok` distinguishes a successful submit from the initial (unsubmitted) state, so dialogs can close themselves. */
-export type ActionState = { error?: string; ok?: boolean };
+/** `success` distinguishes a successful submit from the initial (unsubmitted) state, so dialogs can close themselves. */
+export type ActionState = { error?: string; success?: boolean };
 
 const quizSchema = z.object({
   courseId: z.string().min(1),
@@ -41,7 +41,7 @@ export async function createQuizAction(_prev: ActionState, formData: FormData): 
   }
 
   revalidatePath(`/teacher/courses/${parsed.data.courseId}`);
-  return { ok: true };
+  return { success: true };
 }
 
 const questionSchema = z.object({

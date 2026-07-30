@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { updatePaymentAction, type ActionState } from "@/server/controllers/fee-controller";
 import { contentObjectUrl } from "@/lib/storage/client";
@@ -14,6 +14,7 @@ import { PAYMENT_METHOD_LABELS } from "@/lib/labels";
 const initialState: ActionState = {};
 
 export function EditPaymentForm({
+  onSuccess,
   payment,
   invoiceId,
 }: {
@@ -28,8 +29,13 @@ export function EditPaymentForm({
     proofStorageKey: string | null;
   };
   invoiceId: string;
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(updatePaymentAction, initialState);
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state, onSuccess]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

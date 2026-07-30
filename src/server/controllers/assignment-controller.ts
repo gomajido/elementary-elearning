@@ -10,8 +10,8 @@ import { StudentRepository } from "@/server/repositories/student-repository";
 import { presignUpload } from "@/lib/storage/client";
 import { isAllowedAssignmentAttachmentContentType } from "@/lib/uploads";
 
-/** `ok` distinguishes a successful submit from the initial (unsubmitted) state, so dialogs can close themselves. */
-export type ActionState = { error?: string; ok?: boolean };
+/** `success` distinguishes a successful submit from the initial (unsubmitted) state, so dialogs can close themselves. */
+export type ActionState = { error?: string; success?: boolean };
 
 const assignmentSchema = z.object({
   courseId: z.string().min(1),
@@ -46,7 +46,7 @@ export async function createAssignmentAction(_prev: ActionState, formData: FormD
   }
 
   revalidatePath(`/teacher/courses/${parsed.data.courseId}`);
-  return { ok: true };
+  return { success: true };
 }
 
 export async function requestAssignmentAttachmentUploadUrlAction(courseId: string, contentType: string) {

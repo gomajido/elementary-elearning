@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { updateGuardianAction, type UpdateGuardianState } from "@/server/controllers/guardian-controller";
 import { PhotoUploadField } from "@/components/forms/photo-upload-field";
@@ -19,6 +19,7 @@ const RELATIONSHIPS = [
 ] as const;
 
 export function EditGuardianForm({
+  onSuccess,
   guardian,
   photoStorageKey,
   photoUpdatedAt,
@@ -34,8 +35,13 @@ export function EditGuardianForm({
   };
   photoStorageKey?: string | null;
   photoUpdatedAt?: Date | null;
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(updateGuardianAction, initialState);
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state, onSuccess]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

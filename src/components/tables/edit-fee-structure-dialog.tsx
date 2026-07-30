@@ -28,7 +28,7 @@ export function EditFeeStructureDialog({
         <DialogHeader>
           <DialogTitle>Edit biaya — {structure.name}</DialogTitle>
         </DialogHeader>
-        <EditFeeStructureForm structure={structure} academicYears={academicYears} />
+        <EditFeeStructureForm structure={structure} academicYears={academicYears} onSuccess={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );

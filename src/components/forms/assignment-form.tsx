@@ -25,7 +25,7 @@ export function AssignmentForm({
   const [attachmentR2Key, setAttachmentR2Key] = useState<string | null>(null);
 
   useEffect(() => {
-    if (state.ok) onSuccess?.();
+    if (state.success) onSuccess?.();
   }, [state, onSuccess]);
 
   return (

@@ -13,7 +13,7 @@ export function ThemeForm({ courseId, onSuccess }: { courseId: string; onSuccess
   const [state, formAction, pending] = useActionState(createThemeAction, initialState);
 
   useEffect(() => {
-    if (state.ok) onSuccess?.();
+    if (state.success) onSuccess?.();
   }, [state, onSuccess]);
 
   return (

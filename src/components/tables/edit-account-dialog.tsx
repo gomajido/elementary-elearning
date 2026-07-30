@@ -20,7 +20,7 @@ export function EditAccountDialog({
         <DialogHeader>
           <DialogTitle>Ubah email/username — {name}</DialogTitle>
         </DialogHeader>
-        <EditAccountForm account={account} />
+        <EditAccountForm account={account} onSuccess={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );

@@ -45,7 +45,7 @@ export async function grantPortalAccessAction(_prev: GrantAccessState, formData:
   }
 }
 
-export type UpdateGuardianState = { error?: string };
+export type UpdateGuardianState = { error?: string; success?: boolean };
 
 const updateGuardianSchema = z.object({
   guardianId: z.string().min(1),
@@ -71,7 +71,7 @@ export async function updateGuardianAction(_prev: UpdateGuardianState, formData:
     address: input.address || undefined,
   });
   revalidatePath("/admin/guardians");
-  return {};
+  return { success: true };
 }
 
 export async function deleteGuardianAction(guardianId: string) {

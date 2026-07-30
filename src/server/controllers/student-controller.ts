@@ -87,7 +87,7 @@ export async function createStudentAction(_prev: CreateStudentState, formData: F
   return {};
 }
 
-export type UpdateStudentState = { error?: string };
+export type UpdateStudentState = { error?: string; success?: boolean };
 
 const updateStudentSchema = z.object({
   studentId: z.string().min(1),
@@ -128,7 +128,7 @@ export async function updateStudentAction(_prev: UpdateStudentState, formData: F
   }
 
   revalidatePath("/admin/students");
-  return {};
+  return { success: true };
 }
 
 export async function deleteStudentAction(studentId: string) {

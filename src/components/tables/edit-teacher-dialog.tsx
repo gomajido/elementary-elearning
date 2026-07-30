@@ -31,7 +31,7 @@ export function EditTeacherDialog({
             Edit guru — {teacher.firstName} {teacher.lastName}
           </DialogTitle>
         </DialogHeader>
-        <EditTeacherForm teacher={teacher} photoStorageKey={photoStorageKey} photoUpdatedAt={photoUpdatedAt} />
+        <EditTeacherForm teacher={teacher} photoStorageKey={photoStorageKey} photoUpdatedAt={photoUpdatedAt} onSuccess={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );

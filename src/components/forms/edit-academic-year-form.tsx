@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { updateAcademicYearAction, type ActionState } from "@/server/controllers/academic-controller";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,17 @@ import { Label } from "@/components/ui/label";
 const initialState: ActionState = {};
 
 export function EditAcademicYearForm({
+  onSuccess,
   year,
 }: {
   year: { id: string; name: string; startDate: string; endDate: string; isCurrent: boolean };
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(updateAcademicYearAction, initialState);
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state, onSuccess]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

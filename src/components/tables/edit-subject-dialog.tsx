@@ -18,7 +18,7 @@ export function EditSubjectDialog({
         <DialogHeader>
           <DialogTitle>Edit mata pelajaran — {subject.name}</DialogTitle>
         </DialogHeader>
-        <EditSubjectForm subject={subject} />
+        <EditSubjectForm subject={subject} onSuccess={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );

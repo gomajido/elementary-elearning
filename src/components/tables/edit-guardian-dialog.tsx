@@ -32,7 +32,7 @@ export function EditGuardianDialog({
             Edit wali — {guardian.firstName} {guardian.lastName}
           </DialogTitle>
         </DialogHeader>
-        <EditGuardianForm guardian={guardian} photoStorageKey={photoStorageKey} photoUpdatedAt={photoUpdatedAt} />
+        <EditGuardianForm guardian={guardian} photoStorageKey={photoStorageKey} photoUpdatedAt={photoUpdatedAt} onSuccess={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );

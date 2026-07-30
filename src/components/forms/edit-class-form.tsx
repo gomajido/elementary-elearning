@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { updateClassAction, type ActionState } from "@/server/controllers/academic-controller";
 import { PhotoUploadField } from "@/components/forms/photo-upload-field";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const initialState: ActionState = {};
 
 export function EditClassForm({
+  onSuccess,
   classRow,
   academicYears,
   teachers,
@@ -31,8 +32,13 @@ export function EditClassForm({
   teachers: { id: string; firstName: string; lastName: string }[];
   photoStorageKey?: string | null;
   photoUpdatedAt?: Date | null;
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(updateClassAction, initialState);
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state, onSuccess]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

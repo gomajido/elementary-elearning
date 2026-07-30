@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/rbac";
 import { AcademicService } from "@/server/services/academic-service";
 
-export type ActionState = { error?: string };
+export type ActionState = { error?: string; success?: boolean };
 
 const academicYearSchema = z.object({
   name: z.string().min(1),
@@ -46,7 +46,7 @@ export async function updateAcademicYearAction(_prev: ActionState, formData: For
 
   await AcademicService.updateAcademicYear(academicYearId, input);
   revalidatePath("/admin/academic-years");
-  return {};
+  return { success: true };
 }
 
 export async function deleteAcademicYearAction(academicYearId: string) {
@@ -87,7 +87,7 @@ export async function updateSubjectAction(_prev: ActionState, formData: FormData
 
   await AcademicService.updateSubject(subjectId, input);
   revalidatePath("/admin/subjects");
-  return {};
+  return { success: true };
 }
 
 export async function deleteSubjectAction(subjectId: string) {
@@ -140,7 +140,7 @@ export async function updateClassAction(_prev: ActionState, formData: FormData):
 
   await AcademicService.updateClass(classId, input);
   revalidatePath("/admin/classes");
-  return {};
+  return { success: true };
 }
 
 export async function deleteClassAction(classId: string) {

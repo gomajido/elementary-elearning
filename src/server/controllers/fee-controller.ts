@@ -9,7 +9,7 @@ import { GuardianService, GuardianPortalError } from "@/server/services/guardian
 import { presignUpload } from "@/lib/storage/client";
 import { FEE_FREQUENCIES, PAYMENT_METHODS } from "@/lib/db/schema";
 
-export type ActionState = { error?: string };
+export type ActionState = { error?: string; success?: boolean };
 
 const feeStructureSchema = z.object({
   name: z.string().min(1),
@@ -52,7 +52,7 @@ export async function updateFeeStructureAction(_prev: ActionState, formData: For
 
   await FeeService.updateFeeStructure(feeStructureId, input);
   revalidatePath("/admin/fees/structures");
-  return {};
+  return { success: true };
 }
 
 export async function deleteFeeStructureAction(feeStructureId: string) {
@@ -194,7 +194,7 @@ export async function updatePaymentAction(_prev: ActionState, formData: FormData
 
   await FeeService.updatePayment(paymentId, { ...input, isVerified });
   revalidatePath(`/admin/fees/invoices/${invoiceId}`);
-  return {};
+  return { success: true };
 }
 
 const PROOF_MAX_CONTENT_TYPES = /^(image\/|application\/pdf$)/;

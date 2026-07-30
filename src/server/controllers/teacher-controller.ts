@@ -42,7 +42,7 @@ export async function createTeacherAction(_prev: CreateTeacherState, formData: F
   }
 }
 
-export type UpdateTeacherState = { error?: string };
+export type UpdateTeacherState = { error?: string; success?: boolean };
 
 const updateTeacherSchema = z.object({
   teacherId: z.string().min(1),
@@ -70,7 +70,7 @@ export async function updateTeacherAction(_prev: UpdateTeacherState, formData: F
   }
 
   revalidatePath("/admin/teachers");
-  return {};
+  return { success: true };
 }
 
 export async function deleteTeacherAction(teacherId: string) {

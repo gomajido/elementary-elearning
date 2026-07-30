@@ -8,8 +8,8 @@ import { CourseService, CourseError } from "@/server/services/course-service";
 import { CONTENT_ITEM_TYPES } from "@/lib/db/schema";
 import { presignUpload } from "@/lib/storage/client";
 
-/** `ok` distinguishes a successful submit from the initial (unsubmitted) state, so dialogs can close themselves. */
-export type ActionState = { error?: string; ok?: boolean };
+/** `success` distinguishes a successful submit from the initial (unsubmitted) state, so dialogs can close themselves. */
+export type ActionState = { error?: string; success?: boolean };
 
 const courseSchema = z.object({
   title: z.string().min(1),
@@ -68,7 +68,7 @@ export async function createThemeAction(_prev: ActionState, formData: FormData):
   }
 
   revalidatePath(`/teacher/courses/${parsed.data.courseId}`);
-  return { ok: true };
+  return { success: true };
 }
 
 const contentItemSchema = z.object({
@@ -102,7 +102,7 @@ export async function addContentItemAction(_prev: ActionState, formData: FormDat
   }
 
   revalidatePath(`/teacher/courses/${parsed.data.courseId}`);
-  return { ok: true };
+  return { success: true };
 }
 
 export async function requestContentFileUploadUrlAction(courseId: string, contentType: string) {

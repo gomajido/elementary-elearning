@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { updateFeeStructureAction, type ActionState } from "@/server/controllers/fee-controller";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { FEE_FREQUENCY_LABELS } from "@/lib/labels";
 const initialState: ActionState = {};
 
 export function EditFeeStructureForm({
+  onSuccess,
   structure,
   academicYears,
 }: {
@@ -25,8 +26,13 @@ export function EditFeeStructureForm({
     gradeLevel: number | null;
   };
   academicYears: { id: string; name: string }[];
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(updateFeeStructureAction, initialState);
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state, onSuccess]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

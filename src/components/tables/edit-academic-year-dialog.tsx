@@ -18,7 +18,7 @@ export function EditAcademicYearDialog({
         <DialogHeader>
           <DialogTitle>Edit tahun ajaran — {year.name}</DialogTitle>
         </DialogHeader>
-        <EditAcademicYearForm year={year} />
+        <EditAcademicYearForm year={year} onSuccess={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );

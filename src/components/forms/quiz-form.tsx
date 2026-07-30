@@ -21,7 +21,7 @@ export function QuizForm({
   const [state, formAction, pending] = useActionState(createQuizAction, initialState);
 
   useEffect(() => {
-    if (state.ok) onSuccess?.();
+    if (state.success) onSuccess?.();
   }, [state, onSuccess]);
 
   return (

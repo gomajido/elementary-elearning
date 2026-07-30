@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { updateSubjectAction, type ActionState } from "@/server/controllers/academic-controller";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,18 @@ import { Label } from "@/components/ui/label";
 
 const initialState: ActionState = {};
 
-export function EditSubjectForm({ subject }: { subject: { id: string; name: string; code: string | null } }) {
+export function EditSubjectForm({
+  subject,
+  onSuccess,
+}: {
+  subject: { id: string; name: string; code: string | null };
+  onSuccess?: () => void;
+}) {
   const [state, formAction, pending] = useActionState(updateSubjectAction, initialState);
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state, onSuccess]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

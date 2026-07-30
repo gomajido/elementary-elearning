@@ -26,7 +26,7 @@ export function ContentItemForm({
   const [r2Key, setR2Key] = useState<string | null>(null);
 
   useEffect(() => {
-    if (state.ok) onSuccess?.();
+    if (state.success) onSuccess?.();
   }, [state, onSuccess]);
 
   return (

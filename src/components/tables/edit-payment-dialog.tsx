@@ -31,7 +31,7 @@ export function EditPaymentDialog({
         <DialogHeader>
           <DialogTitle>Edit pembayaran — {payment.receiptNumber}</DialogTitle>
         </DialogHeader>
-        <EditPaymentForm payment={payment} invoiceId={invoiceId} />
+        <EditPaymentForm payment={payment} invoiceId={invoiceId} onSuccess={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );

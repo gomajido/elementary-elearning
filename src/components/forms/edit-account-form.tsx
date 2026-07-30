@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { adminUpdateAccountAction, type UpdateAccountState } from "@/server/controllers/account-controller";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,18 @@ import { Label } from "@/components/ui/label";
 
 const initialState: UpdateAccountState = {};
 
-export function EditAccountForm({ account }: { account: { id: string; email: string | null; username: string | null } }) {
+export function EditAccountForm({
+  account,
+  onSuccess,
+}: {
+  account: { id: string; email: string | null; username: string | null };
+  onSuccess?: () => void;
+}) {
   const [state, formAction, pending] = useActionState(adminUpdateAccountAction, initialState);
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state, onSuccess]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

@@ -40,6 +40,7 @@ export function EditClassDialog({
           teachers={teachers}
           photoStorageKey={photoStorageKey}
           photoUpdatedAt={photoUpdatedAt}
+          onSuccess={() => onOpenChange(false)}
         />
       </DialogContent>
     </Dialog>
