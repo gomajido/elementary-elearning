@@ -23,6 +23,20 @@ export const courses = pgTable("courses", {
   ...timestamps,
 });
 
+// A named unit within a course ("Bab 1", "Bab 2", ...) grouping its own
+// Materi/Tugas/Kuis. Every content item/assignment/quiz belongs to exactly
+// one theme.
+export const themes = pgTable("themes", {
+  id: id(),
+  courseId: text("course_id")
+    .notNull()
+    .references(() => courses.id),
+  title: text("title").notNull(),
+  orderIndex: integer("order_index").notNull().default(0),
+  schoolId: schoolId(),
+  ...timestamps,
+});
+
 export const CONTENT_ITEM_TYPES = ["video", "pdf", "note", "link"] as const;
 export type ContentItemType = (typeof CONTENT_ITEM_TYPES)[number];
 
@@ -31,6 +45,9 @@ export const courseContentItems = pgTable("course_content_items", {
   courseId: text("course_id")
     .notNull()
     .references(() => courses.id),
+  themeId: text("theme_id")
+    .notNull()
+    .references(() => themes.id),
   title: text("title").notNull(),
   type: text("type").notNull().$type<ContentItemType>(),
   r2Key: text("r2_key"), // for video/pdf
@@ -47,6 +64,9 @@ export const assignments = pgTable("assignments", {
   courseId: text("course_id")
     .notNull()
     .references(() => courses.id),
+  themeId: text("theme_id")
+    .notNull()
+    .references(() => themes.id),
   title: text("title").notNull(),
   instructions: text("instructions"), // markdown
   dueDate: text("due_date").notNull(), // YYYY-MM-DD

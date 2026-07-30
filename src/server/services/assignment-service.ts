@@ -10,11 +10,13 @@ export const AssignmentService = {
   async createAssignment(input: {
     teacherUserId: string;
     courseId: string;
+    themeId: string;
     title: string;
     instructions?: string;
     dueDate: string;
     maxScore: number;
     allowLateSubmission?: boolean;
+    attachmentR2Key?: string;
   }) {
     const teacher = await TeacherRepository.findByUserId(input.teacherUserId);
     const course = await CourseRepository.findById(input.courseId);
@@ -22,11 +24,13 @@ export const AssignmentService = {
 
     return AssignmentRepository.create({
       courseId: input.courseId,
+      themeId: input.themeId,
       title: input.title,
       instructions: input.instructions,
       dueDate: input.dueDate,
       maxScore: input.maxScore,
       allowLateSubmission: input.allowLateSubmission,
+      attachmentR2Key: input.attachmentR2Key,
     });
   },
 

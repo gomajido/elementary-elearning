@@ -17,11 +17,13 @@ export const AssignmentRepository = {
 
   async create(input: {
     courseId: string;
+    themeId: string;
     title: string;
     instructions?: string;
     dueDate: string;
     maxScore: number;
     allowLateSubmission?: boolean;
+    attachmentR2Key?: string;
   }) {
     const db = getDb();
     const [row] = await db.insert(assignments).values(input).returning();

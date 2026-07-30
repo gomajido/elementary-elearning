@@ -61,6 +61,7 @@ export const CourseRepository = {
 
   async createContentItem(input: {
     courseId: string;
+    themeId: string;
     title: string;
     type: ContentItemType;
     r2Key?: string;

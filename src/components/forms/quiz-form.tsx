@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { createQuizAction, type ActionState } from "@/server/controllers/quiz-controller";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,25 @@ import { Label } from "@/components/ui/label";
 
 const initialState: ActionState = {};
 
-export function QuizForm({ courseId }: { courseId: string }) {
+export function QuizForm({
+  courseId,
+  themeId,
+  onSuccess,
+}: {
+  courseId: string;
+  themeId: string;
+  onSuccess?: () => void;
+}) {
   const [state, formAction, pending] = useActionState(createQuizAction, initialState);
+
+  useEffect(() => {
+    if (state.ok) onSuccess?.();
+  }, [state, onSuccess]);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-3">
       <input type="hidden" name="courseId" value={courseId} />
+      <input type="hidden" name="themeId" value={themeId} />
       <div className="flex flex-col gap-2 sm:col-span-3">
         <Label htmlFor="title">Judul</Label>
         <Input id="title" name="title" required />

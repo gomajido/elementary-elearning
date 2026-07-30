@@ -1,6 +1,7 @@
 import { CourseRepository } from "@/server/repositories/course-repository";
 import { TeacherRepository } from "@/server/repositories/teacher-repository";
 import { StudentRepository } from "@/server/repositories/student-repository";
+import { ThemeRepository } from "@/server/repositories/theme-repository";
 import type { ContentItemType } from "@/lib/db/schema";
 
 export class CourseError extends Error {}
@@ -30,7 +31,7 @@ export const CourseService = {
   }) {
     const teacher = await TeacherRepository.findByUserId(input.teacherUserId);
     if (!teacher) throw new CourseError("Tidak ada data guru untuk akun ini");
-    return CourseRepository.create({
+    const course = await CourseRepository.create({
       title: input.title,
       description: input.description,
       subjectId: input.subjectId,
@@ -38,31 +39,51 @@ export const CourseService = {
       teacherId: teacher.id,
       academicYearId: input.academicYearId,
     });
+    // Materi/Tugas/Kuis can only be added inside a Bab, so a course with none
+    // is a dead end — every course starts with one, same as the backfill did
+    // for pre-existing courses.
+    await ThemeRepository.create({ courseId: course.id, title: "Bab 1", orderIndex: 0 });
+    return course;
   },
 
   async courseDetail(courseId: string) {
     const course = await CourseRepository.findById(courseId);
     if (!course) return null;
     const contentItems = await CourseRepository.listContentItems(courseId);
-    return { course, contentItems };
+    const themes = await ThemeRepository.listByCourse(courseId);
+    return { course, contentItems, themes };
+  },
+
+  /** Throws unless the given user is a teacher who owns this course. */
+  async assertTeacherOwnsCourse(teacherUserId: string, courseId: string) {
+    const teacher = await TeacherRepository.findByUserId(teacherUserId);
+    if (!teacher) throw new CourseError("Tidak ada data guru untuk akun ini");
+    const course = await CourseRepository.findById(courseId);
+    if (!course || course.teacherId !== teacher.id) throw new CourseError("Anda bukan pemilik kursus ini");
+    return { teacher, course };
+  },
+
+  async createTheme(input: { teacherUserId: string; courseId: string; title: string }) {
+    await CourseService.assertTeacherOwnsCourse(input.teacherUserId, input.courseId);
+    const existing = await ThemeRepository.listByCourse(input.courseId);
+    return ThemeRepository.create({ courseId: input.courseId, title: input.title, orderIndex: existing.length });
   },
 
   async addContentItem(input: {
     teacherUserId: string;
     courseId: string;
+    themeId: string;
     title: string;
     type: ContentItemType;
     r2Key?: string;
     bodyMarkdown?: string;
     externalUrl?: string;
   }) {
-    const teacher = await TeacherRepository.findByUserId(input.teacherUserId);
-    if (!teacher) throw new CourseError("Tidak ada data guru untuk akun ini");
-    const course = await CourseRepository.findById(input.courseId);
-    if (!course || course.teacherId !== teacher.id) throw new CourseError("Anda bukan pemilik kursus ini");
+    await CourseService.assertTeacherOwnsCourse(input.teacherUserId, input.courseId);
 
     return CourseRepository.createContentItem({
       courseId: input.courseId,
+      themeId: input.themeId,
       title: input.title,
       type: input.type,
       r2Key: input.r2Key,
@@ -81,9 +102,7 @@ export const CourseService = {
   },
 
   async publishCourse(teacherUserId: string, courseId: string) {
-    const teacher = await TeacherRepository.findByUserId(teacherUserId);
-    const course = await CourseRepository.findById(courseId);
-    if (!teacher || !course || course.teacherId !== teacher.id) throw new CourseError("Anda bukan pemilik kursus ini");
+    await CourseService.assertTeacherOwnsCourse(teacherUserId, courseId);
     await CourseRepository.publish(courseId);
   },
 };

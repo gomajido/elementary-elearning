@@ -10,7 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { SUBMISSION_STATUS_LABELS, label } from "@/lib/labels";
 
-type Submission = Awaited<ReturnType<typeof AssignmentService.submissionsForAssignment>>[number];
+type Submission = Awaited<ReturnType<typeof AssignmentService.submissionsForAssignment>>[number] & {
+  attachmentDownloadUrl?: string | null;
+};
 
 export function SubmissionsTable({ rows, maxScore }: { rows: Submission[]; maxScore: number }) {
   const [query, setQuery] = useState("");
@@ -39,12 +41,13 @@ export function SubmissionsTable({ rows, maxScore }: { rows: Submission[]; maxSc
             <TableHead>Siswa</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Jawaban</TableHead>
+            <TableHead>Lampiran</TableHead>
             <TableHead>Nilai</TableHead>
             <TableHead>Penilaian</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {paged.map(({ submission, student }) => (
+          {paged.map(({ submission, student, attachmentDownloadUrl }) => (
             <TableRow key={submission.id}>
               <TableCell>
                 {student.firstName} {student.lastName}
@@ -55,6 +58,15 @@ export function SubmissionsTable({ rows, maxScore }: { rows: Submission[]; maxSc
                 </Badge>
               </TableCell>
               <TableCell className="max-w-xs truncate">{submission.textResponse ?? "—"}</TableCell>
+              <TableCell>
+                {attachmentDownloadUrl ? (
+                  <a href={attachmentDownloadUrl} target="_blank" rel="noreferrer" className="underline underline-offset-4">
+                    Buka
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </TableCell>
               <TableCell>{submission.score ?? "—"}</TableCell>
               <TableCell>
                 <GradeSubmissionForm submissionId={submission.id} maxScore={maxScore} />
@@ -63,7 +75,7 @@ export function SubmissionsTable({ rows, maxScore }: { rows: Submission[]; maxSc
           ))}
           {filtered.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground">
+              <TableCell colSpan={6} className="text-center text-muted-foreground">
                 {rows.length === 0 ? "Belum ada pengumpulan" : "Tidak ditemukan"}
               </TableCell>
             </TableRow>

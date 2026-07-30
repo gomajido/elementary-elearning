@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page, type Locator } from "@playwright/test";
 
 /**
  * Full role-chain smoke test: admin sets up the school, provisions a
@@ -38,6 +38,20 @@ async function selectOption(page: Page, labelText: string, optionText: string, o
   const labels = page.locator("label", { hasText: new RegExp(`^${escapeRegExp(labelText)}$`) });
   await labels.nth(occurrence).locator("xpath=following-sibling::*[1]").click();
   await page.getByRole("option", { name: optionText, exact: false }).first().click();
+}
+
+/**
+ * Materi/Tugas/Kuis are added from a dialog inside a Bab's accordion panel.
+ * Also asserts the dialog closes itself on success — if it stayed open, the
+ * still-filled form could be submitted twice and duplicate the record.
+ */
+async function addViaDialog(page: Page, triggerLabel: string, fill: (dialog: Locator) => Promise<void>) {
+  await page.getByRole("button", { name: triggerLabel, exact: true }).click();
+  const dialog = page.locator('[data-slot="dialog-content"]');
+  await dialog.waitFor();
+  await fill(dialog);
+  await dialog.locator('button[type="submit"]').click();
+  await expect(dialog).toBeHidden();
 }
 
 let teacherTempPassword: string;
@@ -167,23 +181,31 @@ test.describe.serial("golden path across all four roles", () => {
     await expect(page).toHaveURL(/\/teacher\/courses\//);
     courseUrl = page.url();
 
-    await page.fill('input[name="title"]', "Intro note");
-    await page.fill('textarea[name="bodyMarkdown"]', "A fraction represents part of a whole.");
-    await submit(page, "Tambah materi");
+    // Every course is created with a "Bab 1" (see CourseService.createCourse) —
+    // Materi/Tugas/Kuis only exist inside a Bab. Expand it to reach its tabs.
+    const bab1 = page.locator('[data-slot="accordion-item"]', { hasText: "Bab 1" });
+    await bab1.locator('[data-slot="accordion-trigger"]').click();
+
+    await addViaDialog(page, "Tambah materi", async (dialog) => {
+      await dialog.locator('input[name="title"]').fill("Intro note");
+      await dialog.locator('textarea[name="bodyMarkdown"]').fill("A fraction represents part of a whole.");
+    });
     await expect(page.getByText("Intro note")).toBeVisible();
 
-    const assignmentForm = page.locator("form", { has: page.getByRole("button", { name: "Buat tugas" }) });
-    await assignmentForm.locator('input[name="title"]').fill(`Worksheet-${RUN}`);
-    await assignmentForm.locator('input[name="dueDate"]').fill("2026-12-31");
-    await assignmentForm.locator('input[name="maxScore"]').fill("10");
-    await submit(page, "Buat tugas");
+    await bab1.locator('[data-slot="tabs-tab"]', { hasText: "Tugas" }).click();
+    await addViaDialog(page, "Tambah tugas", async (dialog) => {
+      await dialog.locator('input[name="title"]').fill(`Worksheet-${RUN}`);
+      await dialog.locator('input[name="dueDate"]').fill("2026-12-31");
+      await dialog.locator('input[name="maxScore"]').fill("10");
+    });
     await expect(page.getByText(`Worksheet-${RUN}`)).toBeVisible();
     const assignmentHref = await page.getByRole("link", { name: new RegExp(`Worksheet-${RUN}`) }).getAttribute("href");
     assignmentId = assignmentHref!.split("/").pop()!;
 
-    const quizForm = page.locator("form", { has: page.getByRole("button", { name: "Buat kuis" }) });
-    await quizForm.locator('input[name="title"]').fill(`Quiz-${RUN}`);
-    await submit(page, "Buat kuis");
+    await bab1.locator('[data-slot="tabs-tab"]', { hasText: "Kuis" }).click();
+    await addViaDialog(page, "Tambah kuis", async (dialog) => {
+      await dialog.locator('input[name="title"]').fill(`Quiz-${RUN}`);
+    });
     await expect(page.getByText(`Quiz-${RUN}`)).toBeVisible();
     await page.getByRole("link", { name: new RegExp(`Quiz-${RUN}`) }).click();
     await expect(page).toHaveURL(/\/teacher\/quizzes\//);
@@ -222,6 +244,10 @@ test.describe.serial("golden path across all four roles", () => {
     await expect(page.getByText(/Sudah dikumpulkan|kumpulkan ulang/)).toBeVisible();
 
     await page.goto(courseUrl.replace("/teacher/courses/", "/student/courses/"));
+    // Student view groups content by Bab too — expand it, then switch to its Kuis tab.
+    const studentBab1 = page.locator('[data-slot="accordion-item"]', { hasText: "Bab 1" });
+    await studentBab1.locator('[data-slot="accordion-trigger"]').click();
+    await studentBab1.locator('[data-slot="tabs-tab"]', { hasText: "Kuis" }).click();
     await submit(page, "Mulai kuis");
     await expect(page).toHaveURL(/\/student\/quizzes\/attempt\//);
     await page.getByText("3/4", { exact: true }).click();

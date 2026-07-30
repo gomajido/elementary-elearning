@@ -20,6 +20,7 @@ export const QuizService = {
   async createQuiz(input: {
     teacherUserId: string;
     courseId: string;
+    themeId: string;
     title: string;
     instructions?: string;
     timeLimitMinutes?: number;
@@ -32,6 +33,7 @@ export const QuizService = {
 
     return QuizRepository.create({
       courseId: input.courseId,
+      themeId: input.themeId,
       title: input.title,
       instructions: input.instructions,
       timeLimitMinutes: input.timeLimitMinutes,

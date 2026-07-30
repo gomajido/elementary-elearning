@@ -1,7 +1,7 @@
 import { pgTable, text, integer, boolean, timestamp, unique } from "drizzle-orm/pg-core";
 
 import { id, schoolId, timestamps } from "./_shared";
-import { courses } from "./elearning";
+import { courses, themes } from "./elearning";
 import { students } from "./people";
 
 export const quizzes = pgTable("quizzes", {
@@ -9,6 +9,9 @@ export const quizzes = pgTable("quizzes", {
   courseId: text("course_id")
     .notNull()
     .references(() => courses.id),
+  themeId: text("theme_id")
+    .notNull()
+    .references(() => themes.id),
   title: text("title").notNull(),
   instructions: text("instructions"),
   timeLimitMinutes: integer("time_limit_minutes"),

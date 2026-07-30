@@ -9,10 +9,12 @@ import { QuizService, QuizError } from "@/server/services/quiz-service";
 import { StudentRepository } from "@/server/repositories/student-repository";
 import { QUESTION_TYPES } from "@/lib/db/schema";
 
-export type ActionState = { error?: string };
+/** `ok` distinguishes a successful submit from the initial (unsubmitted) state, so dialogs can close themselves. */
+export type ActionState = { error?: string; ok?: boolean };
 
 const quizSchema = z.object({
   courseId: z.string().min(1),
+  themeId: z.string().min(1),
   title: z.string().min(1),
   instructions: z.string().optional(),
   timeLimitMinutes: z.coerce.number().int().positive().optional(),
@@ -23,6 +25,7 @@ export async function createQuizAction(_prev: ActionState, formData: FormData): 
   const user = await requireRole(["teacher"]);
   const parsed = quizSchema.safeParse({
     courseId: formData.get("courseId"),
+    themeId: formData.get("themeId"),
     title: formData.get("title"),
     instructions: formData.get("instructions") || undefined,
     timeLimitMinutes: formData.get("timeLimitMinutes") || undefined,
@@ -38,7 +41,7 @@ export async function createQuizAction(_prev: ActionState, formData: FormData): 
   }
 
   revalidatePath(`/teacher/courses/${parsed.data.courseId}`);
-  return {};
+  return { ok: true };
 }
 
 const questionSchema = z.object({

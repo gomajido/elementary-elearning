@@ -46,3 +46,15 @@ export async function getObject(key: string) {
   const client = getClient();
   return client.send(new GetObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key }));
 }
+
+/**
+ * Presigned GET — the browser streams the object directly from S3/MinIO
+ * (supports Range requests, no server memory buffering), unlike the
+ * /api/uploads/[key] proxy which loads the whole object into memory. Use
+ * this for anything that isn't a small avatar (documents, PDFs).
+ */
+export async function presignDownload(key: string) {
+  const client = getClient();
+  const command = new GetObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key });
+  return getSignedUrl(client, command, { expiresIn: 600 });
+}

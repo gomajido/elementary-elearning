@@ -26,6 +26,7 @@ export const QuizRepository = {
 
   async create(input: {
     courseId: string;
+    themeId: string;
     title: string;
     instructions?: string;
     timeLimitMinutes?: number;
