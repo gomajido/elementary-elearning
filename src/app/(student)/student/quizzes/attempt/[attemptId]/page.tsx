@@ -20,7 +20,11 @@ export default async function QuizAttemptPage({ params }: { params: Promise<{ at
     return (
       <div className="flex max-w-2xl flex-col gap-4">
         <h1 className="text-2xl font-semibold">{detail.quiz?.title}</h1>
-        <TakeQuizForm attemptId={attemptId} questions={detail.questions} />
+        <TakeQuizForm
+          attemptId={attemptId}
+          questions={detail.questions}
+          deadline={detail.deadline?.toISOString() ?? null}
+        />
       </div>
     );
   }

@@ -14,6 +14,26 @@ export function normalize(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+/**
+ * Slack on the server-side deadline, to absorb the round-trip of the client's
+ * auto-submit plus modest clock drift. Short enough not to be usable as extra
+ * working time on a realistically-sized quiz.
+ */
+export const SUBMIT_GRACE_MS = 60_000;
+
+/** When an attempt must be in by, or null when the quiz is untimed. */
+export function attemptDeadline(startedAt: Date, timeLimitMinutes: number | null): Date | null {
+  if (!timeLimitMinutes) return null;
+  return new Date(startedAt.getTime() + timeLimitMinutes * 60_000);
+}
+
+/** Past the deadline plus grace, a submission can't be trusted — the clock was stopped, not the work. */
+export function isPastGrace(startedAt: Date, timeLimitMinutes: number | null, now: Date): boolean {
+  const deadline = attemptDeadline(startedAt, timeLimitMinutes);
+  if (!deadline) return false;
+  return now.getTime() > deadline.getTime() + SUBMIT_GRACE_MS;
+}
+
 export const QuizService = {
   listForCourse: (courseId: string) => QuizRepository.listByCourse(courseId),
 
@@ -167,7 +187,10 @@ export const QuizService = {
     const quiz = await QuizRepository.findById(attempt.quizId);
     const questions = await QuizQuestionRepository.listWithOptionsByQuiz(attempt.quizId);
     const answers = await QuizAnswerRepository.listByAttempt(attemptId);
-    return { attempt, quiz, questions, answers };
+    // Absolute deadline rather than seconds-remaining: the client can then
+    // survive a reload without gaining time.
+    const deadline = attemptDeadline(attempt.startedAt, quiz?.timeLimitMinutes ?? null);
+    return { attempt, quiz, questions, answers, deadline };
   },
 
   /**
@@ -184,6 +207,15 @@ export const QuizService = {
     const attempt = await QuizAttemptRepository.findById(attemptId);
     if (!attempt || attempt.studentId !== studentId) throw new QuizError("Percobaan tidak ditemukan");
     if (attempt.status !== "in_progress") throw new QuizError("Percobaan sudah dikumpulkan");
+
+    // Checked against startedAt, not a client-supplied clock: pausing the tab
+    // or reloading doesn't buy time. The countdown auto-submits at zero, so an
+    // honest attempt lands well inside the grace window.
+    const quiz = await QuizRepository.findById(attempt.quizId);
+    if (isPastGrace(attempt.startedAt, quiz?.timeLimitMinutes ?? null, new Date())) {
+      await QuizAttemptRepository.markGraded(attemptId, 0);
+      throw new QuizError("Waktu habis — kuis ditutup dan tidak bisa dikumpulkan lagi.");
+    }
 
     const questions = await QuizQuestionRepository.listWithOptionsByQuiz(attempt.quizId);
     let totalScore = 0;
