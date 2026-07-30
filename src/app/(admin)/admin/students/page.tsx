@@ -1,11 +1,10 @@
 import { StudentService } from "@/server/services/student-service";
 import { AcademicService } from "@/server/services/academic-service";
+import { MediaRepository } from "@/server/repositories/media-repository";
 import { StudentForm } from "@/components/forms/student-form";
-import { GrantStudentAccessForm } from "@/components/forms/grant-student-access-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { ENROLLMENT_STATUS_LABELS, label } from "@/lib/labels";
+import { ActionDialog } from "@/components/dashboard/action-dialog";
+import { StudentsTable } from "@/components/tables/students-table";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function StudentsPage() {
   const [studentRows, classes, academicYears] = await Promise.all([
@@ -13,64 +12,26 @@ export default async function StudentsPage() {
     AcademicService.listClasses(),
     AcademicService.listAcademicYears(),
   ]);
+  const media = await MediaRepository.findManyForEntities(
+    "student",
+    studentRows.map((r) => r.student.id),
+  );
+  const photoByStudentId = Object.fromEntries(
+    media.map((m) => [m.entityId, { storageKey: m.storageKey, updatedAt: m.updatedAt }]),
+  );
 
   return (
-    <div className="flex max-w-4xl flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftarkan siswa</CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="flex max-w-6xl flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Siswa</h1>
+        <ActionDialog triggerLabel="Siswa Baru" title="Daftarkan siswa" contentClassName="sm:max-w-2xl">
           <StudentForm classes={classes} academicYears={academicYears} />
-        </CardContent>
-      </Card>
+        </ActionDialog>
+      </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Siswa</CardTitle>
-        </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>No. Induk</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>Kelas</TableHead>
-                <TableHead>Tgl Lahir</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Akses Portal</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {studentRows.map((row) => (
-                <TableRow key={row.student.id}>
-                  <TableCell>{row.student.admissionNumber}</TableCell>
-                  <TableCell>
-                    {row.student.firstName} {row.student.lastName}
-                  </TableCell>
-                  <TableCell>
-                    {row.className ? `${row.className}${row.classSection ? ` ${row.classSection}` : ""}` : "—"}
-                  </TableCell>
-                  <TableCell>{row.student.dateOfBirth}</TableCell>
-                  <TableCell>{label(ENROLLMENT_STATUS_LABELS, row.student.enrollmentStatus)}</TableCell>
-                  <TableCell>
-                    {row.student.userId ? (
-                      <Badge variant="secondary">Aktif</Badge>
-                    ) : (
-                      <GrantStudentAccessForm studentId={row.student.id} />
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {studentRows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    Belum ada siswa
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <StudentsTable rows={studentRows} classes={classes} photoByStudentId={photoByStudentId} />
         </CardContent>
       </Card>
     </div>

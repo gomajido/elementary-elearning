@@ -14,7 +14,22 @@ import { ROLE_HOME } from "@/lib/auth/roles";
 export async function requireRole(allowed: Role[]) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  if (!allowed.includes(user.role)) redirect(ROLE_HOME[user.role]);
+  if (!allowed.some((r) => user.roles.includes(r))) redirect(ROLE_HOME[user.roles[0]]);
+  return user;
+}
+
+/**
+ * Like requireRole, but checks only the *primary* role (roles[0]), ignoring
+ * any granted-on-top roles — e.g. a teacher granted admin access still
+ * fails requireBaseRole(["admin"]). Use for actions that must be
+ * restricted to real admins, such as granting/revoking further roles
+ * (see account-controller.ts) — otherwise a granted admin could escalate
+ * further or grant others.
+ */
+export async function requireBaseRole(allowed: Role[]) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  if (!allowed.includes(user.roles[0])) redirect(ROLE_HOME[user.roles[0]]);
   return user;
 }
 

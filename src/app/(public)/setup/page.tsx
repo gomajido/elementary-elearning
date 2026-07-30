@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
 
 import { AuthService } from "@/server/services/auth-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,9 +9,12 @@ export default async function SetupPage() {
   const adminExists = await AuthService.adminExists();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
       <Card className="w-full max-w-sm">
-        <CardHeader>
+        <CardHeader className="items-center text-center">
+          <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <ShieldCheck className="size-6" />
+          </div>
           <CardTitle>{adminExists ? "Pengaturan selesai" : "Buat akun admin"}</CardTitle>
           <CardDescription>
             {adminExists

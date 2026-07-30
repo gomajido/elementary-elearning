@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -7,7 +7,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
  * proxy file bytes through the app server: the browser uploads directly to
  * a presigned URL.
  */
-function getClient() {
+export function getClient() {
   return new S3Client({
     endpoint: process.env.S3_ENDPOINT,
     region: process.env.S3_REGION ?? "us-east-1",
@@ -29,6 +29,20 @@ export async function presignUpload(key: string, contentType: string) {
   return getSignedUrl(client, command, { expiresIn: 600 });
 }
 
-export function contentObjectUrl(key: string) {
-  return `/api/uploads/${encodeURIComponent(key)}`;
+/**
+ * The storage key is stable per (entityType, entityId) — re-uploads
+ * overwrite it (see media.ts) — so the URL must carry a cache-busting
+ * version param, otherwise the browser's cached response for that exact
+ * URL keeps showing the old photo after a re-upload.
+ */
+export function contentObjectUrl(key: string, version?: Date | string | number | null) {
+  const base = `/api/uploads/${encodeURIComponent(key)}`;
+  if (!version) return base;
+  const v = version instanceof Date ? version.getTime() : version;
+  return `${base}?v=${encodeURIComponent(v)}`;
+}
+
+export async function getObject(key: string) {
+  const client = getClient();
+  return client.send(new GetObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key }));
 }

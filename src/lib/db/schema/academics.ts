@@ -1,6 +1,6 @@
 import { pgTable, text, integer, boolean, timestamp, unique } from "drizzle-orm/pg-core";
 
-import { id, schoolId, timestamps } from "./_shared";
+import { id, schoolId, timestamps, softDelete } from "./_shared";
 import { users } from "./users";
 
 export const academicYears = pgTable("academic_years", {
@@ -10,7 +10,8 @@ export const academicYears = pgTable("academic_years", {
   endDate: text("end_date").notNull(),
   isCurrent: boolean("is_current").notNull().default(false),
   schoolId: schoolId(),
-  createdAt: timestamps.createdAt,
+  ...timestamps,
+  ...softDelete,
 });
 
 export const subjects = pgTable("subjects", {
@@ -18,7 +19,8 @@ export const subjects = pgTable("subjects", {
   name: text("name").notNull(), // e.g. "Mathematics"
   code: text("code"),
   schoolId: schoolId(),
-  createdAt: timestamps.createdAt,
+  ...timestamps,
+  ...softDelete,
 });
 
 export const teachers = pgTable("teachers", {
@@ -33,7 +35,6 @@ export const teachers = pgTable("teachers", {
   hireDate: text("hire_date"), // YYYY-MM-DD
   employeeNumber: text("employee_number").notNull().unique(),
   bio: text("bio"),
-  photoR2Key: text("photo_r2_key"),
   schoolId: schoolId(),
   ...timestamps,
   deletedAt: timestamp("deleted_at", { mode: "date" }),
@@ -51,6 +52,7 @@ export const classes = pgTable("classes", {
   capacity: integer("capacity"),
   schoolId: schoolId(),
   ...timestamps,
+  ...softDelete,
 });
 
 export const teacherSubjectAssignments = pgTable(

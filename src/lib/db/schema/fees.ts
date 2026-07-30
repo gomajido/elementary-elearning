@@ -1,6 +1,6 @@
-import { pgTable, text, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, boolean } from "drizzle-orm/pg-core";
 
-import { id, schoolId, timestamps } from "./_shared";
+import { id, schoolId, timestamps, softDelete } from "./_shared";
 import { students } from "./people";
 import { academicYears } from "./academics";
 import { users } from "./users";
@@ -20,6 +20,7 @@ export const feeStructures = pgTable("fee_structures", {
   frequency: text("frequency").notNull().$type<FeeFrequency>(),
   schoolId: schoolId(),
   ...timestamps,
+  ...softDelete,
 });
 
 export const INVOICE_STATUSES = ["unpaid", "partial", "paid", "void"] as const;
@@ -42,6 +43,7 @@ export const invoices = pgTable("invoices", {
   totalAmountCents: integer("total_amount_cents").notNull(),
   schoolId: schoolId(),
   ...timestamps,
+  ...softDelete,
 });
 
 export const invoiceLineItems = pgTable("invoice_line_items", {
@@ -77,6 +79,14 @@ export const payments = pgTable("payments", {
     .references(() => users.id), // the admin who entered it
   receiptNumber: text("receipt_number").notNull().unique(),
   notes: text("notes"),
+  // Admin-entered payments are presumed confirmed at entry (default true).
+  // Parent-submitted claims (see FeeService.submitPaymentClaim) always start
+  // false — admin must check the actual bank statement/proof and flip this
+  // before it counts toward the invoice balance (see summarizeInvoice).
+  isVerified: boolean("is_verified").notNull().default(true),
+  // Set only for parent-submitted claims — photo/PDF of the transfer receipt.
+  proofStorageKey: text("proof_storage_key"),
   schoolId: schoolId(),
   createdAt: timestamps.createdAt,
+  ...softDelete,
 });

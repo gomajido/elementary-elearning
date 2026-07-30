@@ -7,9 +7,19 @@ export type Role = (typeof ROLES)[number];
 
 export const users = pgTable("users", {
   id: id(),
-  email: text("email").notNull().unique(),
+  email: text("email").unique(),
+  // Alternate login identifier for accounts without email: NIP for
+  // teachers (mirrors teachers.employeeNumber), system-generated for
+  // students/guardians who don't have one. See RFC-less design note in
+  // auth-service.ts login().
+  username: text("username").unique(),
   passwordHash: text("password_hash").notNull(),
-  role: text("role").notNull().$type<Role>(),
+  // Every role this user has. roles[0] is the "primary" role — set once at
+  // creation, decides the default post-login landing page (ROLE_HOME) and
+  // gates who may grant/revoke further roles (see requireBaseRole in
+  // rbac.ts). Later entries are additive grants (e.g. a teacher granted
+  // admin access becomes ["teacher", "admin"]) — see AuthService.grantAdmin.
+  roles: text("roles").array().notNull().$type<Role[]>(),
   isActive: boolean("is_active").notNull().default(true),
   mustChangePassword: boolean("must_change_password").notNull().default(false),
   lastLoginAt: timestamp("last_login_at", { mode: "date" }),

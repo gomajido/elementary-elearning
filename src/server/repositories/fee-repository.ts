@@ -1,12 +1,12 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, isNull, and } from "drizzle-orm";
 
-import { getDb } from "@/lib/db";
+import { getDb, type Queryable } from "@/lib/db";
 import { feeStructures, invoices, invoiceLineItems, payments, students } from "@/lib/db/schema";
 
 export const FeeStructureRepository = {
   async list() {
     const db = getDb();
-    return db.select().from(feeStructures).orderBy(feeStructures.name);
+    return db.select().from(feeStructures).where(isNull(feeStructures.deletedAt)).orderBy(feeStructures.name);
   },
 
   async create(input: {
@@ -20,6 +20,29 @@ export const FeeStructureRepository = {
     const [row] = await db.insert(feeStructures).values(input).returning();
     return row;
   },
+
+  async update(
+    id: string,
+    input: Partial<{
+      name: string;
+      academicYearId: string;
+      amountCents: number;
+      frequency: "termly" | "annual" | "one_time" | "monthly";
+      gradeLevel: number | null;
+    }>,
+    tx: Queryable = getDb(),
+  ) {
+    const [row] = await tx
+      .update(feeStructures)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(feeStructures.id, id))
+      .returning();
+    return row;
+  },
+
+  async softDelete(id: string, tx: Queryable = getDb()) {
+    await tx.update(feeStructures).set({ deletedAt: new Date() }).where(eq(feeStructures.id, id));
+  },
 };
 
 export type NewInvoiceLineItem = { feeStructureId?: string; description: string; amountCents: number };
@@ -27,8 +50,16 @@ export type NewInvoiceLineItem = { feeStructureId?: string; description: string;
 export const InvoiceRepository = {
   async findById(id: string) {
     const db = getDb();
-    const [row] = await db.select().from(invoices).where(eq(invoices.id, id)).limit(1);
+    const [row] = await db
+      .select()
+      .from(invoices)
+      .where(and(eq(invoices.id, id), isNull(invoices.deletedAt)))
+      .limit(1);
     return row ?? null;
+  },
+
+  async softDelete(id: string, tx: Queryable = getDb()) {
+    await tx.update(invoices).set({ deletedAt: new Date() }).where(eq(invoices.id, id));
   },
 
   async listLineItems(invoiceId: string) {
@@ -78,8 +109,8 @@ export const InvoiceRepository = {
     return db
       .select({ invoice: invoices, payment: payments })
       .from(invoices)
-      .leftJoin(payments, eq(payments.invoiceId, invoices.id))
-      .where(eq(invoices.studentId, studentId))
+      .leftJoin(payments, and(eq(payments.invoiceId, invoices.id), isNull(payments.deletedAt)))
+      .where(and(eq(invoices.studentId, studentId), isNull(invoices.deletedAt)))
       .orderBy(desc(invoices.issueDate));
   },
 
@@ -89,8 +120,9 @@ export const InvoiceRepository = {
     return db
       .select({ invoice: invoices, payment: payments, student: students })
       .from(invoices)
-      .leftJoin(payments, eq(payments.invoiceId, invoices.id))
+      .leftJoin(payments, and(eq(payments.invoiceId, invoices.id), isNull(payments.deletedAt)))
       .innerJoin(students, eq(students.id, invoices.studentId))
+      .where(isNull(invoices.deletedAt))
       .orderBy(desc(invoices.issueDate));
   },
 };
@@ -106,15 +138,47 @@ export const PaymentRepository = {
     recordedByUserId: string;
     receiptNumber: string;
     notes?: string;
+    isVerified?: boolean;
+    proofStorageKey?: string;
   }) {
     const db = getDb();
     const [row] = await db.insert(payments).values(input).returning();
     return row;
   },
 
+  async findById(id: string) {
+    const db = getDb();
+    const [row] = await db
+      .select()
+      .from(payments)
+      .where(and(eq(payments.id, id), isNull(payments.deletedAt)))
+      .limit(1);
+    return row ?? null;
+  },
+
   async findByReceiptNumber(receiptNumber: string) {
     const db = getDb();
     const [row] = await db.select().from(payments).where(eq(payments.receiptNumber, receiptNumber)).limit(1);
     return row ?? null;
+  },
+
+  async update(
+    id: string,
+    input: Partial<{
+      amountCents: number;
+      method: "bank_transfer" | "cash" | "cheque" | "other";
+      referenceNumber: string;
+      paidAt: string;
+      notes: string;
+      isVerified: boolean;
+    }>,
+    tx: Queryable = getDb(),
+  ) {
+    const [row] = await tx.update(payments).set(input).where(eq(payments.id, id)).returning();
+    return row;
+  },
+
+  async softDelete(id: string, tx: Queryable = getDb()) {
+    await tx.update(payments).set({ deletedAt: new Date() }).where(eq(payments.id, id));
   },
 };

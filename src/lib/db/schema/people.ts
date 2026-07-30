@@ -1,8 +1,11 @@
 import { pgTable, text, boolean, timestamp, unique } from "drizzle-orm/pg-core";
 
-import { id, schoolId, timestamps } from "./_shared";
+import { id, schoolId, timestamps, softDelete } from "./_shared";
 import { users } from "./users";
 import { classes, academicYears } from "./academics";
+
+export const GENDERS = ["male", "female"] as const;
+export type Gender = (typeof GENDERS)[number];
 
 export const ENROLLMENT_STATUSES = [
   "active",
@@ -29,14 +32,13 @@ export const students = pgTable("students", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   dateOfBirth: text("date_of_birth").notNull(), // YYYY-MM-DD
-  gender: text("gender"),
+  gender: text("gender").notNull().$type<Gender>(),
   currentClassId: text("current_class_id").references(() => classes.id), // denormalized fast-lookup; enrollments is the historical record
   enrollmentStatus: text("enrollment_status")
     .notNull()
     .$type<EnrollmentStatus>()
     .default("active"),
   enrollmentDate: text("enrollment_date").notNull(), // YYYY-MM-DD
-  photoR2Key: text("photo_r2_key"),
   medicalNotes: text("medical_notes"),
   schoolId: schoolId(),
   ...timestamps,
@@ -56,6 +58,7 @@ export const guardians = pgTable("guardians", {
   address: text("address"),
   schoolId: schoolId(),
   ...timestamps,
+  ...softDelete,
 });
 
 // Many-to-many: siblings share guardians.

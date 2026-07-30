@@ -1,8 +1,7 @@
 import { GuardianService } from "@/server/services/guardian-service";
-import { GrantGuardianAccessForm } from "@/components/forms/grant-guardian-access-form";
+import { MediaRepository } from "@/server/repositories/media-repository";
+import { GuardiansTable } from "@/components/tables/guardians-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 
 export default async function GuardiansPage() {
   const rows = await GuardianService.listGuardiansWithStudents();
@@ -18,47 +17,21 @@ export default async function GuardiansPage() {
   }
   const guardians = Array.from(byId.values());
 
+  const media = await MediaRepository.findManyForEntities(
+    "guardian",
+    guardians.map((g) => g.guardian.id),
+  );
+  const photoByGuardianId = Object.fromEntries(
+    media.map((m) => [m.entityId, { storageKey: m.storageKey, updatedAt: m.updatedAt }]),
+  );
+
   return (
-    <Card className="max-w-4xl">
+    <Card className="max-w-6xl">
       <CardHeader>
         <CardTitle>Wali</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nama</TableHead>
-              <TableHead>Anak</TableHead>
-              <TableHead>Kontak</TableHead>
-              <TableHead>Akses Portal</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {guardians.map(({ guardian, children }) => (
-              <TableRow key={guardian.id}>
-                <TableCell>
-                  {guardian.firstName} {guardian.lastName}
-                </TableCell>
-                <TableCell>{children.join(", ") || "—"}</TableCell>
-                <TableCell>{guardian.phone ?? guardian.email ?? "—"}</TableCell>
-                <TableCell>
-                  {guardian.userId ? (
-                    <Badge variant="secondary">Aktif</Badge>
-                  ) : (
-                    <GrantGuardianAccessForm guardianId={guardian.id} defaultEmail={guardian.email ?? undefined} />
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-            {guardians.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
-                  Belum ada wali
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        <GuardiansTable rows={guardians} photoByGuardianId={photoByGuardianId} />
       </CardContent>
     </Card>
   );

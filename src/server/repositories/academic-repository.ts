@@ -1,18 +1,22 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, isNull, and } from "drizzle-orm";
 
-import { getDb } from "@/lib/db";
+import { getDb, type Queryable } from "@/lib/db";
 import { academicYears, subjects, classes, teachers, teacherSubjectAssignments } from "@/lib/db/schema";
 import { alias } from "drizzle-orm/pg-core";
 
 export const AcademicYearRepository = {
   async list() {
     const db = getDb();
-    return db.select().from(academicYears).orderBy(desc(academicYears.startDate));
+    return db.select().from(academicYears).where(isNull(academicYears.deletedAt)).orderBy(desc(academicYears.startDate));
   },
 
   async findById(id: string) {
     const db = getDb();
-    const [row] = await db.select().from(academicYears).where(eq(academicYears.id, id)).limit(1);
+    const [row] = await db
+      .select()
+      .from(academicYears)
+      .where(and(eq(academicYears.id, id), isNull(academicYears.deletedAt)))
+      .limit(1);
     return row ?? null;
   },
 
@@ -20,6 +24,19 @@ export const AcademicYearRepository = {
     const db = getDb();
     const [row] = await db.insert(academicYears).values(input).returning();
     return row;
+  },
+
+  async update(id: string, input: Partial<{ name: string; startDate: string; endDate: string; isCurrent: boolean }>, tx: Queryable = getDb()) {
+    const [row] = await tx
+      .update(academicYears)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(academicYears.id, id))
+      .returning();
+    return row;
+  },
+
+  async softDelete(id: string, tx: Queryable = getDb()) {
+    await tx.update(academicYears).set({ deletedAt: new Date() }).where(eq(academicYears.id, id));
   },
 
   async unsetCurrent() {
@@ -31,13 +48,26 @@ export const AcademicYearRepository = {
 export const SubjectRepository = {
   async list() {
     const db = getDb();
-    return db.select().from(subjects).orderBy(subjects.name);
+    return db.select().from(subjects).where(isNull(subjects.deletedAt)).orderBy(subjects.name);
   },
 
   async create(input: { name: string; code?: string }) {
     const db = getDb();
     const [row] = await db.insert(subjects).values(input).returning();
     return row;
+  },
+
+  async update(id: string, input: Partial<{ name: string; code: string }>, tx: Queryable = getDb()) {
+    const [row] = await tx
+      .update(subjects)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(subjects.id, id))
+      .returning();
+    return row;
+  },
+
+  async softDelete(id: string, tx: Queryable = getDb()) {
+    await tx.update(subjects).set({ deletedAt: new Date() }).where(eq(subjects.id, id));
   },
 };
 
@@ -47,6 +77,7 @@ export const ClassRepository = {
     return db
       .select()
       .from(classes)
+      .where(isNull(classes.deletedAt))
       .orderBy(classes.gradeLevel, classes.section);
   },
 
@@ -55,13 +86,17 @@ export const ClassRepository = {
     return db
       .select()
       .from(classes)
-      .where(eq(classes.academicYearId, academicYearId))
+      .where(and(eq(classes.academicYearId, academicYearId), isNull(classes.deletedAt)))
       .orderBy(classes.gradeLevel, classes.section);
   },
 
   async findById(id: string) {
     const db = getDb();
-    const [row] = await db.select().from(classes).where(eq(classes.id, id)).limit(1);
+    const [row] = await db
+      .select()
+      .from(classes)
+      .where(and(eq(classes.id, id), isNull(classes.deletedAt)))
+      .limit(1);
     return row ?? null;
   },
 
@@ -70,7 +105,7 @@ export const ClassRepository = {
     return db
       .select()
       .from(classes)
-      .where(eq(classes.classTeacherId, classTeacherId))
+      .where(and(eq(classes.classTeacherId, classTeacherId), isNull(classes.deletedAt)))
       .orderBy(classes.gradeLevel, classes.section);
   },
 
@@ -87,6 +122,30 @@ export const ClassRepository = {
     return row;
   },
 
+  async update(
+    id: string,
+    input: Partial<{
+      name: string;
+      section: string | null;
+      gradeLevel: number;
+      academicYearId: string;
+      classTeacherId: string | null;
+      capacity: number | null;
+    }>,
+    tx: Queryable = getDb(),
+  ) {
+    const [row] = await tx
+      .update(classes)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(classes.id, id))
+      .returning();
+    return row;
+  },
+
+  async softDelete(id: string, tx: Queryable = getDb()) {
+    await tx.update(classes).set({ deletedAt: new Date() }).where(eq(classes.id, id));
+  },
+
   async listWithDetails() {
     const db = getDb();
     return db
@@ -99,6 +158,7 @@ export const ClassRepository = {
       .from(classes)
       .innerJoin(academicYears, eq(classes.academicYearId, academicYears.id))
       .leftJoin(teachers, eq(classes.classTeacherId, teachers.id))
+      .where(isNull(classes.deletedAt))
       .orderBy(classes.gradeLevel, classes.section);
   },
 };
@@ -130,6 +190,7 @@ export const TeacherSubjectAssignmentRepository = {
       .from(teacherSubjectAssignments)
       .innerJoin(teachers, eq(teacherSubjectAssignments.teacherId, teachers.id))
       .innerJoin(cls, eq(teacherSubjectAssignments.classId, cls.id))
-      .innerJoin(subjects, eq(teacherSubjectAssignments.subjectId, subjects.id));
+      .innerJoin(subjects, eq(teacherSubjectAssignments.subjectId, subjects.id))
+      .where(and(isNull(teachers.deletedAt), isNull(cls.deletedAt), isNull(subjects.deletedAt)));
   },
 };

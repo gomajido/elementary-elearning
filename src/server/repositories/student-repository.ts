@@ -1,7 +1,7 @@
 import { eq, isNull, and } from "drizzle-orm";
 
 import { getDb, type Queryable } from "@/lib/db";
-import { students, guardians, studentGuardians, enrollments, classes } from "@/lib/db/schema";
+import { students, guardians, studentGuardians, enrollments, classes, type EnrollmentStatus, type Gender } from "@/lib/db/schema";
 
 export type NewStudent = {
   id?: string;
@@ -9,10 +9,12 @@ export type NewStudent = {
   firstName: string;
   lastName: string;
   dateOfBirth: string;
-  gender?: string;
+  gender: Gender;
   currentClassId?: string;
   enrollmentDate: string;
 };
+
+export type StudentUpdate = Partial<NewStudent> & { enrollmentStatus?: EnrollmentStatus };
 
 export const StudentRepository = {
   async list() {
@@ -49,6 +51,15 @@ export const StudentRepository = {
     return row;
   },
 
+  async update(id: string, input: StudentUpdate, tx: Queryable = getDb()) {
+    const [row] = await tx.update(students).set({ ...input, updatedAt: new Date() }).where(eq(students.id, id)).returning();
+    return row;
+  },
+
+  async softDelete(id: string, tx: Queryable = getDb()) {
+    await tx.update(students).set({ deletedAt: new Date() }).where(eq(students.id, id));
+  },
+
   async listWithDetails() {
     const db = getDb();
     return db
@@ -82,7 +93,7 @@ export const StudentRepository = {
       .select({ guardian: guardians, link: studentGuardians })
       .from(studentGuardians)
       .innerJoin(guardians, eq(studentGuardians.guardianId, guardians.id))
-      .where(eq(studentGuardians.studentId, studentId));
+      .where(and(eq(studentGuardians.studentId, studentId), isNull(guardians.deletedAt)));
   },
 };
 
@@ -95,6 +106,8 @@ export type NewGuardian = {
   email?: string;
   address?: string;
 };
+
+export type GuardianUpdate = Partial<Omit<NewGuardian, "id">>;
 
 export type NewStudentGuardianLink = {
   id?: string;
@@ -117,14 +130,35 @@ export const GuardianRepository = {
 
   async findById(id: string) {
     const db = getDb();
-    const [row] = await db.select().from(guardians).where(eq(guardians.id, id)).limit(1);
+    const [row] = await db
+      .select()
+      .from(guardians)
+      .where(and(eq(guardians.id, id), isNull(guardians.deletedAt)))
+      .limit(1);
     return row ?? null;
   },
 
   async findByUserId(userId: string) {
     const db = getDb();
-    const [row] = await db.select().from(guardians).where(eq(guardians.userId, userId)).limit(1);
+    const [row] = await db
+      .select()
+      .from(guardians)
+      .where(and(eq(guardians.userId, userId), isNull(guardians.deletedAt)))
+      .limit(1);
     return row ?? null;
+  },
+
+  async update(id: string, input: GuardianUpdate, tx: Queryable = getDb()) {
+    const [row] = await tx
+      .update(guardians)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(guardians.id, id))
+      .returning();
+    return row;
+  },
+
+  async softDelete(id: string, tx: Queryable = getDb()) {
+    await tx.update(guardians).set({ deletedAt: new Date() }).where(eq(guardians.id, id));
   },
 
   /** All guardians, with their linked students' names (comma-joined-friendly array). */
@@ -135,6 +169,7 @@ export const GuardianRepository = {
       .from(guardians)
       .leftJoin(studentGuardians, eq(studentGuardians.guardianId, guardians.id))
       .leftJoin(students, eq(students.id, studentGuardians.studentId))
+      .where(isNull(guardians.deletedAt))
       .orderBy(guardians.lastName, guardians.firstName);
   },
 
@@ -144,7 +179,7 @@ export const GuardianRepository = {
       .select({ student: students })
       .from(studentGuardians)
       .innerJoin(students, eq(students.id, studentGuardians.studentId))
-      .where(eq(studentGuardians.guardianId, guardianId));
+      .where(and(eq(studentGuardians.guardianId, guardianId), isNull(students.deletedAt)));
   },
 
   async linkUser(guardianId: string, userId: string, tx: Queryable = getDb()) {

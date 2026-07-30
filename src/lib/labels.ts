@@ -2,6 +2,13 @@
 // in English (they're internal identifiers used in queries/filters) — only
 // what's shown on screen is translated here, in one place.
 
+export const ROLE_LABELS: Record<string, string> = {
+  admin: "Admin",
+  teacher: "Guru",
+  student: "Siswa",
+  parent: "Wali",
+};
+
 export const ATTENDANCE_STATUS_LABELS: Record<string, string> = {
   present: "Hadir",
   absent: "Tidak Hadir",
@@ -28,6 +35,11 @@ export const FEE_FREQUENCY_LABELS: Record<string, string> = {
   annual: "Tahunan",
   one_time: "Sekali bayar",
   monthly: "Bulanan",
+};
+
+export const GENDER_LABELS: Record<string, string> = {
+  male: "Laki-laki",
+  female: "Perempuan",
 };
 
 export const ENROLLMENT_STATUS_LABELS: Record<string, string> = {

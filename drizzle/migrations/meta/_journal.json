@@ -8,6 +8,41 @@
       "when": 1785211304306,
       "tag": "0000_wide_nighthawk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785226135825,
+      "tag": "0001_optimal_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785275533745,
+      "tag": "0002_petite_overlord",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785276855807,
+      "tag": "0003_bored_payback",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785283477578,
+      "tag": "0004_cold_quentin_quire",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785289982886,
+      "tag": "0005_demonic_blazing_skull",
+      "breakpoints": true
     }
   ]
 }

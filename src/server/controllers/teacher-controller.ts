@@ -41,3 +41,40 @@ export async function createTeacherAction(_prev: CreateTeacherState, formData: F
     throw err;
   }
 }
+
+export type UpdateTeacherState = { error?: string };
+
+const updateTeacherSchema = z.object({
+  teacherId: z.string().min(1),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  employeeNumber: z.string().min(1),
+  phone: z.string().optional(),
+  hireDate: z.string().optional(),
+});
+
+export async function updateTeacherAction(_prev: UpdateTeacherState, formData: FormData): Promise<UpdateTeacherState> {
+  await requireRole(["admin"]);
+  const raw = Object.fromEntries(formData.entries());
+  const parsed = updateTeacherSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+  const { teacherId, ...input } = parsed.data;
+
+  try {
+    await TeacherService.updateTeacher(teacherId, { ...input, phone: input.phone || undefined, hireDate: input.hireDate || undefined });
+  } catch (err) {
+    if (err instanceof Error && /UNIQUE/i.test(err.message)) {
+      return { error: "Nomor pegawai sudah digunakan" };
+    }
+    throw err;
+  }
+
+  revalidatePath("/admin/teachers");
+  return {};
+}
+
+export async function deleteTeacherAction(teacherId: string) {
+  await requireRole(["admin"]);
+  await TeacherService.deleteTeacher(teacherId);
+  revalidatePath("/admin/teachers");
+}

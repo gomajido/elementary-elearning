@@ -6,10 +6,12 @@ import { AttendanceService } from "@/server/services/attendance-service";
 import { FeeService } from "@/server/services/fee-service";
 import { GradeService } from "@/server/services/grade-service";
 import { StudentRepository } from "@/server/repositories/student-repository";
+import { AttendanceHistoryTable } from "@/components/tables/attendance-history-table";
+import { SubmitPaymentProofDialog } from "@/components/forms/submit-payment-proof-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ATTENDANCE_STATUS_LABELS, INVOICE_STATUS_LABELS, label } from "@/lib/labels";
+import { INVOICE_STATUS_LABELS, label } from "@/lib/labels";
 
 function formatCents(cents: number) {
   return `Rp${(cents / 100).toLocaleString("id-ID")}`;
@@ -68,31 +70,7 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ st
           <CardTitle>Kehadiran</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tanggal</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Catatan</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {attendance.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell>{record.date}</TableCell>
-                  <TableCell>{label(ATTENDANCE_STATUS_LABELS, record.status)}</TableCell>
-                  <TableCell>{record.notes ?? "—"}</TableCell>
-                </TableRow>
-              ))}
-              {attendance.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    Belum ada catatan kehadiran
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <AttendanceHistoryTable rows={attendance} />
         </CardContent>
       </Card>
 
@@ -108,22 +86,31 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ st
                 <TableHead>Total</TableHead>
                 <TableHead>Sisa Tagihan</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invoices.map(({ invoice, balanceCents, status }) => (
+              {invoices.map(({ invoice, balanceCents, status, hasPendingVerification }) => (
                 <TableRow key={invoice.id}>
                   <TableCell>{invoice.invoiceNumber}</TableCell>
                   <TableCell>{formatCents(invoice.totalAmountCents)}</TableCell>
                   <TableCell>{formatCents(balanceCents)}</TableCell>
                   <TableCell>
-                    <Badge variant={STATUS_VARIANT[status]}>{label(INVOICE_STATUS_LABELS, status)}</Badge>
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant={STATUS_VARIANT[status]}>{label(INVOICE_STATUS_LABELS, status)}</Badge>
+                      {hasPendingVerification && <Badge variant="outline">Menunggu verifikasi</Badge>}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {balanceCents > 0 && (
+                      <SubmitPaymentProofDialog invoiceId={invoice.id} invoiceNumber={invoice.invoiceNumber} />
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
               {invoices.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
                     Belum ada tagihan
                   </TableCell>
                 </TableRow>

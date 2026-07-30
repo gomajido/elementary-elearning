@@ -65,19 +65,22 @@ test.describe.serial("golden path across all four roles", () => {
     await expect(page).toHaveURL(/\/admin\/dashboard/);
 
     await page.goto("/admin/academic-years");
+    await page.getByRole("button", { name: "Tahun Ajaran Baru" }).click();
     await page.fill('input[name="name"]', `${RUN}/${RUN}`);
     await page.fill('input[name="startDate"]', "2026-09-01");
     await page.fill('input[name="endDate"]', "2027-07-31");
     await page.check('input[name="isCurrent"]');
     await submit(page, "Tambah tahun ajaran");
-    await expect(page.getByText(`${RUN}/${RUN}`).first()).toBeVisible();
+    await expect(page.getByText(`${RUN}/${RUN}`, { exact: true })).toBeVisible();
 
     await page.goto("/admin/subjects");
+    await page.getByRole("button", { name: "Mata Pelajaran Baru" }).click();
     await page.fill('input[name="name"]', `Mathematics-${RUN}`);
     await submit(page, "Tambah mata pelajaran");
-    await expect(page.getByText(`Mathematics-${RUN}`)).toBeVisible();
+    await expect(page.getByText(`Mathematics-${RUN}`, { exact: true })).toBeVisible();
 
     await page.goto("/admin/teachers");
+    await page.getByRole("button", { name: "Guru Baru" }).click();
     await page.fill('input[name="firstName"]', "Jane");
     await page.fill('input[name="lastName"]', `Doe-${RUN}`);
     await page.fill('input[name="employeeNumber"]', `EMP-${RUN}`);
@@ -87,6 +90,7 @@ test.describe.serial("golden path across all four roles", () => {
     teacherTempPassword = (await page.locator("code").first().textContent())!;
 
     await page.goto("/admin/classes");
+    await page.getByRole("button", { name: "Kelas Baru" }).click();
     await page.fill('input[name="name"]', `Primary-${RUN}`);
     await page.fill('input[name="section"]', "A");
     await page.fill('input[name="gradeLevel"]', "3");
@@ -96,11 +100,13 @@ test.describe.serial("golden path across all four roles", () => {
     await expect(page.getByText(`Primary-${RUN}`).first()).toBeVisible();
 
     await page.goto("/admin/students");
+    await page.getByRole("button", { name: "Siswa Baru" }).click();
     await page.fill('input[name="admissionNumber"]', `ADM-${RUN}`);
     await page.fill('input[name="firstName"]', "Amina");
     await page.fill('input[name="lastName"]', `Bello-${RUN}`);
     await page.fill('input[name="dateOfBirth"]', "2018-05-10");
     await page.fill('input[name="enrollmentDate"]', "2026-09-01");
+    await selectOption(page, "Jenis kelamin", "Perempuan");
     await selectOption(page, "Kelas", `Primary-${RUN}`);
     await selectOption(page, "Tahun ajaran", `${RUN}/${RUN}`);
     await page.fill('input[name="guardian1FirstName"]', "Fatima");
@@ -109,19 +115,32 @@ test.describe.serial("golden path across all four roles", () => {
     await page.fill('input[name="guardian1Email"]', GUARDIAN_EMAIL);
     await submit(page, "Daftarkan siswa");
     await expect(page.getByText(`ADM-${RUN}`)).toBeVisible();
+    await page.keyboard.press("Escape"); // close the dialog to interact with the new row underneath
 
-    // Grant portal access to the student
-    await page.fill('input[name="email"]', STUDENT_EMAIL);
-    await submit(page, "Beri akses");
-    await expect(page.getByText("Kata sandi sementara")).toBeVisible();
-    studentTempPassword = (await page.locator("code").first().textContent())!;
+    // Grant portal access to the student — via the row's kebab menu, which
+    // opens a modal (see student-row-actions.tsx / grant-student-access-dialog.tsx).
+    const studentRow = page.locator("tr", { hasText: `ADM-${RUN}` });
+    await studentRow.getByRole("button", { name: /Aksi untuk/ }).click();
+    await page.getByRole("menuitem", { name: "Kelola akses portal" }).click();
+    const accessDialog = page.getByRole("dialog", { name: /Kelola akses portal/ });
+    await accessDialog.locator('input[name="email"]').fill(STUDENT_EMAIL);
+    await accessDialog.getByRole("button", { name: "Beri akses" }).click();
+    await expect(accessDialog.getByText("Kata sandi sementara")).toBeVisible();
+    studentTempPassword = (await accessDialog.locator("code").first().textContent())!;
+    await page.keyboard.press("Escape");
 
-    // Grant portal access to the guardian
+    // Grant portal access to the guardian — via the row's kebab menu, which
+    // opens a modal (see guardian-row-actions.tsx / grant-guardian-access-dialog.tsx).
     await page.goto("/admin/guardians");
-    await page.fill('input[name="email"]', GUARDIAN_EMAIL);
-    await submit(page, "Beri akses");
-    await expect(page.getByText("Kata sandi sementara")).toBeVisible();
-    guardianTempPassword = (await page.locator("code").first().textContent())!;
+    const guardianRow = page.locator("tr", { hasText: `Bello-${RUN}` });
+    await guardianRow.getByRole("button", { name: /Aksi untuk/ }).click();
+    await page.getByRole("menuitem", { name: "Kelola akses portal" }).click();
+    const guardianAccessDialog = page.getByRole("dialog", { name: /Kelola akses portal/ });
+    await guardianAccessDialog.locator('input[name="email"]').fill(GUARDIAN_EMAIL);
+    await guardianAccessDialog.getByRole("button", { name: "Beri akses" }).click();
+    await expect(guardianAccessDialog.getByText("Kata sandi sementara")).toBeVisible();
+    guardianTempPassword = (await guardianAccessDialog.locator("code").first().textContent())!;
+    await page.keyboard.press("Escape");
   });
 
   test("teacher builds a course with content, an assignment, and a quiz", async ({ page }) => {
@@ -136,12 +155,14 @@ test.describe.serial("golden path across all four roles", () => {
     await expect(page).toHaveURL(/\/teacher\/dashboard/);
 
     await page.goto("/teacher/courses");
+    await page.getByRole("button", { name: "Kursus Baru" }).click();
     await page.fill('input[name="title"]', `Fractions-${RUN}`);
     await selectOption(page, "Mata pelajaran", `Mathematics-${RUN}`);
     await selectOption(page, "Kelas", `Primary-${RUN}`);
     await selectOption(page, "Tahun ajaran", `${RUN}/${RUN}`);
     await submit(page, "Buat kursus");
     await expect(page.getByText(`Fractions-${RUN}`)).toBeVisible();
+    await page.keyboard.press("Escape"); // close the dialog to interact with the new row underneath
     await page.getByText(`Fractions-${RUN}`).click();
     await expect(page).toHaveURL(/\/teacher\/courses\//);
     courseUrl = page.url();

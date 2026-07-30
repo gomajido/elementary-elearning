@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/rbac";
 import { FeeService, FeeError } from "@/server/services/fee-service";
+import { GuardianService, GuardianPortalError } from "@/server/services/guardian-service";
+import { presignUpload } from "@/lib/storage/client";
 import { FEE_FREQUENCIES, PAYMENT_METHODS } from "@/lib/db/schema";
 
 export type ActionState = { error?: string };
@@ -31,6 +33,46 @@ export async function createFeeStructureAction(_prev: ActionState, formData: For
   await FeeService.createFeeStructure(parsed.data);
   revalidatePath("/admin/fees/structures");
   return {};
+}
+
+const updateFeeStructureSchema = feeStructureSchema.extend({ feeStructureId: z.string().min(1) });
+
+export async function updateFeeStructureAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole(["admin"]);
+  const parsed = updateFeeStructureSchema.safeParse({
+    feeStructureId: formData.get("feeStructureId"),
+    name: formData.get("name"),
+    academicYearId: formData.get("academicYearId"),
+    amountCents: Number(formData.get("amount")) * 100,
+    frequency: formData.get("frequency"),
+    gradeLevel: formData.get("gradeLevel") || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+  const { feeStructureId, ...input } = parsed.data;
+
+  await FeeService.updateFeeStructure(feeStructureId, input);
+  revalidatePath("/admin/fees/structures");
+  return {};
+}
+
+export async function deleteFeeStructureAction(feeStructureId: string) {
+  await requireRole(["admin"]);
+  await FeeService.deleteFeeStructure(feeStructureId);
+  revalidatePath("/admin/fees/structures");
+}
+
+export async function deleteInvoiceAction(invoiceId: string) {
+  await requireRole(["admin"]);
+  await FeeService.deleteInvoice(invoiceId);
+  revalidatePath("/admin/fees/invoices");
+  revalidatePath("/admin/fees");
+}
+
+export async function deletePaymentAction(paymentId: string, invoiceId: string) {
+  await requireRole(["admin"]);
+  await FeeService.deletePayment(paymentId);
+  revalidatePath(`/admin/fees/invoices/${invoiceId}`);
+  revalidatePath("/admin/fees");
 }
 
 const invoiceSchema = z.object({
@@ -112,9 +154,10 @@ export async function recordPaymentAction(_prev: ActionState, formData: FormData
     notes: formData.get("notes") || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+  const isVerified = formData.get("isVerified") === "on";
 
   try {
-    await FeeService.recordPayment({ ...parsed.data, recordedByUserId: user.id });
+    await FeeService.recordPayment({ ...parsed.data, recordedByUserId: user.id, isVerified });
   } catch (err) {
     if (err instanceof FeeError) return { error: err.message };
     throw err;
@@ -122,4 +165,94 @@ export async function recordPaymentAction(_prev: ActionState, formData: FormData
 
   revalidatePath(`/admin/fees/invoices/${parsed.data.invoiceId}`);
   return {};
+}
+
+const updatePaymentSchema = z.object({
+  paymentId: z.string().min(1),
+  invoiceId: z.string().min(1),
+  amountCents: z.coerce.number().int().positive(),
+  method: z.enum(PAYMENT_METHODS),
+  referenceNumber: z.string().optional(),
+  paidAt: z.string().min(1),
+  notes: z.string().optional(),
+});
+
+export async function updatePaymentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole(["admin"]);
+  const parsed = updatePaymentSchema.safeParse({
+    paymentId: formData.get("paymentId"),
+    invoiceId: formData.get("invoiceId"),
+    amountCents: Number(formData.get("amount")) * 100,
+    method: formData.get("method"),
+    referenceNumber: formData.get("referenceNumber") || undefined,
+    paidAt: formData.get("paidAt"),
+    notes: formData.get("notes") || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+  const isVerified = formData.get("isVerified") === "on";
+  const { paymentId, invoiceId, ...input } = parsed.data;
+
+  await FeeService.updatePayment(paymentId, { ...input, isVerified });
+  revalidatePath(`/admin/fees/invoices/${invoiceId}`);
+  return {};
+}
+
+const PROOF_MAX_CONTENT_TYPES = /^(image\/|application\/pdf$)/;
+
+/** Parent uploading proof of a bank transfer — presigns the S3 PUT, same primitive photo-upload-field.tsx uses. */
+export async function requestPaymentProofUploadAction(invoiceId: string, contentType: string) {
+  const user = await requireRole(["parent"]);
+  const invoice = await FeeService.findInvoiceById(invoiceId);
+  if (!invoice) throw new Error("Tagihan tidak ditemukan");
+  await GuardianService.assertGuardianOwnsStudent(user.id, invoice.studentId);
+  if (!PROOF_MAX_CONTENT_TYPES.test(contentType)) throw new Error("File harus berupa gambar atau PDF");
+
+  const key = `payments/proof/${crypto.randomUUID()}`;
+  const uploadUrl = await presignUpload(key, contentType);
+  return { uploadUrl, key };
+}
+
+export type SubmitProofState = { error?: string; success?: boolean };
+
+const proofSchema = z.object({
+  invoiceId: z.string().min(1),
+  amountCents: z.coerce.number().int().positive(),
+  method: z.enum(PAYMENT_METHODS),
+  referenceNumber: z.string().optional(),
+  paidAt: z.string().min(1),
+  notes: z.string().optional(),
+  proofStorageKey: z.string().min(1, "Unggah bukti transfer terlebih dahulu"),
+});
+
+export async function submitPaymentProofAction(
+  _prev: SubmitProofState,
+  formData: FormData
+): Promise<SubmitProofState> {
+  const user = await requireRole(["parent"]);
+  const parsed = proofSchema.safeParse({
+    invoiceId: formData.get("invoiceId"),
+    amountCents: Number(formData.get("amount")) * 100,
+    method: formData.get("method"),
+    referenceNumber: formData.get("referenceNumber") || undefined,
+    paidAt: formData.get("paidAt"),
+    notes: formData.get("notes") || undefined,
+    proofStorageKey: formData.get("proofStorageKey"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+
+  const invoice = await FeeService.findInvoiceById(parsed.data.invoiceId);
+  if (!invoice) return { error: "Tagihan tidak ditemukan" };
+
+  try {
+    await GuardianService.assertGuardianOwnsStudent(user.id, invoice.studentId);
+    await FeeService.submitPaymentClaim({ ...parsed.data, submittedByUserId: user.id });
+  } catch (err) {
+    if (err instanceof GuardianPortalError) return { error: err.message };
+    if (err instanceof FeeError) return { error: err.message };
+    throw err;
+  }
+
+  revalidatePath(`/admin/fees/invoices/${parsed.data.invoiceId}`);
+  revalidatePath(`/parent/children/${invoice.studentId}`);
+  return { success: true };
 }

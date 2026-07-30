@@ -37,6 +37,15 @@ export const TeacherRepository = {
     const [row] = await tx.insert(teachers).values(input).returning();
     return row;
   },
+
+  async update(id: string, input: TeacherUpdate, tx: Queryable = getDb()) {
+    const [row] = await tx.update(teachers).set({ ...input, updatedAt: new Date() }).where(eq(teachers.id, id)).returning();
+    return row;
+  },
+
+  async softDelete(id: string, tx: Queryable = getDb()) {
+    await tx.update(teachers).set({ deletedAt: new Date() }).where(eq(teachers.id, id));
+  },
 };
 
 export type NewTeacher = {
@@ -48,3 +57,5 @@ export type NewTeacher = {
   phone?: string;
   hireDate?: string;
 };
+
+export type TeacherUpdate = Partial<Omit<NewTeacher, "userId">>;

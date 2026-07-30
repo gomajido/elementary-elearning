@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { grantStudentPortalAccessAction, type GrantStudentAccessState } from "@/server/controllers/student-controller";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const initialState: GrantStudentAccessState = {};
 
@@ -13,23 +14,34 @@ export function GrantStudentAccessForm({ studentId }: { studentId: string }) {
 
   if (state.tempPassword) {
     return (
-      <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs dark:border-amber-900 dark:bg-amber-950">
-        <p className="font-medium">
-          Kata sandi sementara: <code className="rounded bg-background px-1">{state.tempPassword}</code>
+      <div className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm dark:border-amber-900 dark:bg-amber-950">
+        {state.username && (
+          <p className="font-medium">
+            Username: <code className="rounded bg-background px-1.5 py-0.5">{state.username}</code>
+          </p>
+        )}
+        <p className="mt-1 font-medium">
+          Kata sandi sementara: <code className="rounded bg-background px-1.5 py-0.5">{state.tempPassword}</code>
         </p>
-        <p className="text-muted-foreground">Bagikan sekarang — hanya ditampilkan sekali.</p>
+        <p className="mt-1 text-muted-foreground">Bagikan sekarang — hanya ditampilkan sekali.</p>
       </div>
     );
   }
 
   return (
-    <form action={formAction} className="flex items-center gap-2">
+    <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="studentId" value={studentId} />
-      <Input name="email" type="email" placeholder="siswa@email.com" className="h-7 w-44 text-xs" required />
-      <Button type="submit" disabled={pending} size="sm" variant="outline">
-        {pending ? "…" : "Beri akses"}
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="email">Email siswa (opsional)</Label>
+        <Input id="email" name="email" type="email" placeholder="siswa@email.com" />
+        <p className="text-xs text-muted-foreground">
+          Kosongkan jika siswa tidak memiliki email — sistem akan membuat username otomatis.
+        </p>
+      </div>
+      {state.error && <p className="text-sm text-destructive">{state.error}</p>}
+      <Button type="submit" disabled={pending} className="w-fit">
+        {pending ? "Memproses…" : "Beri akses"}
       </Button>
-      {state.error && <p className="text-xs text-destructive">{state.error}</p>}
     </form>
   );
 }

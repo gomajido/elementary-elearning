@@ -1,19 +1,25 @@
 import type { ReactNode } from "react";
+import { Home, BookOpen, Award, ShieldCheck } from "lucide-react";
 
 import { requireRole } from "@/lib/auth/rbac";
-import { RoleShell } from "@/components/layout/role-shell";
+import { StudentShell, type StudentNavItem } from "@/components/layout/student-shell";
 
-const NAV_ITEMS = [
-  { href: "/student/dashboard", label: "Dasbor" },
-  { href: "/student/courses", label: "Kursus" },
-  { href: "/student/grades", label: "Nilai" },
+const NAV_ITEMS: StudentNavItem[] = [
+  { href: "/student/dashboard", label: "Beranda", icon: <Home className="size-6" /> },
+  { href: "/student/courses", label: "Kursus", icon: <BookOpen className="size-6" /> },
+  { href: "/student/grades", label: "Nilai", icon: <Award className="size-6" /> },
 ];
 
 export default async function StudentLayout({ children }: { children: ReactNode }) {
   const user = await requireRole(["student"]);
+  const navItems =
+    user.roles[0] !== "admin" && user.roles.includes("admin")
+      ? [...NAV_ITEMS, { href: "/admin/dashboard", label: "Portal Admin", icon: <ShieldCheck className="size-6" /> }]
+      : NAV_ITEMS;
+
   return (
-    <RoleShell roleLabel="Siswa" email={user.email} navItems={NAV_ITEMS}>
+    <StudentShell email={user.email ?? user.username ?? ""} navItems={navItems}>
       {children}
-    </RoleShell>
+    </StudentShell>
   );
 }

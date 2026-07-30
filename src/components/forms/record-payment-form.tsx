@@ -53,6 +53,12 @@ export function RecordPaymentForm({ invoiceId }: { invoiceId: string }) {
         <Label htmlFor="notes">Catatan (opsional)</Label>
         <Input id="notes" name="notes" />
       </div>
+      <div className="flex items-center gap-2">
+        <input id="isVerified" name="isVerified" type="checkbox" className="size-4" defaultChecked />
+        <Label htmlFor="isVerified" className="font-normal">
+          Sudah diverifikasi
+        </Label>
+      </div>
       {state.error && <p className="text-sm text-destructive sm:col-span-3">{state.error}</p>}
       <Button type="submit" disabled={pending} className="sm:w-fit">
         {pending ? "Menyimpan…" : "Catat pembayaran"}

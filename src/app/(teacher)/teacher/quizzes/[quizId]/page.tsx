@@ -4,10 +4,9 @@ import { requireRole } from "@/lib/auth/rbac";
 import { QuizService } from "@/server/services/quiz-service";
 import { QuizQuestionForm } from "@/components/forms/quiz-question-form";
 import { PublishQuizButton } from "@/components/forms/publish-quiz-button";
+import { QuizResultsTable } from "@/components/tables/quiz-results-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { QUIZ_ATTEMPT_STATUS_LABELS, label } from "@/lib/labels";
 
 export default async function TeacherQuizDetailPage({ params }: { params: Promise<{ quizId: string }> }) {
   await requireRole(["teacher"]);
@@ -62,35 +61,7 @@ export default async function TeacherQuizDetailPage({ params }: { params: Promis
           <CardTitle>Hasil</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Siswa</TableHead>
-                <TableHead>Nilai</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {results.map(({ attempt, student }) => (
-                <TableRow key={attempt.id}>
-                  <TableCell>
-                    {student.firstName} {student.lastName}
-                  </TableCell>
-                  <TableCell>
-                    {attempt.totalScore ?? "—"} / {attempt.maxPossibleScore}
-                  </TableCell>
-                  <TableCell>{label(QUIZ_ATTEMPT_STATUS_LABELS, attempt.status)}</TableCell>
-                </TableRow>
-              ))}
-              {results.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    Belum ada percobaan
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <QuizResultsTable rows={results} />
         </CardContent>
       </Card>
     </div>

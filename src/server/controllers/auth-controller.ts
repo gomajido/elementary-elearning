@@ -9,7 +9,9 @@ import { setSessionCookie, clearSessionCookie, getSessionToken, getCurrentUser }
 import { ROLE_HOME } from "@/lib/auth/roles";
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  // Accepts email, NIP (teacher), or system-generated username — field is
+  // still named "email" for form/e2e-test compatibility, see auth-service.ts.
+  email: z.string().min(1),
   password: z.string().min(1),
 });
 
@@ -20,7 +22,7 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     email: formData.get("email"),
     password: formData.get("password"),
   });
-  if (!parsed.success) return { error: "Masukkan email dan kata sandi yang valid" };
+  if (!parsed.success) return { error: "Masukkan email/NIP/username dan kata sandi yang valid" };
 
   try {
     const headerList = await headers();
@@ -28,7 +30,7 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
       userAgent: headerList.get("user-agent") ?? undefined,
     });
     await setSessionCookie(token);
-    redirect(user.mustChangePassword ? "/account/change-password" : ROLE_HOME[user.role]);
+    redirect(user.mustChangePassword ? "/account/change-password" : ROLE_HOME[user.roles[0]]);
   } catch (err) {
     if (err instanceof AuthError) return { error: err.message };
     throw err;
@@ -92,5 +94,5 @@ export async function changePasswordAction(
     if (err instanceof AuthError) return { error: err.message };
     throw err;
   }
-  redirect(ROLE_HOME[user.role]);
+  redirect(ROLE_HOME[user.roles[0]]);
 }

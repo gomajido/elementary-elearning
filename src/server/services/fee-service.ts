@@ -4,12 +4,17 @@ import { AcademicYearRepository } from "@/server/repositories/academic-repositor
 
 export class FeeError extends Error {}
 
-/** Balance/status are always derived from summing payments — see RFC 0001 "Payments". */
-export function summarizeInvoice(totalAmountCents: number, paymentAmounts: number[]) {
-  const paidCents = paymentAmounts.reduce((sum, a) => sum + a, 0);
+/**
+ * Balance/status are always derived from summing payments — see RFC 0001
+ * "Payments". Unverified payments (parent-submitted claims awaiting admin
+ * review — see FeeService.submitPaymentClaim) don't count until confirmed.
+ */
+export function summarizeInvoice(totalAmountCents: number, payments: { amountCents: number; isVerified: boolean }[]) {
+  const paidCents = payments.filter((p) => p.isVerified).reduce((sum, p) => sum + p.amountCents, 0);
   const balanceCents = totalAmountCents - paidCents;
   const status: "paid" | "partial" | "unpaid" = balanceCents <= 0 ? "paid" : paidCents > 0 ? "partial" : "unpaid";
-  return { paidCents, balanceCents, status };
+  const hasPendingVerification = payments.some((p) => !p.isVerified);
+  return { paidCents, balanceCents, status, hasPendingVerification };
 }
 
 function generateInvoiceNumber(academicYearName: string) {
@@ -23,9 +28,15 @@ function generateReceiptNumber() {
 }
 
 export const FeeService = {
+  findInvoiceById: (id: string) => InvoiceRepository.findById(id),
   listFeeStructures: () => FeeStructureRepository.list(),
   createFeeStructure: (input: Parameters<typeof FeeStructureRepository.create>[0]) =>
     FeeStructureRepository.create(input),
+  updateFeeStructure: (id: string, input: Parameters<typeof FeeStructureRepository.update>[1]) =>
+    FeeStructureRepository.update(id, input),
+  deleteFeeStructure: (id: string) => FeeStructureRepository.softDelete(id),
+  deleteInvoice: (id: string) => InvoiceRepository.softDelete(id),
+  deletePayment: (id: string) => PaymentRepository.softDelete(id),
 
   async generateInvoiceForStudent(input: {
     studentId: string;
@@ -83,6 +94,8 @@ export const FeeService = {
     paidAt: string;
     recordedByUserId: string;
     notes?: string;
+    isVerified?: boolean;
+    proofStorageKey?: string;
   }) {
     const invoice = await InvoiceRepository.findById(input.invoiceId);
     if (!invoice) throw new FeeError("Tagihan tidak ditemukan");
@@ -98,15 +111,68 @@ export const FeeService = {
       recordedByUserId: input.recordedByUserId,
       receiptNumber: generateReceiptNumber(),
       notes: input.notes,
+      isVerified: input.isVerified ?? true,
+      proofStorageKey: input.proofStorageKey,
     });
+  },
+
+  /**
+   * Parent self-service claim of a bank transfer, always unverified until an
+   * admin checks the actual bank statement/proof — see summarizeInvoice.
+   */
+  async submitPaymentClaim(input: {
+    invoiceId: string;
+    amountCents: number;
+    method: "bank_transfer" | "cash" | "cheque" | "other";
+    referenceNumber?: string;
+    paidAt: string;
+    submittedByUserId: string;
+    notes?: string;
+    proofStorageKey: string;
+  }) {
+    const invoice = await InvoiceRepository.findById(input.invoiceId);
+    if (!invoice) throw new FeeError("Tagihan tidak ditemukan");
+    if (input.amountCents <= 0) throw new FeeError("Jumlah pembayaran harus lebih dari nol");
+    if (!input.proofStorageKey) throw new FeeError("Bukti transfer wajib diunggah");
+
+    return PaymentRepository.create({
+      invoiceId: input.invoiceId,
+      studentId: invoice.studentId,
+      amountCents: input.amountCents,
+      method: input.method,
+      referenceNumber: input.referenceNumber,
+      paidAt: input.paidAt,
+      recordedByUserId: input.submittedByUserId,
+      receiptNumber: generateReceiptNumber(),
+      notes: input.notes,
+      isVerified: false,
+      proofStorageKey: input.proofStorageKey,
+    });
+  },
+
+  async updatePayment(
+    id: string,
+    input: Partial<{
+      amountCents: number;
+      method: "bank_transfer" | "cash" | "cheque" | "other";
+      referenceNumber: string;
+      paidAt: string;
+      notes: string;
+      isVerified: boolean;
+    }>,
+  ) {
+    return PaymentRepository.update(id, input);
   },
 
   async invoicesForStudent(studentId: string) {
     const rows = await InvoiceRepository.listWithPaymentsByStudent(studentId);
-    const byId = new Map<string, { invoice: (typeof rows)[number]["invoice"]; payments: number[] }>();
+    const byId = new Map<
+      string,
+      { invoice: (typeof rows)[number]["invoice"]; payments: { amountCents: number; isVerified: boolean }[] }
+    >();
     for (const row of rows) {
       const entry = byId.get(row.invoice.id) ?? { invoice: row.invoice, payments: [] };
-      if (row.payment) entry.payments.push(row.payment.amountCents);
+      if (row.payment) entry.payments.push({ amountCents: row.payment.amountCents, isVerified: row.payment.isVerified });
       byId.set(row.invoice.id, entry);
     }
     return Array.from(byId.values()).map(({ invoice, payments }) => ({
@@ -119,11 +185,15 @@ export const FeeService = {
     const rows = await InvoiceRepository.listAllWithPaymentsAndStudent();
     const byId = new Map<
       string,
-      { invoice: (typeof rows)[number]["invoice"]; student: (typeof rows)[number]["student"]; payments: number[] }
+      {
+        invoice: (typeof rows)[number]["invoice"];
+        student: (typeof rows)[number]["student"];
+        payments: { amountCents: number; isVerified: boolean }[];
+      }
     >();
     for (const row of rows) {
       const entry = byId.get(row.invoice.id) ?? { invoice: row.invoice, student: row.student, payments: [] };
-      if (row.payment) entry.payments.push(row.payment.amountCents);
+      if (row.payment) entry.payments.push({ amountCents: row.payment.amountCents, isVerified: row.payment.isVerified });
       byId.set(row.invoice.id, entry);
     }
     return Array.from(byId.values()).map(({ invoice, student, payments }) => ({
@@ -147,7 +217,7 @@ export const FeeService = {
     const invoicePayments = paymentRows.map((r) => r.payment!);
     const summary = summarizeInvoice(
       invoice.totalAmountCents,
-      invoicePayments.map((p) => p.amountCents)
+      invoicePayments.map((p) => ({ amountCents: p.amountCents, isVerified: p.isVerified }))
     );
     return { invoice, lineItems, payments: invoicePayments, ...summary };
   },

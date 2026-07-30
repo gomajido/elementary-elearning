@@ -1,12 +1,15 @@
 import { getDb } from "@/lib/db";
 import { hashPassword, generateTempPassword } from "@/lib/auth/password";
+import { generateUsername } from "@/lib/auth/username";
 import { UserRepository } from "@/server/repositories/user-repository";
-import { GuardianRepository } from "@/server/repositories/student-repository";
+import { GuardianRepository, type GuardianUpdate } from "@/server/repositories/student-repository";
 
 export class GuardianPortalError extends Error {}
 
 export const GuardianService = {
   listGuardiansWithStudents: () => GuardianRepository.listWithStudents(),
+  updateGuardian: (id: string, input: GuardianUpdate) => GuardianRepository.update(id, input),
+  deleteGuardian: (id: string) => GuardianRepository.softDelete(id),
 
   async childrenForGuardianUser(userId: string) {
     const guardian = await GuardianRepository.findByUserId(userId);
@@ -27,14 +30,25 @@ export const GuardianService = {
    * Grants portal access to an existing guardian record (created during
    * student registration, no login yet). Atomic user-insert + guardian-link
    * update in one transaction.
+   *
+   * `email` is optional — many guardians don't have one. When omitted, a
+   * unique system-generated username becomes their login identifier instead.
    */
-  async grantPortalAccess(guardianId: string, email: string) {
+  async grantPortalAccess(guardianId: string, email?: string) {
     const guardian = await GuardianRepository.findById(guardianId);
     if (!guardian) throw new GuardianPortalError("Wali tidak ditemukan");
     if (guardian.userId) throw new GuardianPortalError("Wali ini sudah memiliki akses portal");
 
-    const existingUser = await UserRepository.findByEmail(email);
-    if (existingUser) throw new GuardianPortalError("Pengguna dengan email ini sudah ada");
+    let username: string | undefined;
+    if (email) {
+      const existingUser = await UserRepository.findByEmail(email);
+      if (existingUser) throw new GuardianPortalError("Pengguna dengan email ini sudah ada");
+    } else {
+      username = generateUsername(guardian.firstName, guardian.lastName);
+      while (await UserRepository.findByUsername(username)) {
+        username = generateUsername(guardian.firstName, guardian.lastName);
+      }
+    }
 
     const db = getDb();
     const userId = crypto.randomUUID();
@@ -42,10 +56,13 @@ export const GuardianService = {
     const passwordHash = await hashPassword(tempPassword);
 
     await db.transaction(async (tx) => {
-      await UserRepository.create({ id: userId, email, passwordHash, role: "parent", mustChangePassword: true }, tx);
+      await UserRepository.create(
+        { id: userId, email: email || null, username, passwordHash, roles: ["parent"], mustChangePassword: true },
+        tx
+      );
       await GuardianRepository.linkUser(guardianId, userId, tx);
     });
 
-    return { tempPassword };
+    return { tempPassword, username };
   },
 };

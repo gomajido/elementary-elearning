@@ -5,3 +5,4 @@ export * from "./attendance";
 export * from "./fees";
 export * from "./elearning";
 export * from "./quizzes";
+export * from "./media";

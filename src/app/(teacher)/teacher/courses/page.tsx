@@ -4,7 +4,8 @@ import { requireRole } from "@/lib/auth/rbac";
 import { CourseService } from "@/server/services/course-service";
 import { AcademicService } from "@/server/services/academic-service";
 import { CourseForm } from "@/components/forms/course-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ActionDialog } from "@/components/dashboard/action-dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export default async function TeacherCoursesPage() {
@@ -18,19 +19,14 @@ export default async function TeacherCoursesPage() {
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Buat kursus</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Kursus Anda</h1>
+        <ActionDialog triggerLabel="Kursus Baru" title="Buat kursus">
           <CourseForm subjects={subjects} classes={classes} academicYears={academicYears} />
-        </CardContent>
-      </Card>
+        </ActionDialog>
+      </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Kursus Anda</CardTitle>
-        </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {courses.map(({ course, subjectName, className, classSection }) => (
             <Link

@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { GENDER_LABELS, label } from "@/lib/labels";
+import { GENDERS } from "@/lib/db/schema";
 
 const initialState: CreateStudentState = {};
 
@@ -48,8 +50,23 @@ export function StudentForm({
           <Input id="dateOfBirth" name="dateOfBirth" type="date" required />
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="gender">Jenis kelamin (opsional)</Label>
-          <Input id="gender" name="gender" />
+          <Label>Jenis kelamin</Label>
+          <Select
+            name="gender"
+            required
+            items={Object.fromEntries(GENDERS.map((g) => [g, label(GENDER_LABELS, g)]))}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Pilih jenis kelamin" />
+            </SelectTrigger>
+            <SelectContent>
+              {GENDERS.map((g) => (
+                <SelectItem key={g} value={g}>
+                  {label(GENDER_LABELS, g)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="enrollmentDate">Tanggal masuk</Label>

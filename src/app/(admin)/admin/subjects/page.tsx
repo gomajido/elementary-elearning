@@ -1,50 +1,24 @@
 import { AcademicService } from "@/server/services/academic-service";
 import { SubjectForm } from "@/components/forms/subject-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ActionDialog } from "@/components/dashboard/action-dialog";
+import { SubjectsTable } from "@/components/tables/subjects-table";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function SubjectsPage() {
   const subjects = await AcademicService.listSubjects();
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Tambah mata pelajaran</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Mata Pelajaran</h1>
+        <ActionDialog triggerLabel="Mata Pelajaran Baru" title="Tambah mata pelajaran">
           <SubjectForm />
-        </CardContent>
-      </Card>
+        </ActionDialog>
+      </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Mata Pelajaran</CardTitle>
-        </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nama</TableHead>
-                <TableHead>Kode</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {subjects.map((subject) => (
-                <TableRow key={subject.id}>
-                  <TableCell>{subject.name}</TableCell>
-                  <TableCell>{subject.code ?? "—"}</TableCell>
-                </TableRow>
-              ))}
-              {subjects.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={2} className="text-center text-muted-foreground">
-                    Belum ada mata pelajaran
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <SubjectsTable rows={subjects} />
         </CardContent>
       </Card>
     </div>
