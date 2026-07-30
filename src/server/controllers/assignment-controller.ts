@@ -49,6 +49,52 @@ export async function createAssignmentAction(_prev: ActionState, formData: FormD
   return { success: true };
 }
 
+const updateAssignmentSchema = z.object({
+  assignmentId: z.string().min(1),
+  title: z.string().min(1),
+  instructions: z.string().optional(),
+  dueDate: z.string().min(1),
+  maxScore: z.coerce.number().int().positive(),
+  allowLateSubmission: z.coerce.boolean().optional(),
+});
+
+export async function updateAssignmentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireRole(["teacher"]);
+  const parsed = updateAssignmentSchema.safeParse({
+    assignmentId: formData.get("assignmentId"),
+    title: formData.get("title"),
+    instructions: formData.get("instructions") || undefined,
+    dueDate: formData.get("dueDate"),
+    maxScore: formData.get("maxScore"),
+    allowLateSubmission: formData.get("allowLateSubmission") === "on",
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+
+  try {
+    const assignment = await AssignmentService.updateAssignment({ teacherUserId: user.id, ...parsed.data });
+    revalidatePath(`/teacher/courses/${assignment.courseId}`);
+    revalidatePath(`/teacher/assignments/${assignment.id}`);
+  } catch (err) {
+    if (err instanceof AssignmentError) return { error: err.message };
+    throw err;
+  }
+
+  return { success: true };
+}
+
+/** Returns the reason instead of throwing — Next.js redacts thrown Server Action messages in production. */
+export async function deleteAssignmentAction(assignmentId: string): Promise<{ error?: string }> {
+  const user = await requireRole(["teacher"]);
+  try {
+    const assignment = await AssignmentService.deleteAssignment({ teacherUserId: user.id, assignmentId });
+    revalidatePath(`/teacher/courses/${assignment.courseId}`);
+    return {};
+  } catch (err) {
+    if (err instanceof AssignmentError) return { error: err.message };
+    throw err;
+  }
+}
+
 export async function requestAssignmentAttachmentUploadUrlAction(courseId: string, contentType: string) {
   const user = await requireRole(["teacher"]);
   try {

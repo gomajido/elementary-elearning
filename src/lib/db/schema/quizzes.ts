@@ -1,6 +1,6 @@
 import { pgTable, text, integer, boolean, timestamp, unique } from "drizzle-orm/pg-core";
 
-import { id, schoolId, timestamps } from "./_shared";
+import { id, schoolId, timestamps, softDelete } from "./_shared";
 import { courses, themes } from "./elearning";
 import { students } from "./people";
 
@@ -22,6 +22,7 @@ export const quizzes = pgTable("quizzes", {
   isPublished: boolean("is_published").notNull().default(false),
   schoolId: schoolId(),
   ...timestamps,
+  ...softDelete,
 });
 
 export const QUESTION_TYPES = ["multiple_choice", "true_false", "short_answer"] as const;

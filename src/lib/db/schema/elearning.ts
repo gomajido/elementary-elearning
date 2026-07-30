@@ -1,6 +1,6 @@
 import { pgTable, text, integer, boolean, timestamp, unique } from "drizzle-orm/pg-core";
 
-import { id, schoolId, timestamps } from "./_shared";
+import { id, schoolId, timestamps, softDelete } from "./_shared";
 import { subjects, classes, teachers, academicYears } from "./academics";
 import { students } from "./people";
 
@@ -35,6 +35,7 @@ export const themes = pgTable("themes", {
   orderIndex: integer("order_index").notNull().default(0),
   schoolId: schoolId(),
   ...timestamps,
+  ...softDelete,
 });
 
 export const CONTENT_ITEM_TYPES = ["video", "pdf", "note", "link"] as const;
@@ -57,6 +58,7 @@ export const courseContentItems = pgTable("course_content_items", {
   durationSeconds: integer("duration_seconds"), // for video
   schoolId: schoolId(),
   ...timestamps,
+  ...softDelete,
 });
 
 export const assignments = pgTable("assignments", {
@@ -75,6 +77,7 @@ export const assignments = pgTable("assignments", {
   attachmentR2Key: text("attachment_r2_key"),
   schoolId: schoolId(),
   ...timestamps,
+  ...softDelete,
 });
 
 export const SUBMISSION_STATUSES = ["submitted", "late", "graded", "missing"] as const;

@@ -42,6 +42,45 @@ export const QuizService = {
     });
   },
 
+  /** Resolves a quiz and checks the caller owns its course. */
+  async assertTeacherOwnsQuiz(teacherUserId: string, quizId: string) {
+    const quiz = await QuizRepository.findById(quizId);
+    if (!quiz) throw new QuizError("Kuis tidak ditemukan");
+    const teacher = await TeacherRepository.findByUserId(teacherUserId);
+    const course = await CourseRepository.findById(quiz.courseId);
+    if (!teacher || !course || course.teacherId !== teacher.id) throw new QuizError("Anda bukan pemilik kuis ini");
+    return quiz;
+  },
+
+  async updateQuiz(input: {
+    teacherUserId: string;
+    quizId: string;
+    title: string;
+    instructions?: string;
+    timeLimitMinutes?: number;
+    maxAttempts: number;
+  }) {
+    const quiz = await QuizService.assertTeacherOwnsQuiz(input.teacherUserId, input.quizId);
+    await QuizRepository.update(quiz.id, {
+      title: input.title,
+      instructions: input.instructions,
+      timeLimitMinutes: input.timeLimitMinutes ?? null,
+      maxAttempts: input.maxAttempts,
+    });
+    return quiz;
+  },
+
+  /** Refuses once anyone has attempted it — even an in-progress attempt is a student's work. */
+  async deleteQuiz(input: { teacherUserId: string; quizId: string }) {
+    const quiz = await QuizService.assertTeacherOwnsQuiz(input.teacherUserId, input.quizId);
+    const attempts = await QuizRepository.countAttempts(quiz.id);
+    if (attempts > 0) {
+      throw new QuizError(`Kuis ini sudah dikerjakan ${attempts} kali, jadi tidak bisa dihapus. Nilainya akan hilang.`);
+    }
+    await QuizRepository.softDelete(quiz.id);
+    return quiz;
+  },
+
   async quizDetail(quizId: string) {
     const quiz = await QuizRepository.findById(quizId);
     if (!quiz) return null;

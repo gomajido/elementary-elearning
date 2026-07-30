@@ -71,6 +71,91 @@ export async function createThemeAction(_prev: ActionState, formData: FormData):
   return { success: true };
 }
 
+const renameThemeSchema = z.object({ themeId: z.string().min(1), title: z.string().min(1) });
+
+export async function renameThemeAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireRole(["teacher"]);
+  const parsed = renameThemeSchema.safeParse({
+    themeId: formData.get("themeId"),
+    title: formData.get("title"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+
+  try {
+    const theme = await CourseService.renameTheme({ teacherUserId: user.id, ...parsed.data });
+    revalidatePath(`/teacher/courses/${theme.courseId}`);
+  } catch (err) {
+    if (err instanceof CourseError) return { error: err.message };
+    throw err;
+  }
+
+  return { success: true };
+}
+
+/**
+ * Deletes run off a button, not a form, so they return the reason rather
+ * than throwing: Next.js redacts thrown Server Action messages in
+ * production, which would turn "Bab ini masih berisi 2 materi" into a
+ * generic error.
+ */
+export async function deleteThemeAction(themeId: string): Promise<{ error?: string }> {
+  const user = await requireRole(["teacher"]);
+  try {
+    const theme = await CourseService.deleteTheme({ teacherUserId: user.id, themeId });
+    revalidatePath(`/teacher/courses/${theme.courseId}`);
+    return {};
+  } catch (err) {
+    if (err instanceof CourseError) return { error: err.message };
+    throw err;
+  }
+}
+
+export async function moveThemeAction(themeId: string, direction: "up" | "down") {
+  const user = await requireRole(["teacher"]);
+  const theme = await CourseService.moveTheme({ teacherUserId: user.id, themeId, direction });
+  revalidatePath(`/teacher/courses/${theme.courseId}`);
+}
+
+const updateContentItemSchema = z.object({
+  contentItemId: z.string().min(1),
+  title: z.string().min(1),
+  bodyMarkdown: z.string().optional(),
+  externalUrl: z.string().url().optional().or(z.literal("")),
+});
+
+export async function updateContentItemAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireRole(["teacher"]);
+  const parsed = updateContentItemSchema.safeParse({
+    contentItemId: formData.get("contentItemId"),
+    title: formData.get("title"),
+    bodyMarkdown: formData.get("bodyMarkdown") || undefined,
+    externalUrl: formData.get("externalUrl") || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+
+  try {
+    const item = await CourseService.updateContentItem({ teacherUserId: user.id, ...parsed.data });
+    revalidatePath(`/teacher/courses/${item.courseId}`);
+  } catch (err) {
+    if (err instanceof CourseError) return { error: err.message };
+    throw err;
+  }
+
+  return { success: true };
+}
+
+export async function deleteContentItemAction(contentItemId: string): Promise<{ error?: string }> {
+  const user = await requireRole(["teacher"]);
+  try {
+    const item = await CourseService.deleteContentItem({ teacherUserId: user.id, contentItemId });
+    revalidatePath(`/teacher/courses/${item.courseId}`);
+    return {};
+  } catch (err) {
+    if (err instanceof CourseError) return { error: err.message };
+    throw err;
+  }
+}
+
 const contentItemSchema = z.object({
   courseId: z.string().min(1),
   themeId: z.string().min(1),

@@ -34,6 +34,51 @@ export const AssignmentService = {
     });
   },
 
+  /** Resolves an assignment and checks the caller owns its course. */
+  async assertTeacherOwnsAssignment(teacherUserId: string, assignmentId: string) {
+    const assignment = await AssignmentRepository.findById(assignmentId);
+    if (!assignment) throw new AssignmentError("Tugas tidak ditemukan");
+    const teacher = await TeacherRepository.findByUserId(teacherUserId);
+    const course = await CourseRepository.findById(assignment.courseId);
+    if (!teacher || !course || course.teacherId !== teacher.id) {
+      throw new AssignmentError("Anda bukan pemilik tugas ini");
+    }
+    return assignment;
+  },
+
+  async updateAssignment(input: {
+    teacherUserId: string;
+    assignmentId: string;
+    title: string;
+    instructions?: string;
+    dueDate: string;
+    maxScore: number;
+    allowLateSubmission?: boolean;
+  }) {
+    const assignment = await AssignmentService.assertTeacherOwnsAssignment(input.teacherUserId, input.assignmentId);
+    await AssignmentRepository.update(assignment.id, {
+      title: input.title,
+      instructions: input.instructions,
+      dueDate: input.dueDate,
+      maxScore: input.maxScore,
+      allowLateSubmission: input.allowLateSubmission,
+    });
+    return assignment;
+  },
+
+  /** Refuses once anyone has turned work in — those submissions and grades are the record. */
+  async deleteAssignment(input: { teacherUserId: string; assignmentId: string }) {
+    const assignment = await AssignmentService.assertTeacherOwnsAssignment(input.teacherUserId, input.assignmentId);
+    const submissions = await AssignmentRepository.countSubmissions(assignment.id);
+    if (submissions > 0) {
+      throw new AssignmentError(
+        `Tugas ini sudah dikumpulkan ${submissions} siswa, jadi tidak bisa dihapus. Nilai mereka akan hilang.`,
+      );
+    }
+    await AssignmentRepository.softDelete(assignment.id);
+    return assignment;
+  },
+
   async assignmentDetail(assignmentId: string) {
     const assignment = await AssignmentRepository.findById(assignmentId);
     if (!assignment) return null;

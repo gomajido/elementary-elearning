@@ -18,11 +18,19 @@ import {
 export function DeleteEntityDialog({
   name,
   onDelete,
+  description,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
 }: {
   name: string;
-  onDelete: () => Promise<void>;
+  /**
+   * Returning `{ error }` keeps the dialog open and shows the reason —
+   * how a delete that would drop student work refuses. A thrown error is
+   * caught too, since Next.js redacts those in production.
+   */
+  onDelete: () => Promise<void | { error?: string }>;
+  /** Overrides the default "hidden, not permanently deleted" note. */
+  description?: string;
   /** Omit both to keep the default self-triggered icon-button behavior (used by every table but students). */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -32,9 +40,16 @@ export function DeleteEntityDialog({
   const open = isControlled ? controlledOpen : uncontrolledOpen;
   const setOpen = isControlled ? setControlledOpen! : setUncontrolledOpen;
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) setError(null); // don't show a stale reason next time it opens
+        setOpen(next);
+      }}
+    >
       {!isControlled && (
         <DialogTrigger render={<Button variant="ghost" size="icon-sm" />}>
           <Trash2 className="size-4" />
@@ -44,8 +59,9 @@ export function DeleteEntityDialog({
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Hapus {name}?</DialogTitle>
-          <DialogDescription>Data akan disembunyikan, bukan dihapus permanen.</DialogDescription>
+          <DialogDescription>{description ?? "Data akan disembunyikan, bukan dihapus permanen."}</DialogDescription>
         </DialogHeader>
+        {error && <p className="text-sm text-destructive">{error}</p>}
         <DialogFooter>
           <DialogClose render={<Button variant="outline" />}>Batal</DialogClose>
           <Button
@@ -53,9 +69,19 @@ export function DeleteEntityDialog({
             disabled={pending}
             onClick={async () => {
               setPending(true);
-              await onDelete();
-              setPending(false);
-              setOpen(false);
+              setError(null);
+              try {
+                const result = await onDelete();
+                if (result?.error) {
+                  setError(result.error);
+                  return;
+                }
+                setOpen(false);
+              } catch {
+                setError("Gagal menghapus.");
+              } finally {
+                setPending(false);
+              }
             }}
           >
             {pending ? "Menghapus…" : "Hapus"}

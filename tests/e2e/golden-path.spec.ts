@@ -190,7 +190,7 @@ test.describe.serial("golden path across all four roles", () => {
       await dialog.locator('input[name="title"]').fill("Intro note");
       await dialog.locator('textarea[name="bodyMarkdown"]').fill("A fraction represents part of a whole.");
     });
-    await expect(page.getByText("Intro note")).toBeVisible();
+    await expect(bab1.locator("p", { hasText: "Intro note" }).first()).toBeVisible();
 
     await bab1.locator('[data-slot="tabs-tab"]', { hasText: "Tugas" }).click();
     await addViaDialog(page, "Tambah tugas", async (dialog) => {
@@ -198,16 +198,18 @@ test.describe.serial("golden path across all four roles", () => {
       await dialog.locator('input[name="dueDate"]').fill("2026-12-31");
       await dialog.locator('input[name="maxScore"]').fill("10");
     });
-    await expect(page.getByText(`Worksheet-${RUN}`)).toBeVisible();
-    const assignmentHref = await page.getByRole("link", { name: new RegExp(`Worksheet-${RUN}`) }).getAttribute("href");
+    const worksheetLink = page.getByRole("link", { name: new RegExp(`Worksheet-${RUN}`) });
+    await expect(worksheetLink).toBeVisible();
+    const assignmentHref = await worksheetLink.getAttribute("href");
     assignmentId = assignmentHref!.split("/").pop()!;
 
     await bab1.locator('[data-slot="tabs-tab"]', { hasText: "Kuis" }).click();
     await addViaDialog(page, "Tambah kuis", async (dialog) => {
       await dialog.locator('input[name="title"]').fill(`Quiz-${RUN}`);
     });
-    await expect(page.getByText(`Quiz-${RUN}`)).toBeVisible();
-    await page.getByRole("link", { name: new RegExp(`Quiz-${RUN}`) }).click();
+    const quizLink = page.getByRole("link", { name: new RegExp(`Quiz-${RUN}`) });
+    await expect(quizLink).toBeVisible();
+    await quizLink.click();
     await expect(page).toHaveURL(/\/teacher\/quizzes\//);
     quizUrl = page.url();
 

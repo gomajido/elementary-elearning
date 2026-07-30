@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, isNull } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
 import { courses, courseContentItems, subjects, classes, type ContentItemType } from "@/lib/db/schema";
@@ -50,8 +50,34 @@ export const CourseRepository = {
     return db
       .select()
       .from(courseContentItems)
-      .where(eq(courseContentItems.courseId, courseId))
+      .where(and(eq(courseContentItems.courseId, courseId), isNull(courseContentItems.deletedAt)))
       .orderBy(courseContentItems.orderIndex);
+  },
+
+  async findContentItemById(id: string) {
+    const db = getDb();
+    const [row] = await db
+      .select()
+      .from(courseContentItems)
+      .where(and(eq(courseContentItems.id, id), isNull(courseContentItems.deletedAt)))
+      .limit(1);
+    return row ?? null;
+  },
+
+  async updateContentItem(
+    id: string,
+    input: { title: string; bodyMarkdown?: string | null; externalUrl?: string | null; r2Key?: string | null },
+  ) {
+    const db = getDb();
+    await db.update(courseContentItems).set({ ...input, updatedAt: new Date() }).where(eq(courseContentItems.id, id));
+  },
+
+  async softDeleteContentItem(id: string) {
+    const db = getDb();
+    await db
+      .update(courseContentItems)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(eq(courseContentItems.id, id));
   },
 
   async publish(id: string) {

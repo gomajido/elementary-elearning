@@ -44,6 +44,50 @@ export async function createQuizAction(_prev: ActionState, formData: FormData): 
   return { success: true };
 }
 
+const updateQuizSchema = z.object({
+  quizId: z.string().min(1),
+  title: z.string().min(1),
+  instructions: z.string().optional(),
+  timeLimitMinutes: z.coerce.number().int().positive().optional(),
+  maxAttempts: z.coerce.number().int().positive().default(1),
+});
+
+export async function updateQuizAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireRole(["teacher"]);
+  const parsed = updateQuizSchema.safeParse({
+    quizId: formData.get("quizId"),
+    title: formData.get("title"),
+    instructions: formData.get("instructions") || undefined,
+    timeLimitMinutes: formData.get("timeLimitMinutes") || undefined,
+    maxAttempts: formData.get("maxAttempts") || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+
+  try {
+    const quiz = await QuizService.updateQuiz({ teacherUserId: user.id, ...parsed.data });
+    revalidatePath(`/teacher/courses/${quiz.courseId}`);
+    revalidatePath(`/teacher/quizzes/${quiz.id}`);
+  } catch (err) {
+    if (err instanceof QuizError) return { error: err.message };
+    throw err;
+  }
+
+  return { success: true };
+}
+
+/** Returns the reason instead of throwing — Next.js redacts thrown Server Action messages in production. */
+export async function deleteQuizAction(quizId: string): Promise<{ error?: string }> {
+  const user = await requireRole(["teacher"]);
+  try {
+    const quiz = await QuizService.deleteQuiz({ teacherUserId: user.id, quizId });
+    revalidatePath(`/teacher/courses/${quiz.courseId}`);
+    return {};
+  } catch (err) {
+    if (err instanceof QuizError) return { error: err.message };
+    throw err;
+  }
+}
+
 const questionSchema = z.object({
   quizId: z.string().min(1),
   questionText: z.string().min(1),

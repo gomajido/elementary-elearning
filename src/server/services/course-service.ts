@@ -69,6 +69,77 @@ export const CourseService = {
     return ThemeRepository.create({ courseId: input.courseId, title: input.title, orderIndex: existing.length });
   },
 
+  /** Resolves a Bab and checks the caller owns its course. */
+  async assertTeacherOwnsTheme(teacherUserId: string, themeId: string) {
+    const theme = await ThemeRepository.findById(themeId);
+    if (!theme) throw new CourseError("Bab tidak ditemukan");
+    await CourseService.assertTeacherOwnsCourse(teacherUserId, theme.courseId);
+    return theme;
+  },
+
+  async renameTheme(input: { teacherUserId: string; themeId: string; title: string }) {
+    const theme = await CourseService.assertTeacherOwnsTheme(input.teacherUserId, input.themeId);
+    await ThemeRepository.updateTitle(theme.id, input.title);
+    return theme;
+  },
+
+  /**
+   * Refuses while the Bab still holds anything — deleting it would orphan
+   * materi/tugas/kuis (and the student work hanging off them) behind a
+   * hidden parent, so the teacher is told what to clear out first.
+   */
+  async deleteTheme(input: { teacherUserId: string; themeId: string }) {
+    const theme = await CourseService.assertTeacherOwnsTheme(input.teacherUserId, input.themeId);
+    const children = await ThemeRepository.countChildren(theme.id);
+    const blocking = [
+      children.contentItems && `${children.contentItems} materi`,
+      children.assignments && `${children.assignments} tugas`,
+      children.quizzes && `${children.quizzes} kuis`,
+    ].filter(Boolean) as string[];
+    if (blocking.length > 0) {
+      throw new CourseError(`Bab ini masih berisi ${blocking.join(", ")}. Hapus isinya dulu.`);
+    }
+    await ThemeRepository.softDelete(theme.id);
+    return theme;
+  },
+
+  /** Moves a Bab one slot up or down by swapping orderIndex with its neighbour. */
+  async moveTheme(input: { teacherUserId: string; themeId: string; direction: "up" | "down" }) {
+    const theme = await CourseService.assertTeacherOwnsTheme(input.teacherUserId, input.themeId);
+    const siblings = await ThemeRepository.listByCourse(theme.courseId);
+    const i = siblings.findIndex((t) => t.id === theme.id);
+    const j = input.direction === "up" ? i - 1 : i + 1;
+    if (j < 0 || j >= siblings.length) return theme; // already at the end, nothing to do
+    await ThemeRepository.swapOrder(siblings[i], siblings[j]);
+    return theme;
+  },
+
+  async updateContentItem(input: {
+    teacherUserId: string;
+    contentItemId: string;
+    title: string;
+    bodyMarkdown?: string;
+    externalUrl?: string;
+  }) {
+    const item = await CourseRepository.findContentItemById(input.contentItemId);
+    if (!item) throw new CourseError("Materi tidak ditemukan");
+    await CourseService.assertTeacherOwnsCourse(input.teacherUserId, item.courseId);
+    await CourseRepository.updateContentItem(item.id, {
+      title: input.title,
+      bodyMarkdown: input.bodyMarkdown ?? null,
+      externalUrl: input.externalUrl ?? null,
+    });
+    return item;
+  },
+
+  async deleteContentItem(input: { teacherUserId: string; contentItemId: string }) {
+    const item = await CourseRepository.findContentItemById(input.contentItemId);
+    if (!item) throw new CourseError("Materi tidak ditemukan");
+    await CourseService.assertTeacherOwnsCourse(input.teacherUserId, item.courseId);
+    await CourseRepository.softDeleteContentItem(item.id);
+    return item;
+  },
+
   async addContentItem(input: {
     teacherUserId: string;
     courseId: string;

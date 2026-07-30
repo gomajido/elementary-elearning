@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, isNull } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
 import {
@@ -15,12 +15,20 @@ import {
 export const QuizRepository = {
   async listByCourse(courseId: string) {
     const db = getDb();
-    return db.select().from(quizzes).where(eq(quizzes.courseId, courseId)).orderBy(desc(quizzes.createdAt));
+    return db
+      .select()
+      .from(quizzes)
+      .where(and(eq(quizzes.courseId, courseId), isNull(quizzes.deletedAt)))
+      .orderBy(desc(quizzes.createdAt));
   },
 
   async findById(id: string) {
     const db = getDb();
-    const [row] = await db.select().from(quizzes).where(eq(quizzes.id, id)).limit(1);
+    const [row] = await db
+      .select()
+      .from(quizzes)
+      .where(and(eq(quizzes.id, id), isNull(quizzes.deletedAt)))
+      .limit(1);
     return row ?? null;
   },
 
@@ -41,6 +49,26 @@ export const QuizRepository = {
   async publish(id: string) {
     const db = getDb();
     await db.update(quizzes).set({ isPublished: true, updatedAt: new Date() }).where(eq(quizzes.id, id));
+  },
+
+  async update(
+    id: string,
+    input: { title: string; instructions?: string; timeLimitMinutes?: number | null; maxAttempts: number },
+  ) {
+    const db = getDb();
+    await db.update(quizzes).set({ ...input, updatedAt: new Date() }).where(eq(quizzes.id, id));
+  },
+
+  async softDelete(id: string) {
+    const db = getDb();
+    await db.update(quizzes).set({ deletedAt: new Date(), updatedAt: new Date() }).where(eq(quizzes.id, id));
+  },
+
+  /** Any attempt at all blocks deletion — even in-progress work is a student's effort. */
+  async countAttempts(quizId: string) {
+    const db = getDb();
+    const rows = await db.select({ id: quizAttempts.id }).from(quizAttempts).where(eq(quizAttempts.quizId, quizId));
+    return rows.length;
   },
 };
 
@@ -128,7 +156,7 @@ export const QuizAttemptRepository = {
       .from(quizAttempts)
       .innerJoin(quizzes, eq(quizAttempts.quizId, quizzes.id))
       .innerJoin(students, eq(quizAttempts.studentId, students.id))
-      .where(and(eq(quizzes.courseId, courseId), eq(quizAttempts.status, "auto_graded")));
+      .where(and(eq(quizzes.courseId, courseId), eq(quizAttempts.status, "auto_graded"), isNull(quizzes.deletedAt)));
   },
 
   async listForStudentWithDetails(studentId: string) {
@@ -138,7 +166,7 @@ export const QuizAttemptRepository = {
       .from(quizAttempts)
       .innerJoin(quizzes, eq(quizAttempts.quizId, quizzes.id))
       .innerJoin(courses, eq(quizzes.courseId, courses.id))
-      .where(eq(quizAttempts.studentId, studentId));
+      .where(and(eq(quizAttempts.studentId, studentId), isNull(quizzes.deletedAt)));
   },
 
   async listForQuizWithStudent(quizId: string) {

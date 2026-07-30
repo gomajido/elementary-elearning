@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull, isNotNull } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
 import { assignments, assignmentSubmissions, students, courses, type SubmissionStatus } from "@/lib/db/schema";
@@ -6,13 +6,50 @@ import { assignments, assignmentSubmissions, students, courses, type SubmissionS
 export const AssignmentRepository = {
   async listByCourse(courseId: string) {
     const db = getDb();
-    return db.select().from(assignments).where(eq(assignments.courseId, courseId)).orderBy(assignments.dueDate);
+    return db
+      .select()
+      .from(assignments)
+      .where(and(eq(assignments.courseId, courseId), isNull(assignments.deletedAt)))
+      .orderBy(assignments.dueDate);
   },
 
   async findById(id: string) {
     const db = getDb();
-    const [row] = await db.select().from(assignments).where(eq(assignments.id, id)).limit(1);
+    const [row] = await db
+      .select()
+      .from(assignments)
+      .where(and(eq(assignments.id, id), isNull(assignments.deletedAt)))
+      .limit(1);
     return row ?? null;
+  },
+
+  async update(
+    id: string,
+    input: {
+      title: string;
+      instructions?: string;
+      dueDate: string;
+      maxScore: number;
+      allowLateSubmission?: boolean;
+    },
+  ) {
+    const db = getDb();
+    await db.update(assignments).set({ ...input, updatedAt: new Date() }).where(eq(assignments.id, id));
+  },
+
+  async softDelete(id: string) {
+    const db = getDb();
+    await db.update(assignments).set({ deletedAt: new Date(), updatedAt: new Date() }).where(eq(assignments.id, id));
+  },
+
+  /** Submissions a student has actually turned in — a graded/submitted one blocks deletion. */
+  async countSubmissions(assignmentId: string) {
+    const db = getDb();
+    const rows = await db
+      .select({ id: assignmentSubmissions.id })
+      .from(assignmentSubmissions)
+      .where(and(eq(assignmentSubmissions.assignmentId, assignmentId), isNotNull(assignmentSubmissions.submittedAt)));
+    return rows.length;
   },
 
   async create(input: {
@@ -63,7 +100,7 @@ export const AssignmentSubmissionRepository = {
       .from(assignmentSubmissions)
       .innerJoin(assignments, eq(assignmentSubmissions.assignmentId, assignments.id))
       .innerJoin(students, eq(assignmentSubmissions.studentId, students.id))
-      .where(eq(assignments.courseId, courseId));
+      .where(and(eq(assignments.courseId, courseId), isNull(assignments.deletedAt)));
   },
 
   async listForStudentWithDetails(studentId: string) {
@@ -73,7 +110,7 @@ export const AssignmentSubmissionRepository = {
       .from(assignmentSubmissions)
       .innerJoin(assignments, eq(assignmentSubmissions.assignmentId, assignments.id))
       .innerJoin(courses, eq(assignments.courseId, courses.id))
-      .where(eq(assignmentSubmissions.studentId, studentId));
+      .where(and(eq(assignmentSubmissions.studentId, studentId), isNull(assignments.deletedAt)));
   },
 
   async upsertSubmission(input: {

@@ -17,6 +17,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTab, TabsPanel } from "@/components/ui/tabs";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionPanel } from "@/components/ui/accordion";
+import {
+  ThemeActions,
+  ContentItemActions,
+  AssignmentActions,
+  QuizActions,
+} from "@/components/tables/theme-item-actions";
 import { CONTENT_ITEM_TYPE_LABELS, label } from "@/lib/labels";
 
 export default async function TeacherCourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
@@ -53,14 +59,21 @@ export default async function TeacherCourseDetailPage({ params }: { params: Prom
       )}
 
       <Accordion multiple className="flex flex-col gap-3">
-        {detail.themes.map((theme) => {
+        {detail.themes.map((theme, themeIndex) => {
           const themeContentItems = detail.contentItems.filter((item) => item.themeId === theme.id);
           const themeAssignments = assignments.filter((a) => a.themeId === theme.id);
           const themeQuizzes = quizzes.filter((q) => q.themeId === theme.id);
 
           return (
             <AccordionItem key={theme.id} value={theme.id}>
-              <AccordionTrigger>{theme.title}</AccordionTrigger>
+              <div className="flex items-center pr-2">
+                <AccordionTrigger>{theme.title}</AccordionTrigger>
+                <ThemeActions
+                  theme={theme}
+                  canMoveUp={themeIndex > 0}
+                  canMoveDown={themeIndex < detail.themes.length - 1}
+                />
+              </div>
               <AccordionPanel>
                 <Tabs defaultValue="materi">
                   <TabsList>
@@ -78,10 +91,13 @@ export default async function TeacherCourseDetailPage({ params }: { params: Prom
                       <CardContent className="flex flex-col gap-4">
                         {themeContentItems.map((item) => (
                           <div key={item.id} className="rounded-md border p-3 text-sm">
-                            <p className="font-medium">
-                              {item.title}{" "}
-                              <span className="text-muted-foreground">({label(CONTENT_ITEM_TYPE_LABELS, item.type)})</span>
-                            </p>
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-medium">
+                                {item.title}{" "}
+                                <span className="text-muted-foreground">({label(CONTENT_ITEM_TYPE_LABELS, item.type)})</span>
+                              </p>
+                              <ContentItemActions item={item} />
+                            </div>
                             <div className="mt-1">
                               <ContentItemView item={item} />
                             </div>
@@ -100,13 +116,12 @@ export default async function TeacherCourseDetailPage({ params }: { params: Prom
                       </CardHeader>
                       <CardContent className="flex flex-col gap-4">
                         {themeAssignments.map((a) => (
-                          <Link
-                            key={a.id}
-                            href={`/teacher/assignments/${a.id}`}
-                            className="rounded-md border p-3 text-sm hover:bg-muted"
-                          >
-                            {a.title} — tenggat {a.dueDate} — {a.maxScore} poin
-                          </Link>
+                          <div key={a.id} className="flex items-center justify-between gap-2 rounded-md border p-3 text-sm">
+                            <Link href={`/teacher/assignments/${a.id}`} className="hover:underline">
+                              {a.title} — tenggat {a.dueDate} — {a.maxScore} poin
+                            </Link>
+                            <AssignmentActions assignment={a} />
+                          </div>
                         ))}
                         {themeAssignments.length === 0 && <p className="text-sm text-muted-foreground">Belum ada tugas</p>}
                       </CardContent>
@@ -121,9 +136,12 @@ export default async function TeacherCourseDetailPage({ params }: { params: Prom
                       </CardHeader>
                       <CardContent className="flex flex-col gap-4">
                         {themeQuizzes.map((q) => (
-                          <Link key={q.id} href={`/teacher/quizzes/${q.id}`} className="rounded-md border p-3 text-sm hover:bg-muted">
-                            {q.title} — maks {q.maxAttempts} percobaan
-                          </Link>
+                          <div key={q.id} className="flex items-center justify-between gap-2 rounded-md border p-3 text-sm">
+                            <Link href={`/teacher/quizzes/${q.id}`} className="hover:underline">
+                              {q.title} — maks {q.maxAttempts} percobaan
+                            </Link>
+                            <QuizActions quiz={q} />
+                          </div>
                         ))}
                         {themeQuizzes.length === 0 && <p className="text-sm text-muted-foreground">Belum ada kuis</p>}
                       </CardContent>
