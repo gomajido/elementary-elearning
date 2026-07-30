@@ -44,15 +44,27 @@ Open [http://localhost:3000](http://localhost:3000). The landing page is public;
 
 ```bash
 # Unit tests (pure logic: fee balance calc, quiz auto-grading normalization)
-bun test
-
-# End-to-end tests (Playwright, drives a real browser against the running app)
-bunx playwright install chromium   # first time only
-bun run dev &                       # app must be running
-bun run test:e2e
+bun run test        # NOT `bun test` — that runs Bun's own runner over the
+                    # Playwright specs too, which then error out
 ```
 
 The e2e suite exercises the full golden path per role: admin sets up an academic year/class/teacher/student, teacher builds a course/assignment/quiz and grades work, student submits and takes the quiz, parent views the child's attendance/fees/grades — with an explicit check that a parent can't view another family's student (RBAC boundary).
+
+It runs against **its own database**, not your dev one. The first test bootstraps the admin via `/setup`, which refuses once any admin exists — so pointed at a database you've already clicked around in, the whole suite dead-ends on step one.
+
+```bash
+bunx playwright install chromium   # first time only
+
+# One-time: create the e2e database
+psql "postgres://madani:madani@localhost:5433/postgres" -c "CREATE DATABASE madani_elearning_e2e;"
+
+export E2E_DB="postgres://madani:madani@localhost:5433/madani_elearning_e2e"
+DATABASE_URL=$E2E_DB bun run db:migrate
+DATABASE_URL=$E2E_DB bun run dev &   # must be running; playwright reuses it
+bun run test:e2e
+```
+
+To start over from scratch, `DROP DATABASE madani_elearning_e2e` and repeat. The suite otherwise suffixes its records per run, so consecutive runs against the same database don't collide.
 
 ## Database changes
 
