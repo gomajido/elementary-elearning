@@ -210,4 +210,10 @@ export const EnrollmentRepository = {
     const [row] = await tx.insert(enrollments).values(input).returning();
     return row;
   },
+
+  /** Every enrollment row, school-wide — small table, aggregated in JS by the caller (see AnalyticsService). */
+  async listAll() {
+    const db = getDb();
+    return db.select().from(enrollments);
+  },
 };

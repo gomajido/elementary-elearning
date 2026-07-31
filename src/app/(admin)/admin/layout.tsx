@@ -12,6 +12,7 @@ import {
   Wallet,
   Settings,
   ArrowLeftRight,
+  BarChart3,
 } from "lucide-react";
 
 import { requireRole } from "@/lib/auth/rbac";
@@ -32,6 +33,7 @@ const NAV_ITEMS: RoleNavItem[] = [
   { href: "/admin/academic-years", label: "Tahun Ajaran", icon: <CalendarRange className={ICON_CLASS} /> },
   { href: "/admin/attendance", label: "Kehadiran", icon: <ClipboardCheck className={ICON_CLASS} /> },
   { href: "/admin/fees", label: "Biaya", icon: <Wallet className={ICON_CLASS} /> },
+  { href: "/admin/analytics", label: "Analitik", icon: <BarChart3 className={ICON_CLASS} /> },
   { href: "/admin/accounts", label: "Manajemen Akun", icon: <Settings className={ICON_CLASS} /> },
 ];
 

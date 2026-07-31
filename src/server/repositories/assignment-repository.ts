@@ -119,6 +119,17 @@ export const AssignmentSubmissionRepository = {
       .where(and(eq(assignmentSubmissions.studentId, studentId), isNull(assignments.deletedAt)));
   },
 
+  /** Every graded submission, school-wide, with its subject — for AnalyticsService.gradeSummary, no per-student/per-course filter. */
+  async listAllGradedWithSubject() {
+    const db = getDb();
+    return db
+      .select({ score: assignmentSubmissions.score, maxScore: assignments.maxScore, subjectId: courses.subjectId })
+      .from(assignmentSubmissions)
+      .innerJoin(assignments, eq(assignmentSubmissions.assignmentId, assignments.id))
+      .innerJoin(courses, eq(assignments.courseId, courses.id))
+      .where(and(isNotNull(assignmentSubmissions.score), isNull(assignments.deletedAt)));
+  },
+
   async upsertSubmission(input: {
     assignmentId: string;
     studentId: string;

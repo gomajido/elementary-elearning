@@ -76,7 +76,24 @@ services:
     volumes:
       - waha_data:/app/.sessions
 
+  # Cache for expensive aggregate queries (see AnalyticsService) — the first
+  # request per TTL window computes and stores the result, everything after
+  # reads from here until it expires.
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6380:6379" # not 6379 — avoids clashing with a locally-running Redis
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   postgres_data:
   minio_data:
   waha_data:
+  redis_data:

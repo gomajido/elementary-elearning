@@ -159,6 +159,17 @@ export const QuizAttemptRepository = {
       .where(and(eq(quizzes.courseId, courseId), eq(quizAttempts.status, "auto_graded"), isNull(quizzes.deletedAt)));
   },
 
+  /** Every auto-graded attempt, school-wide, with its subject — for AnalyticsService.gradeSummary, no per-student/per-course filter. */
+  async listAllGradedWithSubject() {
+    const db = getDb();
+    return db
+      .select({ totalScore: quizAttempts.totalScore, maxPossibleScore: quizAttempts.maxPossibleScore, subjectId: courses.subjectId })
+      .from(quizAttempts)
+      .innerJoin(quizzes, eq(quizAttempts.quizId, quizzes.id))
+      .innerJoin(courses, eq(quizzes.courseId, courses.id))
+      .where(and(eq(quizAttempts.status, "auto_graded"), isNull(quizzes.deletedAt)));
+  },
+
   async listForStudentWithDetails(studentId: string) {
     const db = getDb();
     return db

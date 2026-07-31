@@ -1,4 +1,4 @@
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, gte, lte, sql } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
 import { attendanceRecords, students, type AttendanceStatus } from "@/lib/db/schema";
@@ -34,6 +34,15 @@ export const AttendanceRepository = {
       .from(attendanceRecords)
       .where(eq(attendanceRecords.studentId, studentId))
       .orderBy(attendanceRecords.date);
+  },
+
+  /** Every record in a date range, school-wide — small table, aggregated in JS by the caller (see AnalyticsService). */
+  async listAll(startDate: string, endDate: string) {
+    const db = getDb();
+    return db
+      .select()
+      .from(attendanceRecords)
+      .where(and(gte(attendanceRecords.date, startDate), lte(attendanceRecords.date, endDate)));
   },
 
   /**
