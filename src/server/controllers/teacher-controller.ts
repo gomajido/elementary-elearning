@@ -5,17 +5,9 @@ import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/rbac";
 import { TeacherService, TeacherRegistrationError } from "@/server/services/teacher-service";
+import { teacherSchema } from "@/lib/validation/teacher";
 
 export type CreateTeacherState = { error?: string; tempPassword?: string; email?: string };
-
-const teacherSchema = z.object({
-  email: z.string().email(),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  employeeNumber: z.string().min(1),
-  phone: z.string().optional(),
-  hireDate: z.string().optional(),
-});
 
 export async function createTeacherAction(_prev: CreateTeacherState, formData: FormData): Promise<CreateTeacherState> {
   await requireRole(["admin"]);

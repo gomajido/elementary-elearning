@@ -6,31 +6,9 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/rbac";
 import { StudentService, StudentPortalError, type GuardianInput } from "@/server/services/student-service";
 import { ENROLLMENT_STATUSES, GENDERS } from "@/lib/db/schema";
+import { studentSchema } from "@/lib/validation/student";
 
 export type CreateStudentState = { error?: string };
-
-const relationshipTypeSchema = z.enum(["mother", "father", "guardian", "other"]);
-
-const studentSchema = z.object({
-  admissionNumber: z.string().min(1),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  dateOfBirth: z.string().min(1),
-  gender: z.enum(GENDERS),
-  classId: z.string().min(1),
-  academicYearId: z.string().min(1),
-  enrollmentDate: z.string().min(1),
-  guardian1FirstName: z.string().min(1),
-  guardian1LastName: z.string().min(1),
-  guardian1Relationship: relationshipTypeSchema,
-  guardian1Phone: z.string().optional(),
-  guardian1Email: z.string().email().optional().or(z.literal("")),
-  guardian2FirstName: z.string().optional(),
-  guardian2LastName: z.string().optional(),
-  guardian2Relationship: relationshipTypeSchema.optional(),
-  guardian2Phone: z.string().optional(),
-  guardian2Email: z.string().email().optional().or(z.literal("")),
-});
 
 export async function createStudentAction(_prev: CreateStudentState, formData: FormData): Promise<CreateStudentState> {
   await requireRole(["admin"]);

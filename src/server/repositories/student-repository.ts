@@ -36,6 +36,16 @@ export const StudentRepository = {
     return row ?? null;
   },
 
+  async findByAdmissionNumber(admissionNumber: string) {
+    const db = getDb();
+    const [row] = await db
+      .select()
+      .from(students)
+      .where(and(eq(students.admissionNumber, admissionNumber), isNull(students.deletedAt)))
+      .limit(1);
+    return row ?? null;
+  },
+
   async findByUserId(userId: string) {
     const db = getDb();
     const [row] = await db

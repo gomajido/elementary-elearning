@@ -24,6 +24,13 @@ export const UserRepository = {
     return user ?? null;
   },
 
+  /** All non-null emails currently in use — for bulk-import uniqueness pre-checks (avoids one query per CSV row). */
+  async listEmails() {
+    const db = getDb();
+    const rows = await db.select({ email: users.email }).from(users).where(isNull(users.deletedAt));
+    return rows.map((r) => r.email).filter((e): e is string => e !== null);
+  },
+
   async findByUsername(username: string) {
     const db = getDb();
     const [user] = await db

@@ -33,6 +33,16 @@ export const TeacherRepository = {
     return row ?? null;
   },
 
+  async findByEmployeeNumber(employeeNumber: string) {
+    const db = getDb();
+    const [row] = await db
+      .select()
+      .from(teachers)
+      .where(and(eq(teachers.employeeNumber, employeeNumber), isNull(teachers.deletedAt)))
+      .limit(1);
+    return row ?? null;
+  },
+
   async create(input: NewTeacher, tx: Queryable = getDb()) {
     const [row] = await tx.insert(teachers).values(input).returning();
     return row;
