@@ -1,7 +1,16 @@
-import { eq, desc, isNull, and } from "drizzle-orm";
+import { eq, desc, isNull, and, inArray } from "drizzle-orm";
 
 import { getDb, type Queryable } from "@/lib/db";
-import { feeStructures, invoices, invoiceLineItems, payments, students } from "@/lib/db/schema";
+import {
+  feeStructures,
+  invoices,
+  invoiceLineItems,
+  payments,
+  students,
+  invoiceReminders,
+  type ReminderChannel,
+  type ReminderStatus,
+} from "@/lib/db/schema";
 
 export const FeeStructureRepository = {
   async list() {
@@ -180,5 +189,30 @@ export const PaymentRepository = {
 
   async softDelete(id: string, tx: Queryable = getDb()) {
     await tx.update(payments).set({ deletedAt: new Date() }).where(eq(payments.id, id));
+  },
+};
+
+export const InvoiceReminderRepository = {
+  async create(input: { invoiceId: string; guardianId: string; channel: ReminderChannel; status: ReminderStatus; errorMessage?: string }) {
+    const db = getDb();
+    const [row] = await db.insert(invoiceReminders).values(input).returning();
+    return row;
+  },
+
+  /** Most recent reminder per invoice, aggregated in JS — small table, no need for a window-function query. */
+  async listLatestByInvoiceIds(invoiceIds: string[]) {
+    if (invoiceIds.length === 0) return new Map<string, typeof invoiceReminders.$inferSelect>();
+    const db = getDb();
+    const rows = await db
+      .select()
+      .from(invoiceReminders)
+      .where(inArray(invoiceReminders.invoiceId, invoiceIds))
+      .orderBy(desc(invoiceReminders.createdAt));
+
+    const latestByInvoiceId = new Map<string, typeof invoiceReminders.$inferSelect>();
+    for (const row of rows) {
+      if (!latestByInvoiceId.has(row.invoiceId)) latestByInvoiceId.set(row.invoiceId, row);
+    }
+    return latestByInvoiceId;
   },
 };

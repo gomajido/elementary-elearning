@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Tags, Receipt, ArrowRight, ShieldAlert, Wallet } from "lucide-react";
+import { Tags, Receipt, ArrowRight, ShieldAlert, Wallet, BellRing } from "lucide-react";
 
 import { FeeService } from "@/server/services/fee-service";
 import { OutstandingTable } from "@/components/tables/outstanding-table";
@@ -40,7 +40,7 @@ export default async function FeesOverviewPage() {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Link href="/admin/fees/structures">
           <Card className="transition-colors hover:bg-muted/50">
             <CardContent className="flex items-center gap-3 py-5">
@@ -64,6 +64,20 @@ export default async function FeesOverviewPage() {
               <div className="flex-1">
                 <p className="font-medium">Tagihan</p>
                 <p className="text-xs text-muted-foreground">Buat dan kelola tagihan siswa</p>
+              </div>
+              <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/fees/reminders">
+          <Card className="transition-colors hover:bg-muted/50">
+            <CardContent className="flex items-center gap-3 py-5">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <BellRing className="size-5" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium">Kirim Pengingat</p>
+                <p className="text-xs text-muted-foreground">Ingatkan wali via WhatsApp/Email</p>
               </div>
               <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
             </CardContent>

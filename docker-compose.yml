@@ -48,6 +48,35 @@ services:
       mc anonymous set download local/madani-elearning-content
       "
 
+  # Local catch-all SMTP inbox — reminders sent in dev land here instead of
+  # a real mailbox. Web UI at :8025 to inspect what was sent.
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8025/readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # WhatsApp HTTP API (WAHA). Port 3001 (not 3000) to avoid clashing with
+  # `next dev`. The session needs a one-time QR-code link via the WAHA
+  # dashboard at :3001 — see README "WhatsApp reminders" for that step.
+  waha:
+    image: devlikeapro/waha:latest
+    platform: linux/amd64 # no arm64 image published — runs under emulation on Apple Silicon
+    restart: unless-stopped
+    environment:
+      WHATSAPP_DEFAULT_ENGINE: NOWEB
+    ports:
+      - "3001:3000"
+    volumes:
+      - waha_data:/app/.sessions
+
 volumes:
   postgres_data:
   minio_data:
+  waha_data:

@@ -1,7 +1,7 @@
 import { pgTable, text, integer, boolean } from "drizzle-orm/pg-core";
 
 import { id, schoolId, timestamps, softDelete } from "./_shared";
-import { students } from "./people";
+import { students, guardians } from "./people";
 import { academicYears } from "./academics";
 import { users } from "./users";
 
@@ -89,4 +89,27 @@ export const payments = pgTable("payments", {
   schoolId: schoolId(),
   createdAt: timestamps.createdAt,
   ...softDelete,
+});
+
+export const REMINDER_CHANNELS = ["whatsapp", "email"] as const;
+export type ReminderChannel = (typeof REMINDER_CHANNELS)[number];
+
+export const REMINDER_STATUSES = ["sent", "failed"] as const;
+export type ReminderStatus = (typeof REMINDER_STATUSES)[number];
+
+// Audit log of payment-reminder sends — lets the admin UI show "last
+// reminded" per invoice and avoid blind re-sends. Append-only, no update.
+export const invoiceReminders = pgTable("invoice_reminders", {
+  id: id(),
+  invoiceId: text("invoice_id")
+    .notNull()
+    .references(() => invoices.id),
+  guardianId: text("guardian_id")
+    .notNull()
+    .references(() => guardians.id),
+  channel: text("channel").notNull().$type<ReminderChannel>(),
+  status: text("status").notNull().$type<ReminderStatus>(),
+  errorMessage: text("error_message"),
+  schoolId: schoolId(),
+  createdAt: timestamps.createdAt,
 });

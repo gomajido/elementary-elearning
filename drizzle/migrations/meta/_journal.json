@@ -71,6 +71,13 @@
       "when": 1785385961908,
       "tag": "0009_same_apocalypse",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785458609759,
+      "tag": "0010_glossy_lethal_legion",
+      "breakpoints": true
     }
   ]
 }

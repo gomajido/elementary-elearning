@@ -17,7 +17,7 @@ See [`docs/rfc/0001-school-management-system.md`](docs/rfc/0001-school-managemen
 ## Prerequisites
 
 - [Bun](https://bun.sh)
-- [Docker](https://docs.docker.com/get-docker/) + Docker Compose (for local Postgres/MinIO)
+- [Docker](https://docs.docker.com/get-docker/) + Docker Compose (for local Postgres/MinIO/Mailpit/WAHA)
 
 ## Local setup
 
@@ -25,7 +25,7 @@ See [`docs/rfc/0001-school-management-system.md`](docs/rfc/0001-school-managemen
 # 1. Install dependencies
 bun install
 
-# 2. Start Postgres + MinIO
+# 2. Start Postgres, MinIO, Mailpit (local email inbox), and WAHA (WhatsApp)
 docker compose up -d
 
 # 3. Configure env vars (defaults already match docker-compose.yml)
@@ -39,6 +39,16 @@ bun run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000). The landing page is public; `/setup` does one-time admin account creation (refuses once an admin exists — see RFC 0001 "Auth Design"). Every other account (teachers, students, parents) is provisioned by the admin from inside the app, each with a one-time temp password shown on screen.
+
+### WhatsApp reminders setup (one-time)
+
+Fee-payment reminders go out over WhatsApp (fallback: email) from `/admin/fees/reminders`. Email works out of the box locally — sent mail lands in Mailpit's inbox at [http://localhost:8025](http://localhost:8025), no further setup. WhatsApp needs a real number linked once per environment:
+
+1. Open the WAHA dashboard at [http://localhost:3001](http://localhost:3001).
+2. Start the `default` session and scan the QR code with the WhatsApp account that should send reminders.
+3. The session persists in the `waha_data` volume, so this only needs to happen once per environment (not per `docker compose up`).
+
+The channel is picked once per guardian, not retried on failure: a guardian with a phone number on file always gets WhatsApp; email is only used when there's no usable phone number. Without a linked WAHA session, WhatsApp sends fail outright — the reminders page will show the failure per row.
 
 ## Running tests
 
