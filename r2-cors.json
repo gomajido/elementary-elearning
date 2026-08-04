@@ -1,0 +1,16 @@
+{
+  "rules": [
+    {
+      "id": "app-uploads",
+      "allowed": {
+        "origins": [
+          "https://app.ismadani.sch.id",
+          "https://elearning.abd-majidehamide.workers.dev"
+        ],
+        "methods": ["PUT", "GET"],
+        "headers": ["content-type"]
+      },
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

@@ -1,7 +1,17 @@
 // PBKDF2 via Web Crypto (crypto.subtle) — chosen over argon2 because it has
 // zero native-binding risk on the Workers runtime. See RFC 0001 "Auth Design".
 
-const ITERATIONS = 210_000;
+// Cloudflare Workers' crypto.subtle hard-caps PBKDF2 at 100,000 iterations —
+// not a performance concern, an outright NotSupportedError above it. Caught
+// live in production (see docs/rfc/0004-cloudflare-production-deployment.md):
+// every login failed until this came down from the original 210,000. Still
+// an accepted baseline (100k was OWASP's own PBKDF2-SHA256 recommendation
+// until fairly recently), but a real reduction in brute-force resistance —
+// noted here since it's a deliberate, disclosed tradeoff, not an oversight.
+// Each stored hash embeds its own iteration count (see verifyPassword), so
+// this doesn't retroactively change already-issued hashes — those needed a
+// one-off rehash pass after this changed, not a schema migration.
+const ITERATIONS = 100_000;
 const HASH_ALG = "SHA-256";
 const KEY_LENGTH_BITS = 256;
 
