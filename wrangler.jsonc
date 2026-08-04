@@ -49,5 +49,20 @@
 		// Enable image optimization
 		// see https://opennext.js.org/cloudflare/howtos/image
 		"binding": "IMAGES"
+	},
+	// Persisted logs queryable in the Cloudflare dashboard — unlike
+	// `wrangler tail`, which is live-only and misses anything that happens
+	// while nobody's watching (exactly what this session spent all night
+	// working around manually). head_sampling_rate: 1 = log everything, no
+	// sampling — this app's traffic is low enough that full logging costs
+	// nothing meaningful.
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1,
+		"logs": {
+			"enabled": true,
+			"invocation_logs": true,
+			"persist": true
+		}
 	}
 }
