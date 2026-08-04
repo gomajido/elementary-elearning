@@ -4,6 +4,7 @@ import { deletePaymentAction } from "@/server/controllers/fee-controller";
 import { PaymentRowActions } from "@/components/tables/payment-row-actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { contentObjectUrl } from "@/lib/storage/client";
 import { PAYMENT_METHOD_LABELS, label } from "@/lib/labels";
 import type { PaymentMethod } from "@/lib/db/schema";
 
@@ -33,6 +34,7 @@ export function PaymentsTable({ rows, invoiceId }: { rows: Payment[]; invoiceId:
           <TableHead>Metode</TableHead>
           <TableHead>Tanggal</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Bukti</TableHead>
           <TableHead>Aksi</TableHead>
         </TableRow>
       </TableHeader>
@@ -51,6 +53,20 @@ export function PaymentsTable({ rows, invoiceId }: { rows: Payment[]; invoiceId:
               )}
             </TableCell>
             <TableCell>
+              {p.proofStorageKey ? (
+                <a
+                  href={contentObjectUrl(p.proofStorageKey)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm underline underline-offset-4"
+                >
+                  Lihat bukti
+                </a>
+              ) : (
+                <span className="text-sm text-muted-foreground">—</span>
+              )}
+            </TableCell>
+            <TableCell>
               <PaymentRowActions
                 payment={p}
                 invoiceId={invoiceId}
@@ -61,7 +77,7 @@ export function PaymentsTable({ rows, invoiceId }: { rows: Payment[]; invoiceId:
         ))}
         {rows.length === 0 && (
           <TableRow>
-            <TableCell colSpan={6} className="text-center text-muted-foreground">
+            <TableCell colSpan={7} className="text-center text-muted-foreground">
               Belum ada pembayaran tercatat
             </TableCell>
           </TableRow>

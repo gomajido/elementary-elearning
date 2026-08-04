@@ -141,6 +141,7 @@ const paymentSchema = z.object({
   referenceNumber: z.string().optional(),
   paidAt: z.string().min(1),
   notes: z.string().optional(),
+  proofStorageKey: z.string().optional(),
 });
 
 export async function recordPaymentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -152,6 +153,7 @@ export async function recordPaymentAction(_prev: ActionState, formData: FormData
     referenceNumber: formData.get("referenceNumber") || undefined,
     paidAt: formData.get("paidAt"),
     notes: formData.get("notes") || undefined,
+    proofStorageKey: formData.get("proofStorageKey") || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
   const isVerified = formData.get("isVerified") === "on";
@@ -205,6 +207,18 @@ export async function requestPaymentProofUploadAction(invoiceId: string, content
   const invoice = await FeeService.findInvoiceById(invoiceId);
   if (!invoice) throw new Error("Tagihan tidak ditemukan");
   await GuardianService.assertGuardianOwnsStudent(user.id, invoice.studentId);
+  if (!PROOF_MAX_CONTENT_TYPES.test(contentType)) throw new Error("File harus berupa gambar atau PDF");
+
+  const key = `payments/proof/${crypto.randomUUID()}`;
+  const uploadUrl = await presignUpload(key, contentType);
+  return { uploadUrl, key };
+}
+
+/** Admin attaching proof while recording a payment directly — no guardian-ownership check, admin's role is the authority boundary (same pattern as AuthService.adminUpdateIdentity). */
+export async function requestAdminPaymentProofUploadAction(invoiceId: string, contentType: string) {
+  await requireRole(["admin"]);
+  const invoice = await FeeService.findInvoiceById(invoiceId);
+  if (!invoice) throw new Error("Tagihan tidak ditemukan");
   if (!PROOF_MAX_CONTENT_TYPES.test(contentType)) throw new Error("File harus berupa gambar atau PDF");
 
   const key = `payments/proof/${crypto.randomUUID()}`;

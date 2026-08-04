@@ -69,14 +69,16 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Catat pembayaran</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RecordPaymentForm invoiceId={invoiceId} />
-        </CardContent>
-      </Card>
+      {detail.status !== "paid" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Catat pembayaran</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RecordPaymentForm invoiceId={invoiceId} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
