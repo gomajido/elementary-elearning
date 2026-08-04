@@ -30,7 +30,7 @@ export function EditClassDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit kelas — {classRow.name}</DialogTitle>
         </DialogHeader>

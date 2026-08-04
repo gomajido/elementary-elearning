@@ -56,7 +56,7 @@ export function ActionDialog({
         <Plus className="size-4" />
         {triggerLabel}
       </DialogTrigger>
-      <DialogContent className={cn("max-h-[85vh] overflow-y-auto sm:max-w-lg", contentClassName)}>
+      <DialogContent className={cn("sm:max-w-lg", contentClassName)}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
