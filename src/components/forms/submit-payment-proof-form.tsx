@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import {
   requestPaymentProofUploadAction,
@@ -16,12 +16,24 @@ import { PAYMENT_METHOD_LABELS } from "@/lib/labels";
 
 const initialState: SubmitProofState = {};
 
-export function SubmitPaymentProofForm({ invoiceId }: { invoiceId: string }) {
+/**
+ * `onSuccess` lets the caller close the dialog and refetch the invoice list
+ * (see submit-payment-proof-dialog.tsx) instead of this form permanently
+ * replacing itself with a dead-end "submitted" screen — an invoice can take
+ * multiple payments (partial transfers accumulating), so a parent needs to
+ * be able to open this again for the same invoice, same as admin's
+ * RecordPaymentForm never blocks a second payment.
+ */
+export function SubmitPaymentProofForm({ invoiceId, onSuccess }: { invoiceId: string; onSuccess?: () => void }) {
   const [state, formAction, pending] = useActionState(submitPaymentProofAction, initialState);
   const [proofKey, setProofKey] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state, onSuccess]);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -40,17 +52,6 @@ export function SubmitPaymentProofForm({ invoiceId }: { invoiceId: string }) {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
     }
-  }
-
-  if (state.success) {
-    return (
-      <div className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm dark:border-amber-900 dark:bg-amber-950">
-        <p className="font-medium">Bukti pembayaran diajukan.</p>
-        <p className="mt-1 text-muted-foreground">
-          Menunggu verifikasi dari admin sekolah — tagihan akan diperbarui setelah dikonfirmasi.
-        </p>
-      </div>
-    );
   }
 
   return (
