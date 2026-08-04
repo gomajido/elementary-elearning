@@ -11,3 +11,10 @@ export async function sendRemindersAction(invoiceIds: string[]) {
   revalidatePath("/admin/fees/reminders");
   return result;
 }
+
+/** Single-parent path — logs that the admin opened the wa.me link for this invoice (see reminder-table.tsx: fire-and-forget, doesn't block the anchor's navigation). */
+export async function logWaReminderSentAction(invoiceId: string) {
+  await requireRole(["admin"]);
+  await ReminderService.logWaReminderSent(invoiceId);
+  revalidatePath("/admin/fees/reminders");
+}

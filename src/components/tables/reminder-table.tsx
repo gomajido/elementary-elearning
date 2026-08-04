@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { MessageCircle } from "lucide-react";
 
-import { sendRemindersAction } from "@/server/controllers/reminder-controller";
+import { sendRemindersAction, logWaReminderSentAction } from "@/server/controllers/reminder-controller";
 import type { ReminderService } from "@/server/services/reminder-service";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,27 @@ function formatCents(cents: number) {
 }
 
 const CHANNEL_LABELS = { whatsapp: "WhatsApp", email: "Email" } as const;
+
+/**
+ * A real `<a href target="_blank">` to `wa.me` (opens the admin's own
+ * WhatsApp — browser or phone app — with the message prefilled) — not a
+ * `window.open()` call, which popup blockers reject even when synchronous,
+ * as a real anchor click never is. The log call is fire-and-forget: it
+ * can't block or delay the anchor's native navigation.
+ */
+function SendWaLinkButton({ invoiceId, waLink }: { invoiceId: string; waLink: string }) {
+  return (
+    <Button
+      variant="outline"
+      size="xs"
+      nativeButton={false}
+      render={<a href={waLink} target="_blank" rel="noopener noreferrer" onClick={() => logWaReminderSentAction(invoiceId)} />}
+    >
+      <MessageCircle />
+      Buka WhatsApp
+    </Button>
+  );
+}
 
 export function ReminderTable({ rows }: { rows: ReminderRow[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set(rows.filter((r) => r.channel).map((r) => r.invoice.id)));
@@ -74,6 +96,7 @@ export function ReminderTable({ rows }: { rows: ReminderRow[] }) {
             <TableHead>Jatuh Tempo</TableHead>
             <TableHead>Kanal</TableHead>
             <TableHead>Terakhir Diingatkan</TableHead>
+            <TableHead>Aksi</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -103,11 +126,14 @@ export function ReminderTable({ rows }: { rows: ReminderRow[] }) {
               <TableCell>
                 {row.lastReminder ? new Date(row.lastReminder.createdAt).toLocaleDateString("id-ID") : "—"}
               </TableCell>
+              <TableCell>
+                {row.channel === "whatsapp" && row.waLink && <SendWaLinkButton invoiceId={row.invoice.id} waLink={row.waLink} />}
+              </TableCell>
             </TableRow>
           ))}
           {rows.length === 0 && (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground">
+              <TableCell colSpan={8} className="text-center text-muted-foreground">
                 Tidak ada tagihan tertunggak
               </TableCell>
             </TableRow>

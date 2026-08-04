@@ -1,10 +1,12 @@
 import { normalizeIndonesianPhone } from "@/lib/notifications/phone";
 import { sendEmail } from "@/lib/notifications/email-client";
-import { sendWhatsAppMessage } from "@/lib/notifications/whatsapp-client";
+import { sendWhatsAppMessage, buildWaMeLink } from "@/lib/notifications/whatsapp-client";
 import { FeeService } from "@/server/services/fee-service";
 import { StudentRepository } from "@/server/repositories/student-repository";
 import { InvoiceReminderRepository } from "@/server/repositories/fee-repository";
 import type { ReminderChannel } from "@/lib/db/schema";
+
+export class ReminderError extends Error {}
 
 function formatCents(cents: number) {
   return `Rp${(cents / 100).toLocaleString("id-ID")}`;
@@ -52,12 +54,26 @@ export const ReminderService = {
       const billingContact = guardianRows.find((g) => g.link.isBillingContact) ?? guardianRows[0];
       const guardian = billingContact?.guardian ?? null;
       const channel = guardian ? pickReminderChannel(guardian) : null;
+      const studentName = `${o.student.firstName} ${o.student.lastName}`;
+
+      // Precomputed server-side (not built on click) so the client can render a
+      // real <a href> — a script-triggered window.open() after an awaited server
+      // action is exactly the pattern popup blockers are designed to catch.
+      const waLink =
+        channel === "whatsapp"
+          ? buildWaMeLink(
+              normalizeIndonesianPhone(guardian!.phone!)!,
+              buildReminderMessage({ studentName, invoiceNumber: o.invoice.invoiceNumber, balanceCents: o.balanceCents, dueDate: o.invoice.dueDate }).text
+            )
+          : null;
+
       return {
         invoice: o.invoice,
         student: o.student,
         balanceCents: o.balanceCents,
         guardian,
         channel,
+        waLink,
         lastReminder: latestReminders.get(o.invoice.id) ?? null,
       };
     });
@@ -102,5 +118,25 @@ export const ReminderService = {
     }
 
     return { succeeded, failed };
+  },
+
+  /**
+   * Single-parent path: the client renders `eligibleInvoices()`'s precomputed
+   * `waLink` as a real `<a href target="_blank">` — clicking it opens the
+   * admin's own WhatsApp (browser or phone app) with the message prefilled,
+   * and they send it themselves; no WAHA session involved. This just logs
+   * that click to `invoiceReminders`, fire-and-forget from the client (see
+   * reminder-table.tsx) so the log call can't block or interfere with the
+   * anchor's native navigation. Same "avoid blind re-sends" purpose as the
+   * bulk path (see schema comment), and just as honest a "sent" signal as
+   * the bulk path's "WAHA accepted it" (neither confirms actual delivery).
+   */
+  async logWaReminderSent(invoiceId: string) {
+    const eligible = await ReminderService.eligibleInvoices();
+    const row = eligible.find((e) => e.invoice.id === invoiceId);
+    if (!row || !row.guardian || row.channel !== "whatsapp") {
+      throw new ReminderError("Tidak ada nomor WhatsApp yang bisa dihubungi untuk tagihan ini");
+    }
+    await InvoiceReminderRepository.create({ invoiceId, guardianId: row.guardian.id, channel: "whatsapp", status: "sent" });
   },
 };
