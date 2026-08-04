@@ -1,6 +1,6 @@
 # RFC 0004: Production deployment on Cloudflare, free storage/DB/cache
 
-- **Status**: Proposed
+- **Status**: Deployed, on Workers Paid, verified working end-to-end under real production traffic — live at `https://elearning.abd-majidehamide.workers.dev` and a custom domain (`app.ismadani.sch.id`), against real Neon (migrated + seeded), real R2 (CORS configured), real Upstash. Still on branch `deploy/cloudflare-workers`, not merged to main — see "Open items" below for why. Workers Logs (persisted observability) enabled, replacing the live-only `wrangler tail` sessions this whole deploy leaned on.
 - **Date**: 2026-08-04
 - **Author**: Abdul Majid Hamid (with Claude Code)
 - **Amends**: RFC 0001, RFC 0002
@@ -19,7 +19,9 @@ RFC 0001 originally targeted Cloudflare Workers + D1. RFC 0002 dropped D1 for Po
 
 **This is the one with a real ongoing cost risk**: R2 doesn't block or suspend past the free allowance — it bills automatically, **$0.015/GB-month over 10 GB** (storage) plus per-operation overage rates past the 1M/10M op caps. If usage grows past the free allowance, it's a small, predictable bill, not a surprise cutoff — but unlike Neon below, there's no free built-in circuit breaker. Worth setting a Cloudflare billing alert once this is live.
 
-**Setup**: create an R2 bucket, mint an R2 API token (S3-compatible access key/secret), set `S3_ENDPOINT`/`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`/`S3_BUCKET` to the R2 values (`S3_FORCE_PATH_STYLE` and `S3_REGION` stay as they are).
+**Setup**: create an R2 bucket, mint an R2 API token (S3-compatible access key/secret), set `S3_ENDPOINT`/`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`/`S3_BUCKET` to the R2 values (`S3_FORCE_PATH_STYLE` and `S3_REGION` stay as they are). `S3_ENDPOINT` is the account-level endpoint only — the bucket name goes in `S3_BUCKET` separately, not appended to the endpoint URL (path-style requests would otherwise double up the bucket segment).
+
+**CORS is required, not optional — RFC 0001 flagged this as a known future risk and it wasn't actually configured until caught live.** Uploads (payment proof, avatars) go browser → presigned URL → R2 directly, never through the Worker — a genuine cross-origin request from the app's domain to R2's domain, which browsers block without an explicit CORS policy on the bucket. Symptom: "Gagal mengunggah bukti transfer" with no server-side error at all (the failure happens entirely client-side against R2, invisible to `wrangler tail`). Fixed via `wrangler r2 bucket cors set madani --file r2-cors.json`, allowing `PUT`/`GET` from the app's real origins. Verified directly (not just "should work now"): generated a real presigned URL and did the PUT with an `Origin` header set, confirming R2's response carries the matching `Access-Control-Allow-Origin`.
 
 ### Database → Neon (free) behind Cloudflare Hyperdrive (free)
 
@@ -28,8 +30,10 @@ Workers don't get a clean, low-friction path to arbitrary Postgres without Hyper
 - `postgres` (the driver this app already uses via `drizzle-orm/postgres-js`) ships a **workerd-specific conditional export** — it's designed to run inside Workers already, no driver swap needed. It does need `serverExternalPackages: ["postgres"]` added to `next.config.ts` so Next doesn't bundle it with Node's module resolution instead of workerd's.
 - `wrangler.jsonc` needs `compatibility_flags: ["nodejs_compat"]`, a recent `compatibility_date`, and a `hyperdrive` binding pointing at a Hyperdrive config created from Neon's connection string.
 - Free-plan Hyperdrive caps at **100,000 queries/day** (unlimited on Workers Paid) — ample for a single small school.
-- `getDb()` (`src/lib/db/index.ts`) currently reads `process.env.DATABASE_URL!` at module load. OpenNext's Cloudflare adapter shims Workers bindings into `process.env`, so this likely keeps working unchanged — **but this needs a real spike to confirm before committing to the full migration**, not an assumption (see Verification).
+- **Spike resolved** (was an open question, now confirmed): `process.env.DATABASE_URL` does *not* just work under Workers. OpenNext's `process.env` shim only covers plain string secrets (`S3_*`, `UPSTASH_*`) — Hyperdrive is an object binding (`env.HYPERDRIVE.connectionString`), which needs `getCloudflareContext()` (from `@opennextjs/cloudflare`) to reach at all, and that's only available inside a request, not at module load.
 - **Migrations run outside the Worker**: `drizzle-kit migrate` needs Postgres DDL access, which is a bad fit for a pooling proxy meant for app-runtime queries. Point `DATABASE_URL` at Neon's **direct** connection string (not through Hyperdrive) for `bun run db:migrate`, run from CI or a local machine — same command, different target, same discipline RFC 0001/0002 already established (inspect the generated diff before applying).
+- **`fetch_types: false` is required, not optional** — caught live: login worked (simple single-table queries) but the admin dashboard's students+classes join threw `Failed query`. Cloudflare's own Hyperdrive+postgres.js example sets `fetch_types: false` (plus `max: 5`) and doesn't explain why in the inline docs, but the practical effect is clear — without it, `postgres-js` queries `pg_catalog` for custom type OIDs on connect, which doesn't work reliably through Hyperdrive's pooling proxy.
+- **Don't cache the connection across requests under Workers** — the first version of `getDb()` used a module-level lazy singleton (create once, reuse for the isolate's lifetime), the same pattern local dev's always used. Caught live: intermittent `Failed query` errors after a few idle minutes between requests, gone on immediate retry — the cached connection was going stale during the gap (an intermediary silently dropping an idle TCP connection is a known class of problem for any long-lived connection in a serverless environment) and the client didn't detect it until the next query. Fixed by creating a **fresh `postgres()` client on every `getDb()` call under Workers** — cheap, since Hyperdrive already maintains the actual warm connection pool at the edge (that's its whole purpose), and matches Cloudflare's own Hyperdrive example code, which creates the client inside the request handler rather than persisting it. Local dev (no Cloudflare context) still uses a cached singleton, same as always — no serverless-isolate staleness concern there, it's a normal long-running process.
 
 **Watch item**: Neon's 0.5 GB/project cap is the tightest free-tier number in this whole plan. A single small elementary school's data (the kind of scale this app's own seed script models — see RFC 0003) should fit for years, but this is worth checking periodically, not a "set and forget." Unlike R2, Neon **fails safe on cost**: hitting the storage or compute-hour cap **suspends the project** until the next billing cycle (or a manual upgrade) — no surprise bill, but the app goes down until you act.
 
@@ -43,9 +47,11 @@ Free allowance: **256 MB data, 500K commands/month, 10 GB bandwidth, up to 10 da
 
 **Setup**: create an Upstash Redis database, take its REST URL + token, set them as Worker secrets (replaces `REDIS_URL`).
 
-### Compute → Cloudflare Workers, Paid plan ($5/mo) recommended — the one line item not free
+### Compute → Cloudflare Workers Paid ($5/mo) — confirmed required, not just a recommendation
 
-Your ask scoped "must be free" to storage/Postgres/Redis specifically, so this is called out as a separate, overridable call: the Workers **Free** plan caps CPU time at **10ms per invocation**. That's wall-clock-cheap I/O (DB/cache round-trips) excluded — only active JS execution counts — but this app's password hashing (`src/lib/auth/password.ts`, PBKDF2 at 210,000 iterations, deliberately expensive to resist brute force) is pure CPU work on every login and every account-creation, and is a realistic candidate to blow a 10ms budget on its own. I'm not asserting it definitely will — that needs measuring, not guessing — but going in assuming the Free compute plan works without checking would be the kind of thing that quietly breaks login in production. Workers **Paid** ($5/month minimum, 10M requests + 30M CPU-ms included) removes this risk entirely and is cheap enough that I'd default to it unless you want to test the Free plan's real headroom first.
+Your ask scoped "must be free" to storage/Postgres/Redis specifically, so this was always called out as a separate, overridable call — but it's no longer hypothetical. The Workers **Free** plan caps CPU time at **10ms per invocation**; **Paid** ($5/month minimum, 10M requests + 30M CPU-ms included, 30-second default per-invocation cap — ~3000x more headroom) removes that ceiling. This account started on Free and hit the wall for real: `wrangler tail` showed `outcome: "exceededCpu"` with `cpuTime: 10-13` on a real mix of requests (not just PBKDF2-heavy ones — plain page loads too), status 503 to the browser as Cloudflare's Error 1102. Upgraded to Paid; confirmed via the same `wrangler tail` — the exact same request shapes that were failing now complete at `cpuTime: 100-260` with `outcome: "ok"`, and zero new `exceededCpu` events across everything since (1000+ requests and counting).
+
+**A second, sharper risk under the original PBKDF2 concern turned out to matter independently of the CPU-time plan.** The concern was PBKDF2 (`src/lib/auth/password.ts`, originally 210,000 iterations) being *slow* enough to blow the CPU budget. The real failure, caught live in production: Workers' `crypto.subtle` **hard-caps PBKDF2 at 100,000 iterations** and throws `NotSupportedError` above it — not slow, rejected outright, on Free *or* Paid, since it's a capability limit not a time limit. Every login and every account/password creation failed unconditionally until this came down. Fixed by lowering `ITERATIONS` to 100,000 (Workers' ceiling) — a real, disclosed reduction in brute-force resistance from the original 210,000, approved explicitly before making the change, not assumed. Existing password hashes (already-seeded prod accounts) needed a one-off rehash pass after the fix, since each hash embeds its own iteration count (`verifyPassword` reads it from the stored hash, not the current constant) — old 210k hashes would have kept failing even after the code fix, since verification would still try to re-derive at 210k.
 
 ### Explicitly out of scope here
 
@@ -54,24 +60,36 @@ Not "storage/Postgres/Redis," so not decided in this RFC, but still blocking a f
 - **SMTP relay** — Mailpit is dev-only. Needs a real relay (several have workable free tiers) before email reminders/notifications work in prod.
 - Domain/DNS, Worker secrets management, CI deploy pipeline.
 
-## Setup checklist (once this RFC is agreed)
+## Setup checklist
 
-1. Re-add `@opennextjs/cloudflare` + `wrangler`, `wrangler.jsonc` (`nodejs_compat`, `hyperdrive` binding).
-2. `next.config.ts`: add `serverExternalPackages: ["postgres"]`.
-3. Create Neon project (free) → Hyperdrive config bound to it.
-4. Create R2 bucket + API token.
-5. Create Upstash Redis database; rewrite `src/lib/cache/redis.ts` against `@upstash/redis`.
-6. Point CI/local migrations at Neon's direct connection string, not Hyperdrive.
-7. Provision Worker secrets for all of the above (never commit them).
-8. Spike: confirm `getDb()`'s `process.env.DATABASE_URL` pattern actually resolves the Hyperdrive binding under OpenNext before treating the migration as done.
+1. ✅ Re-add `@opennextjs/cloudflare` + `wrangler` — via `opennextjs-cloudflare migrate`, which scaffolded `wrangler.jsonc`, `open-next.config.ts`, `.dev.vars`, `public/_headers`, and the `preview`/`deploy`/`upload`/`cf-typegen` package.json scripts.
+2. ✅ `next.config.ts`: `serverExternalPackages: ["postgres"]` added.
+3. ✅ Neon project created; Hyperdrive config created (`wrangler hyperdrive create`) and bound in `wrangler.jsonc`.
+4. ✅ R2 bucket (`madani`, app content) + API token created. A second bucket (`elearning-opennext-cache`) is also required — OpenNext's own incremental-cache layer, unrelated to app storage, bound in `wrangler.jsonc`'s `r2_buckets`.
+5. ✅ Upstash Redis database created; `src/lib/cache/redis.ts` rewritten against `@upstash/redis` (done in an earlier pass, see git history).
+6. ✅ `getDb()` rewritten for the Hyperdrive-binding-vs-`process.env` split (see Decisions above) — verified against both the local-dev fallback path *and* the real deployed Hyperdrive→Neon path (see Verification #2).
+7. ✅ Migrations run directly against Neon's connection string (`.env.production`'s `DATABASE_URL` already is the direct string, confirmed correct by construction) — `bun run db:migrate` applied all 28 tables to Neon successfully.
+8. ✅ `wrangler secret put` done for R2 keys + Upstash REST creds (8 secrets). `DATABASE_URL` deliberately **not** pushed as a Worker secret — the deployed Worker always has a Cloudflare context, so `getDb()` always takes the Hyperdrive path; the plain-env fallback exists only for contexts with no Cloudflare context at all (local dev, `scripts/seed.ts`).
+9. ✅ Deployed via `bun run deploy` — live at `https://elearning.abd-majidehamide.workers.dev`.
+10. ✅ R2 CORS policy applied (`wrangler r2 bucket cors set madani --file r2-cors.json`, committed to the repo for reproducibility) — required for browser→R2 direct uploads, see Storage section above.
+11. ✅ Workers Paid enabled on the account (resolves the confirmed `exceededCpu` failures — see Compute section above).
+12. ✅ Workers Logs (`observability` block in `wrangler.jsonc`, `head_sampling_rate: 1`) enabled — persisted, queryable in the dashboard, rather than depending on a live `wrangler tail` session to see anything.
 
 ## Verification
 
-1. Spike task first, in isolation: minimal Worker + OpenNext + Hyperdrive binding + `postgres` query, confirm it returns data before touching the full app.
-2. Measure real CPU-ms for a login request (PBKDF2 hash+verify) and a representative admin SSR page under `wrangler dev --remote` or a deployed Worker — decide Free-vs-Paid compute with a number, not a guess.
-3. Full role-chain smoke test against the deployed Worker (admin → teacher → student → parent), same golden-path discipline RFC 0001/0002 used.
-4. Confirm R2 upload/download round-trip (payment proof, avatar) against real R2, not just MinIO.
-5. Confirm `cached()` still fails open correctly if Upstash is unreachable (same contract as today's Redis fail-open).
+1. ✅ Confirmed `getCloudflareContext()` is safely inert outside a Cloudflare context: `getDb()` called from a standalone `bun run` script (no Next.js, no Workers) correctly falls through to `process.env.DATABASE_URL` and queries local Postgres successfully.
+2. ✅ Confirmed against the **real deployed Worker**, not just local emulation: first deploy's `/setup` incorrectly showed "admin already exists" — traced to a real, separate bug (see below), fixed, redeployed, then correctly showed the genuine bootstrap-admin form against Neon (migrated, freshly empty of admins). Full chain confirmed live: Worker → `getCloudflareContext()` → Hyperdrive binding → real Neon → Drizzle → correct query result.
+3. **Real bug found and fixed via this deploy**: `src/app/(public)/setup/page.tsx` has no `cookies()`/`headers()` touch (unlike every protected page, which gets dynamic rendering for free via `requireRole()` reading the session cookie), so Next.js's static analysis didn't detect it as dynamic and **prerendered it once at build time** — the deployed Worker was serving a static HTML snapshot baked from local dev's DB state (which had an admin) regardless of Neon's real, empty state. Fixed with `export const dynamic = "force-dynamic"`. Cross-checked the rest of the route tree against the build's route-type output (`○` static vs `ƒ` dynamic) — every other page needing live data was already correctly dynamic via layout-level `requireRole()` cascading; `/setup` was the only gap (`/` and `/login` are static by design, correctly so — no per-request data needed).
+4. ✅ Measured, not guessed: `wrangler tail` on Free showed real requests (including plain page loads, not just login) failing at `cpuTime: 10-13` — right at the 10ms wall. After the Paid upgrade, the exact same request shapes complete at `cpuTime: 100-260` with no failures. Free vs. Paid decided with numbers.
+5. ✅ Full role-chain exercised live against real user traffic (not a synthetic smoke test): login, admin dashboard, every admin nav route (students/teachers/classes/fees/attendance/academic-years/subjects/assignments/guardians/analytics), invoice detail, fee-structure catalog CRUD, payment-proof upload — all confirmed clean via `wrangler tail`.
+6. ✅ R2 upload/download confirmed against real R2, not just MinIO — both a scripted presigned-PUT-with-Origin-header test (confirming the CORS response header) and real browser uploads (payment proof) after the CORS fix.
+7. ✅ Confirmed `cached()` fails open correctly when Upstash is unreachable, and that a cache hit correctly skips recomputation with values round-tripping intact through `@upstash/redis`'s automatic (de)serialization.
+
+## Open items
+
+- **Not merged to `main`** — deliberately, while the Cloudflare-vs-alternative-host question (a plain Hetzner VPS running the same `docker-compose.yml` stack this app already has for local dev was the live alternative discussed) stays open. Everything in this RFC works and is live, but "works" isn't the same as "this is the final answer" until that's actually decided.
+- **WAHA and SMTP relay** (see "Explicitly out of scope" above) — still block WhatsApp/email reminders working in this deployment; unrelated to whether Workers vs. a VPS is the final host.
+- Two application-layer bugs were also found and fixed via this deploy's real usage (dialogs not closing/refreshing after create, dialogs unreachable on mobile) — not Cloudflare-specific, so not detailed here; see git history on `deploy/cloudflare-workers`.
 
 ## Amendments
 

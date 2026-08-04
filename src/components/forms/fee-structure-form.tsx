@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 
 import { createFeeStructureAction, type ActionState } from "@/server/controllers/fee-controller";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,8 +13,15 @@ import { FEE_FREQUENCY_LABELS } from "@/lib/labels";
 
 const initialState: ActionState = {};
 
-export function FeeStructureForm({ academicYears }: { academicYears: { id: string; name: string }[] }) {
+export function FeeStructureForm({
+  academicYears,
+  onSuccess,
+}: {
+  academicYears: { id: string; name: string }[];
+  onSuccess?: () => void;
+}) {
   const [state, formAction, pending] = useActionState(createFeeStructureAction, initialState);
+  useActionSuccess(pending, state.error, onSuccess);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-3 sm:items-end">

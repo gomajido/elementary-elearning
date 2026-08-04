@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 
 import { createCourseAction, type ActionState } from "@/server/controllers/course-controller";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,12 +15,15 @@ export function CourseForm({
   subjects,
   classes,
   academicYears,
+  onSuccess,
 }: {
   subjects: { id: string; name: string }[];
   classes: { id: string; name: string; section: string | null }[];
   academicYears: { id: string; name: string }[];
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(createCourseAction, initialState);
+  useActionSuccess(pending, state.error, onSuccess);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">

@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 
 import { createStudentAction, type CreateStudentState } from "@/server/controllers/student-controller";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,11 +24,14 @@ const RELATIONSHIPS = [
 export function StudentForm({
   classes,
   academicYears,
+  onSuccess,
 }: {
   classes: { id: string; name: string; section: string | null }[];
   academicYears: { id: string; name: string }[];
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(createStudentAction, initialState);
+  useActionSuccess(pending, state.error, onSuccess);
   const [showSecondGuardian, setShowSecondGuardian] = useState(false);
 
   return (

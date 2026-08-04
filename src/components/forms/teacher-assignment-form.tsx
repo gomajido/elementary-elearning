@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 
 import { assignTeacherAction, type ActionState } from "@/server/controllers/academic-controller";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,13 +15,16 @@ export function TeacherAssignmentForm({
   classes,
   subjects,
   academicYears,
+  onSuccess,
 }: {
   teachers: { id: string; firstName: string; lastName: string }[];
   classes: { id: string; name: string; section: string | null }[];
   subjects: { id: string; name: string }[];
   academicYears: { id: string; name: string }[];
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(assignTeacherAction, initialState);
+  useActionSuccess(pending, state.error, onSuccess);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-4 sm:items-end">

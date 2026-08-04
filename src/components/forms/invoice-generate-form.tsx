@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 
 import { generateInvoiceAction, type ActionState } from "@/server/controllers/fee-controller";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,13 +16,16 @@ export function InvoiceGenerateForm({
   classes,
   academicYears,
   feeStructures,
+  onSuccess,
 }: {
   students: { id: string; firstName: string; lastName: string; admissionNumber: string }[];
   classes: { id: string; name: string; section: string | null }[];
   academicYears: { id: string; name: string }[];
   feeStructures: { id: string; name: string; amountCents: number }[];
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(generateInvoiceAction, initialState);
+  useActionSuccess(pending, state.error, onSuccess);
   const [target, setTarget] = useState<"student" | "class">("student");
 
   return (
