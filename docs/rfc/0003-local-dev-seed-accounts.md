@@ -52,7 +52,7 @@ At this scale (~59 accounts: 1 admin + 8 teachers + 20 students + 30 guardians),
 |---|---|---|
 | Admin | Tata Usaha | `admin@sdmadani.sch.id` |
 | Teacher | Siti Nurhaliza — wali kelas 1A | `siti.nurhaliza@sdmadani.sch.id` or NIP `NIP-2026001` |
-| Student | Maya Gunawan — Kelas 3A | e.g. `maya.gunawan493` — re-seed each time, read console output |
+| Student | Dewi Saputra — Kelas 3A | e.g. `dewi.saputra328` — re-seed each time, read console output |
 | Parent | Lina Saputra — ortu Dewi | `lina.saputra1@gmail.com` |
 
 All non-admin accounts have `must_change_password = true`, matching the real provisioning flow (admin hands out a temp password, user is forced to change it at first login) — even though the password value itself is fixed here rather than randomly generated.

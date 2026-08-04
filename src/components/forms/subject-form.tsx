@@ -3,14 +3,16 @@
 import { useActionState } from "react";
 
 import { createSubjectAction, type ActionState } from "@/server/controllers/academic-controller";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const initialState: ActionState = {};
 
-export function SubjectForm() {
+export function SubjectForm({ onSuccess }: { onSuccess?: () => void }) {
   const [state, formAction, pending] = useActionState(createSubjectAction, initialState);
+  useActionSuccess(pending, state.error, onSuccess);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-3 sm:items-end">
