@@ -87,7 +87,7 @@ export function CourseForm({
       </div>
       {state.error && <p className="text-sm text-destructive sm:col-span-2">{state.error}</p>}
       <Button type="submit" disabled={pending} className="sm:w-fit">
-        {pending ? "Membuat…" : "Buat kursus"}
+        {pending ? "Membuat…" : "Buat modul"}
       </Button>
     </form>
   );

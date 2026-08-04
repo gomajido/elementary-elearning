@@ -36,7 +36,7 @@ export default async function StudentCourseDetailPage({ params }: { params: Prom
     <div className="flex max-w-2xl flex-col gap-6">
       <h1 className="text-2xl font-semibold">{detail.course.title}</h1>
 
-      {detail.themes.length === 0 && <p className="text-muted-foreground">Belum ada materi di kursus ini.</p>}
+      {detail.themes.length === 0 && <p className="text-muted-foreground">Belum ada materi di modul ini.</p>}
 
       <Accordion multiple className="flex flex-col gap-3">
         {detail.themes.map((theme) => {

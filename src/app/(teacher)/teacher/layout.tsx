@@ -9,7 +9,7 @@ const ICON_CLASS = "size-4 shrink-0";
 const NAV_ITEMS: RoleNavItem[] = [
   { href: "/teacher/dashboard", label: "Beranda", icon: <LayoutDashboard className={ICON_CLASS} /> },
   { href: "/teacher/attendance", label: "Kehadiran", icon: <ClipboardCheck className={ICON_CLASS} /> },
-  { href: "/teacher/courses", label: "Kursus", icon: <BookOpen className={ICON_CLASS} /> },
+  { href: "/teacher/courses", label: "Modul", icon: <BookOpen className={ICON_CLASS} /> },
 ];
 
 export default async function TeacherLayout({ children }: { children: ReactNode }) {

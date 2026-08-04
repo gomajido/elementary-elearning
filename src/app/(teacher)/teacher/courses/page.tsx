@@ -20,8 +20,8 @@ export default async function TeacherCoursesPage() {
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Kursus Anda</h1>
-        <ActionDialog triggerLabel="Kursus Baru" title="Buat kursus">
+        <h1 className="text-2xl font-semibold">Modul Anda</h1>
+        <ActionDialog triggerLabel="Modul Baru" title="Buat modul">
           <CourseForm subjects={subjects} classes={classes} academicYears={academicYears} />
         </ActionDialog>
       </div>
@@ -43,7 +43,7 @@ export default async function TeacherCoursesPage() {
               </Badge>
             </Link>
           ))}
-          {courses.length === 0 && <p className="text-sm text-muted-foreground">Belum ada kursus</p>}
+          {courses.length === 0 && <p className="text-sm text-muted-foreground">Belum ada modul</p>}
         </CardContent>
       </Card>
     </div>

@@ -6,7 +6,7 @@ import { StudentShell, type StudentNavItem } from "@/components/layout/student-s
 
 const NAV_ITEMS: StudentNavItem[] = [
   { href: "/student/dashboard", label: "Beranda", icon: <Home className="size-6" />, color: "sky" },
-  { href: "/student/courses", label: "Kursus", icon: <BookOpen className="size-6" />, color: "violet" },
+  { href: "/student/courses", label: "Modul", icon: <BookOpen className="size-6" />, color: "violet" },
   { href: "/student/grades", label: "Nilai", icon: <Award className="size-6" />, color: "amber" },
 ];
 

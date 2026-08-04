@@ -16,7 +16,7 @@ export function PublishCourseButton({ courseId, isPublished }: { courseId: strin
       disabled={pending}
       onClick={() => startTransition(() => publishCourseAction(courseId))}
     >
-      {pending ? "Menerbitkan…" : "Terbitkan kursus"}
+      {pending ? "Menerbitkan…" : "Terbitkan modul"}
     </Button>
   );
 }

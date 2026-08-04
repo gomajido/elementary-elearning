@@ -49,7 +49,7 @@ export const QuizService = {
   }) {
     const teacher = await TeacherRepository.findByUserId(input.teacherUserId);
     const course = await CourseRepository.findById(input.courseId);
-    if (!teacher || !course || course.teacherId !== teacher.id) throw new QuizError("Anda bukan pemilik kursus ini");
+    if (!teacher || !course || course.teacherId !== teacher.id) throw new QuizError("Anda bukan pemilik modul ini");
 
     return QuizRepository.create({
       courseId: input.courseId,

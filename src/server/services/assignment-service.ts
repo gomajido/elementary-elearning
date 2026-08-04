@@ -20,7 +20,7 @@ export const AssignmentService = {
   }) {
     const teacher = await TeacherRepository.findByUserId(input.teacherUserId);
     const course = await CourseRepository.findById(input.courseId);
-    if (!teacher || !course || course.teacherId !== teacher.id) throw new AssignmentError("Anda bukan pemilik kursus ini");
+    if (!teacher || !course || course.teacherId !== teacher.id) throw new AssignmentError("Anda bukan pemilik modul ini");
 
     return AssignmentRepository.create({
       courseId: input.courseId,

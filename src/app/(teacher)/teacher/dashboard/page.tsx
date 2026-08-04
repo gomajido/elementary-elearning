@@ -25,10 +25,10 @@ export default async function TeacherDashboardPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold">Beranda Guru</h1>
-        <p className="text-sm text-muted-foreground">Gunakan menu di samping untuk kehadiran kelas dan kursus Anda.</p>
+        <p className="text-sm text-muted-foreground">Gunakan menu di samping untuk kehadiran kelas dan modul Anda.</p>
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <StatCard icon={BookOpen} label="Kursus Saya" value={courses.length} />
+        <StatCard icon={BookOpen} label="Modul Saya" value={courses.length} />
         <StatCard icon={School} label="Kelas Wali" value={classes.length} />
         <StatCard
           icon={ClipboardList}

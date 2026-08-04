@@ -59,7 +59,7 @@ export const CourseService = {
     const teacher = await TeacherRepository.findByUserId(teacherUserId);
     if (!teacher) throw new CourseError("Tidak ada data guru untuk akun ini");
     const course = await CourseRepository.findById(courseId);
-    if (!course || course.teacherId !== teacher.id) throw new CourseError("Anda bukan pemilik kursus ini");
+    if (!course || course.teacherId !== teacher.id) throw new CourseError("Anda bukan pemilik modul ini");
     return { teacher, course };
   },
 
@@ -168,7 +168,7 @@ export const CourseService = {
     const student = await StudentRepository.findById(studentId);
     const course = await CourseRepository.findById(courseId);
     if (!student || !course || course.classId !== student.currentClassId || !course.isPublished) {
-      throw new CourseError("Tidak berwenang melihat kursus ini");
+      throw new CourseError("Tidak berwenang melihat modul ini");
     }
   },
 
