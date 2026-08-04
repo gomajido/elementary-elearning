@@ -92,6 +92,24 @@ services:
       timeout: 5s
       retries: 10
 
+  # REST proxy in front of `redis` above, so the app's @upstash/redis client
+  # (chosen for prod Cloudflare Workers compatibility — see RFC 0004) talks
+  # to the same HTTP protocol locally as it does against real Upstash in
+  # prod — same local/prod-parity pattern MinIO (stands in for R2) and local
+  # Postgres (stands in for Neon) already use.
+  redis-http:
+    image: hiett/serverless-redis-http:latest
+    restart: unless-stopped
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: madani-local-token
+      SRH_CONNECTION_STRING: redis://redis:6379
+    ports:
+      - "8079:80"
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   minio_data:

@@ -1,15 +1,17 @@
-import Redis from "ioredis";
+import { Redis } from "@upstash/redis";
 
-// Module-level singleton — avoid opening a new connection per call, same
-// pattern as getDb() in src/lib/db/index.ts.
+// HTTP-based (not ioredis/TCP) — see RFC 0004: Cloudflare Workers has no
+// reliable, well-supported path for raw Redis TCP, unlike Postgres (which
+// has Hyperdrive). Module-level singleton — avoid constructing a new client
+// per call, same pattern as getDb() in src/lib/db/index.ts.
 let client: Redis | null = null;
 
 function getRedisClient() {
   if (!client) {
-    client = new Redis(process.env.REDIS_URL!, { maxRetriesPerRequest: 1, connectTimeout: 1000 });
-    // Without a listener, a connection error becomes an unhandled 'error'
-    // event and crashes the process — cached() below handles failures itself.
-    client.on("error", () => {});
+    client = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    });
   }
   return client;
 }
@@ -23,13 +25,15 @@ function getRedisClient() {
  * is a performance optimization, not a correctness dependency, so it falls
  * through to `compute()` directly rather than breaking the caller. Errors
  * from `compute()` itself are not caught here — they propagate normally.
+ *
+ * No manual JSON.stringify/parse — the client (de)serializes automatically.
  */
 export async function cached<T>(key: string, ttlSeconds: number, compute: () => Promise<T>): Promise<T> {
   let redis: Redis | null = null;
   try {
     redis = getRedisClient();
-    const hit = await redis.get(key);
-    if (hit !== null) return JSON.parse(hit) as T;
+    const hit = await redis.get<T>(key);
+    if (hit !== null) return hit;
   } catch {
     redis = null;
   }
@@ -38,7 +42,7 @@ export async function cached<T>(key: string, ttlSeconds: number, compute: () => 
 
   if (redis) {
     try {
-      await redis.set(key, JSON.stringify(value), "EX", ttlSeconds);
+      await redis.set(key, value, { ex: ttlSeconds });
     } catch {
       // Best-effort — a failed cache write shouldn't fail the request.
     }
