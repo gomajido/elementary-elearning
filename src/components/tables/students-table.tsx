@@ -101,7 +101,7 @@ export function StudentsTable({
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-1.5">
-                  <Button variant="outline" size="sm" render={<Link href={`/admin/students/${row.student.id}/report-card`} />}>
+                  <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/admin/students/${row.student.id}/report-card`} />}>
                     Rapor
                   </Button>
                   <StudentRowActions

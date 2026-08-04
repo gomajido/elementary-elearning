@@ -28,7 +28,7 @@ export default async function StudentsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Siswa</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" render={<Link href="/admin/students/import" />}>
+          <Button variant="outline" nativeButton={false} render={<Link href="/admin/students/import" />}>
             Impor CSV
           </Button>
           <ActionDialog triggerLabel="Siswa Baru" title="Daftarkan siswa" contentClassName="sm:max-w-2xl">

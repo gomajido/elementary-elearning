@@ -50,7 +50,7 @@ export function GradebookTable({ rows }: { rows: GradebookRow[] }) {
               <TableCell>{row.assignmentMax > 0 ? `${row.assignmentTotal} / ${row.assignmentMax}` : "—"}</TableCell>
               <TableCell>{row.quizMax > 0 ? `${row.quizTotal} / ${row.quizMax}` : "—"}</TableCell>
               <TableCell>
-                <Button variant="outline" size="sm" render={<Link href={`/teacher/students/${row.student.id}/report-card`} />}>
+                <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/teacher/students/${row.student.id}/report-card`} />}>
                   Rapor
                 </Button>
               </TableCell>

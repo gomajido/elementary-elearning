@@ -23,7 +23,7 @@ export default async function TeachersPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Guru</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" render={<Link href="/admin/teachers/import" />}>
+          <Button variant="outline" nativeButton={false} render={<Link href="/admin/teachers/import" />}>
             Impor CSV
           </Button>
           <ActionDialog triggerLabel="Guru Baru" title="Tambah guru">

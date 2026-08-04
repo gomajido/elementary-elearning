@@ -18,7 +18,7 @@ export default async function StudentGradesPage() {
     <div className="flex max-w-2xl flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Nilai Saya</h1>
-        <Button variant="outline" size="sm" render={<Link href="/student/report-card" />}>
+        <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/student/report-card" />}>
           Lihat Rapor
         </Button>
       </div>
