@@ -1,6 +1,6 @@
 # RFC 0004: Production deployment on Cloudflare, free storage/DB/cache
 
-- **Status**: In Progress — R2/Neon/Upstash provisioned, `@opennextjs/cloudflare` + `wrangler.jsonc` + Hyperdrive binding scaffolded, `getDb()` updated and verified; not yet deployed or measured under real Workers
+- **Status**: Deployed and verified end-to-end on a branch (`deploy/cloudflare-workers`, not merged to main yet) — live at `https://elearning.abd-majidehamide.workers.dev` against real Neon (migrated), real R2, real Upstash. CPU-time/PBKDF2 measurement (Free vs. Paid Workers) still open.
 - **Date**: 2026-08-04
 - **Author**: Abdul Majid Hamid (with Claude Code)
 - **Amends**: RFC 0001, RFC 0002
@@ -61,19 +61,20 @@ Not "storage/Postgres/Redis," so not decided in this RFC, but still blocking a f
 3. ✅ Neon project created; Hyperdrive config created (`wrangler hyperdrive create`) and bound in `wrangler.jsonc`.
 4. ✅ R2 bucket (`madani`, app content) + API token created. A second bucket (`elearning-opennext-cache`) is also required — OpenNext's own incremental-cache layer, unrelated to app storage, bound in `wrangler.jsonc`'s `r2_buckets`.
 5. ✅ Upstash Redis database created; `src/lib/cache/redis.ts` rewritten against `@upstash/redis` (done in an earlier pass, see git history).
-6. `getDb()` rewritten for the Hyperdrive-binding-vs-`process.env` split (see Decisions above) — done and verified against the local-dev fallback path only, not yet against a real deployed Hyperdrive binding.
-7. Not yet done: point CI/local migrations explicitly at Neon's direct connection string for `bun run db:migrate` (currently `.env.production`'s `DATABASE_URL` already *is* the direct string, so this may already be correct by construction — confirm before first migration run against Neon).
-8. Not yet done: `wrangler secret put` for every production secret (R2 keys, Upstash REST creds, `DATABASE_URL` if needed at build time) — nothing has been pushed to Cloudflare's secret store yet, `.env.production` is local-only.
-9. Not yet done: an actual `wrangler deploy` / `bun run deploy`.
+6. ✅ `getDb()` rewritten for the Hyperdrive-binding-vs-`process.env` split (see Decisions above) — verified against both the local-dev fallback path *and* the real deployed Hyperdrive→Neon path (see Verification #2).
+7. ✅ Migrations run directly against Neon's connection string (`.env.production`'s `DATABASE_URL` already is the direct string, confirmed correct by construction) — `bun run db:migrate` applied all 28 tables to Neon successfully.
+8. ✅ `wrangler secret put` done for R2 keys + Upstash REST creds (8 secrets). `DATABASE_URL` deliberately **not** pushed as a Worker secret — the deployed Worker always has a Cloudflare context, so `getDb()` always takes the Hyperdrive path; the plain-env fallback exists only for contexts with no Cloudflare context at all (local dev, `scripts/seed.ts`).
+9. ✅ Deployed via `bun run deploy` — live at `https://elearning.abd-majidehamide.workers.dev`.
 
 ## Verification
 
 1. ✅ Confirmed `getCloudflareContext()` is safely inert outside a Cloudflare context: `getDb()` called from a standalone `bun run` script (no Next.js, no Workers) correctly falls through to `process.env.DATABASE_URL` and queries local Postgres successfully.
-2. ✅ Confirmed, not just code-reviewed: `opennextjs-cloudflare build` + `wrangler dev` (local Miniflare, real bindings incl. Hyperdrive with `localConnectionString` pointed at local Docker Postgres — see `wrangler.jsonc`) served `/setup` correctly ("Akun admin untuk sekolah ini sudah ada"), proving the full chain — Worker → `getCloudflareContext()` → Hyperdrive binding → `postgres-js` → Drizzle → real query result. Still only tested against the *local* Hyperdrive emulation, not the real edge Hyperdrive→Neon path — that needs an actual `wrangler deploy` to fully close out.
-3. Measure real CPU-ms for a login request (PBKDF2 hash+verify) and a representative admin SSR page under `wrangler dev --remote` or a deployed Worker — decide Free-vs-Paid compute with a number, not a guess.
-4. Full role-chain smoke test against the deployed Worker (admin → teacher → student → parent), same golden-path discipline RFC 0001/0002 used.
-5. Confirm R2 upload/download round-trip (payment proof, avatar) against real R2, not just MinIO.
-6. ✅ Confirmed `cached()` fails open correctly when Upstash is unreachable, and that a cache hit correctly skips recomputation with values round-tripping intact through `@upstash/redis`'s automatic (de)serialization.
+2. ✅ Confirmed against the **real deployed Worker**, not just local emulation: first deploy's `/setup` incorrectly showed "admin already exists" — traced to a real, separate bug (see below), fixed, redeployed, then correctly showed the genuine bootstrap-admin form against Neon (migrated, freshly empty of admins). Full chain confirmed live: Worker → `getCloudflareContext()` → Hyperdrive binding → real Neon → Drizzle → correct query result.
+3. **Real bug found and fixed via this deploy**: `src/app/(public)/setup/page.tsx` has no `cookies()`/`headers()` touch (unlike every protected page, which gets dynamic rendering for free via `requireRole()` reading the session cookie), so Next.js's static analysis didn't detect it as dynamic and **prerendered it once at build time** — the deployed Worker was serving a static HTML snapshot baked from local dev's DB state (which had an admin) regardless of Neon's real, empty state. Fixed with `export const dynamic = "force-dynamic"`. Cross-checked the rest of the route tree against the build's route-type output (`○` static vs `ƒ` dynamic) — every other page needing live data was already correctly dynamic via layout-level `requireRole()` cascading; `/setup` was the only gap (`/` and `/login` are static by design, correctly so — no per-request data needed).
+4. Not yet done: measure real CPU-ms for a login request (PBKDF2 hash+verify) under the real deployed Worker — decide Free-vs-Paid compute with a number, not a guess.
+5. Not yet done: full role-chain smoke test against the deployed Worker (admin → teacher → student → parent) — only `/setup` has been exercised live so far.
+6. Not yet done: confirm R2 upload/download round-trip (payment proof, avatar) against real R2, not just MinIO.
+7. ✅ Confirmed `cached()` fails open correctly when Upstash is unreachable, and that a cache hit correctly skips recomputation with values round-tripping intact through `@upstash/redis`'s automatic (de)serialization.
 
 ## Amendments
 
