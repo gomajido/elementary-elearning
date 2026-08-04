@@ -1,0 +1,53 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "elearning",
+	"compatibility_date": "2026-08-01",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// Self-reference service binding, the service name must match the worker name
+			// see https://opennext.js.org/cloudflare/caching
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "elearning"
+		}
+	],
+	"hyperdrive": [
+		// Postgres (Neon) via Hyperdrive's connection pool — see
+		// docs/rfc/0004-cloudflare-production-deployment.md. `getDb()` mainly
+		// reaches this through `process.env.DATABASE_URL` in plain local dev
+		// (no Cloudflare context at all — see src/lib/db/index.ts). But
+		// `next build`/`wrangler dev`/`bun run preview` *do* set up a
+		// Cloudflare context, and Hyperdrive can't emulate the real edge
+		// service locally — it needs an explicit stand-in Postgres for that,
+		// same local/prod-parity pattern as everything else here.
+		{
+			"binding": "HYPERDRIVE",
+			"id": "7a654d70db2f4b4fa03c043f08ccf5c2",
+			"localConnectionString": "postgres://madani:madani@localhost:5433/madani_elearning"
+		}
+	],
+	"r2_buckets": [
+		// Use R2 incremental cache
+		// See https://opennext.js.org/cloudflare/caching
+		{
+			"binding": "NEXT_INC_CACHE_R2_BUCKET",
+			// Create the bucket before deploying
+			// You can change the bucket name if you want
+			// See https://developers.cloudflare.com/workers/wrangler/commands/#r2-bucket-create
+			"bucket_name": "elearning-opennext-cache"
+		}
+	],
+	"images": {
+		// Enable image optimization
+		// see https://opennext.js.org/cloudflare/howtos/image
+		"binding": "IMAGES"
+	}
+}

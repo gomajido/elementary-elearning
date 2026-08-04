@@ -1,6 +1,6 @@
 # RFC 0004: Production deployment on Cloudflare, free storage/DB/cache
 
-- **Status**: Proposed
+- **Status**: In Progress — R2/Neon/Upstash provisioned, `@opennextjs/cloudflare` + `wrangler.jsonc` + Hyperdrive binding scaffolded, `getDb()` updated and verified; not yet deployed or measured under real Workers
 - **Date**: 2026-08-04
 - **Author**: Abdul Majid Hamid (with Claude Code)
 - **Amends**: RFC 0001, RFC 0002
@@ -28,7 +28,7 @@ Workers don't get a clean, low-friction path to arbitrary Postgres without Hyper
 - `postgres` (the driver this app already uses via `drizzle-orm/postgres-js`) ships a **workerd-specific conditional export** — it's designed to run inside Workers already, no driver swap needed. It does need `serverExternalPackages: ["postgres"]` added to `next.config.ts` so Next doesn't bundle it with Node's module resolution instead of workerd's.
 - `wrangler.jsonc` needs `compatibility_flags: ["nodejs_compat"]`, a recent `compatibility_date`, and a `hyperdrive` binding pointing at a Hyperdrive config created from Neon's connection string.
 - Free-plan Hyperdrive caps at **100,000 queries/day** (unlimited on Workers Paid) — ample for a single small school.
-- `getDb()` (`src/lib/db/index.ts`) currently reads `process.env.DATABASE_URL!` at module load. OpenNext's Cloudflare adapter shims Workers bindings into `process.env`, so this likely keeps working unchanged — **but this needs a real spike to confirm before committing to the full migration**, not an assumption (see Verification).
+- **Spike resolved** (was an open question, now confirmed): `process.env.DATABASE_URL` does *not* just work under Workers. OpenNext's `process.env` shim only covers plain string secrets (`S3_*`, `UPSTASH_*`) — Hyperdrive is an object binding (`env.HYPERDRIVE.connectionString`), which needs `getCloudflareContext()` (from `@opennextjs/cloudflare`) to reach at all, and that's only available inside a request, not at module load. `getDb()` was rewritten: the connection is now a lazy singleton (created on first call, not at import time), and `resolveConnectionString()` tries `getCloudflareContext().env.HYPERDRIVE.connectionString` first, falling back to plain `process.env.DATABASE_URL` when there's no Cloudflare context at all — which is also what makes `scripts/seed.ts` (a plain Bun script, never touches Next.js/Workers) keep working unchanged. Verified directly: a standalone script import of `getDb()` still queries local Docker Postgres correctly through the fallback path.
 - **Migrations run outside the Worker**: `drizzle-kit migrate` needs Postgres DDL access, which is a bad fit for a pooling proxy meant for app-runtime queries. Point `DATABASE_URL` at Neon's **direct** connection string (not through Hyperdrive) for `bun run db:migrate`, run from CI or a local machine — same command, different target, same discipline RFC 0001/0002 already established (inspect the generated diff before applying).
 
 **Watch item**: Neon's 0.5 GB/project cap is the tightest free-tier number in this whole plan. A single small elementary school's data (the kind of scale this app's own seed script models — see RFC 0003) should fit for years, but this is worth checking periodically, not a "set and forget." Unlike R2, Neon **fails safe on cost**: hitting the storage or compute-hour cap **suspends the project** until the next billing cycle (or a manual upgrade) — no surprise bill, but the app goes down until you act.
@@ -54,24 +54,26 @@ Not "storage/Postgres/Redis," so not decided in this RFC, but still blocking a f
 - **SMTP relay** — Mailpit is dev-only. Needs a real relay (several have workable free tiers) before email reminders/notifications work in prod.
 - Domain/DNS, Worker secrets management, CI deploy pipeline.
 
-## Setup checklist (once this RFC is agreed)
+## Setup checklist
 
-1. Re-add `@opennextjs/cloudflare` + `wrangler`, `wrangler.jsonc` (`nodejs_compat`, `hyperdrive` binding).
-2. `next.config.ts`: add `serverExternalPackages: ["postgres"]`.
-3. Create Neon project (free) → Hyperdrive config bound to it.
-4. Create R2 bucket + API token.
-5. Create Upstash Redis database; rewrite `src/lib/cache/redis.ts` against `@upstash/redis`.
-6. Point CI/local migrations at Neon's direct connection string, not Hyperdrive.
-7. Provision Worker secrets for all of the above (never commit them).
-8. Spike: confirm `getDb()`'s `process.env.DATABASE_URL` pattern actually resolves the Hyperdrive binding under OpenNext before treating the migration as done.
+1. ✅ Re-add `@opennextjs/cloudflare` + `wrangler` — via `opennextjs-cloudflare migrate`, which scaffolded `wrangler.jsonc`, `open-next.config.ts`, `.dev.vars`, `public/_headers`, and the `preview`/`deploy`/`upload`/`cf-typegen` package.json scripts.
+2. ✅ `next.config.ts`: `serverExternalPackages: ["postgres"]` added.
+3. ✅ Neon project created; Hyperdrive config created (`wrangler hyperdrive create`) and bound in `wrangler.jsonc`.
+4. ✅ R2 bucket (`madani`, app content) + API token created. A second bucket (`elearning-opennext-cache`) is also required — OpenNext's own incremental-cache layer, unrelated to app storage, bound in `wrangler.jsonc`'s `r2_buckets`.
+5. ✅ Upstash Redis database created; `src/lib/cache/redis.ts` rewritten against `@upstash/redis` (done in an earlier pass, see git history).
+6. `getDb()` rewritten for the Hyperdrive-binding-vs-`process.env` split (see Decisions above) — done and verified against the local-dev fallback path only, not yet against a real deployed Hyperdrive binding.
+7. Not yet done: point CI/local migrations explicitly at Neon's direct connection string for `bun run db:migrate` (currently `.env.production`'s `DATABASE_URL` already *is* the direct string, so this may already be correct by construction — confirm before first migration run against Neon).
+8. Not yet done: `wrangler secret put` for every production secret (R2 keys, Upstash REST creds, `DATABASE_URL` if needed at build time) — nothing has been pushed to Cloudflare's secret store yet, `.env.production` is local-only.
+9. Not yet done: an actual `wrangler deploy` / `bun run deploy`.
 
 ## Verification
 
-1. Spike task first, in isolation: minimal Worker + OpenNext + Hyperdrive binding + `postgres` query, confirm it returns data before touching the full app.
-2. Measure real CPU-ms for a login request (PBKDF2 hash+verify) and a representative admin SSR page under `wrangler dev --remote` or a deployed Worker — decide Free-vs-Paid compute with a number, not a guess.
-3. Full role-chain smoke test against the deployed Worker (admin → teacher → student → parent), same golden-path discipline RFC 0001/0002 used.
-4. Confirm R2 upload/download round-trip (payment proof, avatar) against real R2, not just MinIO.
-5. Confirm `cached()` still fails open correctly if Upstash is unreachable (same contract as today's Redis fail-open).
+1. ✅ Confirmed `getCloudflareContext()` is safely inert outside a Cloudflare context: `getDb()` called from a standalone `bun run` script (no Next.js, no Workers) correctly falls through to `process.env.DATABASE_URL` and queries local Postgres successfully.
+2. ✅ Confirmed, not just code-reviewed: `opennextjs-cloudflare build` + `wrangler dev` (local Miniflare, real bindings incl. Hyperdrive with `localConnectionString` pointed at local Docker Postgres — see `wrangler.jsonc`) served `/setup` correctly ("Akun admin untuk sekolah ini sudah ada"), proving the full chain — Worker → `getCloudflareContext()` → Hyperdrive binding → `postgres-js` → Drizzle → real query result. Still only tested against the *local* Hyperdrive emulation, not the real edge Hyperdrive→Neon path — that needs an actual `wrangler deploy` to fully close out.
+3. Measure real CPU-ms for a login request (PBKDF2 hash+verify) and a representative admin SSR page under `wrangler dev --remote` or a deployed Worker — decide Free-vs-Paid compute with a number, not a guess.
+4. Full role-chain smoke test against the deployed Worker (admin → teacher → student → parent), same golden-path discipline RFC 0001/0002 used.
+5. Confirm R2 upload/download round-trip (payment proof, avatar) against real R2, not just MinIO.
+6. ✅ Confirmed `cached()` fails open correctly when Upstash is unreachable, and that a cache hit correctly skips recomputation with values round-tripping intact through `@upstash/redis`'s automatic (de)serialization.
 
 ## Amendments
 
