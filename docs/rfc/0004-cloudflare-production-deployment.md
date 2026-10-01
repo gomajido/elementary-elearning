@@ -1,6 +1,6 @@
 # RFC 0004: Production deployment on Cloudflare, free storage/DB/cache
 
-- **Status**: Deployed, on Workers Paid, verified working end-to-end under real production traffic — live at `https://elearning.abd-majidehamide.workers.dev` and a custom domain (`app.ismadani.sch.id`), against real Neon (migrated + seeded), real R2 (CORS configured), real Upstash. Still on branch `deploy/cloudflare-workers`, not merged to main — see "Open items" below for why. Workers Logs (persisted observability) enabled, replacing the live-only `wrangler tail` sessions this whole deploy leaned on.
+- **Status**: Deployed and merged to `main`, on Workers Paid, verified working end-to-end under real production traffic — live at `https://elearning.abd-majidehamide.workers.dev` and a custom domain (`app.ismadani.sch.id`), against real Neon (migrated + seeded), real R2 (CORS configured), real Upstash. Workers Logs (persisted observability) enabled, replacing the live-only `wrangler tail` sessions this whole deploy leaned on. See "Rollout log" below for subsequent production releases shipped through this pipeline.
 - **Date**: 2026-08-04
 - **Author**: Abdul Majid Hamid (with Claude Code)
 - **Amends**: RFC 0001, RFC 0002
@@ -87,9 +87,38 @@ Not "storage/Postgres/Redis," so not decided in this RFC, but still blocking a f
 
 ## Open items
 
-- **Not merged to `main`** — deliberately, while the Cloudflare-vs-alternative-host question (a plain Hetzner VPS running the same `docker-compose.yml` stack this app already has for local dev was the live alternative discussed) stays open. Everything in this RFC works and is live, but "works" isn't the same as "this is the final answer" until that's actually decided.
+- ~~**Not merged to `main`**~~ — the merge itself is done (`032a0eb`), and the 2026-10-01 release below shipped through this pipeline. The underlying **host decision is still formally open**: the alternative discussed at the time (a plain Hetzner VPS running the same `docker-compose.yml` stack used for local dev) was never explicitly ruled out. What has changed is only that Cloudflare is now the de-facto host by accumulated usage, not by a recorded decision. If that should become the recorded decision, it belongs in its own RFC.
 - **WAHA and SMTP relay** (see "Explicitly out of scope" above) — still block WhatsApp/email reminders working in this deployment; unrelated to whether Workers vs. a VPS is the final host.
 - Two application-layer bugs were also found and fixed via this deploy's real usage (dialogs not closing/refreshing after create, dialogs unreachable on mobile) — not Cloudflare-specific, so not detailed here; see git history on `deploy/cloudflare-workers`.
+
+## Rollout log
+
+Production releases shipped through this pipeline after the initial deploy. Kept here rather than in per-feature docs so there is one place to read what is actually running.
+
+### 2026-10-01 — 23 Sep 2026 client request batch (TSD-01..05)
+
+Worker version `f6dc76d6`, 100% of traffic. Schema went from 11 migrations / 28 tables to 15 / 32 via `0011`–`0014`; row counts unchanged across the migration (31 students, 10 teachers, 62 users, 300 attendance records) and `students.day_type` backfilled to `full_day` on all 31 rows. A `pg_dump` was taken first. Every migration in the batch is purely additive — no `NOT NULL` without a default, and each new `UNIQUE` sits on a brand-new all-`NULL` column — which is why migrating ahead of the deploy was safe.
+
+Three things worth carrying forward, all of which cost real time:
+
+**`drizzle-kit migrate` hangs forever against Neon on some networks.** IPv6 records for the Neon host resolve fine but are blackholed; Node's default `autoSelectFamily` stalls instead of falling back to IPv4. `psql` with the identical URL works, and `nc -z` reports the port open, so it presents as a TLS or driver bug when it is neither. `net.connect({ family: 4 })` connects instantly where `family: 0` times out. `--dns-result-order=ipv4first` alone is not enough — the IPv6 attempt is still raced. Working invocation:
+
+```sh
+set -a && . ./.env.production && set +a
+export DATABASE_URL
+NODE_OPTIONS="--no-network-family-autoselection --dns-result-order=ipv4first" \
+  node node_modules/drizzle-kit/bin.cjs migrate
+```
+
+`node` rather than `bun` because bun hits the same stall, and `drizzle.config.ts` loads `.env.local`/`.env` without overwriting an already-set `DATABASE_URL`, so exporting the production URL first is what retargets it.
+
+**`.env.production` does not drive `NEXT_PUBLIC_*` at build time.** Next gives `.env.local` precedence over `.env.production`, so editing the latter silently baked Cloudflare's always-pass *test* Turnstile key into the production client bundle. Real environment variables beat all `.env` files, so export them for the build, and verify before deploying — `grep -rl '<real sitekey>' .open-next/assets/` must hit and `grep -rl '1x00000000000000000000AA' .open-next/` must be empty.
+
+**Worker secrets beat baked env, which is load-bearing for more than convenience.** `.open-next/cloudflare/next-env.mjs` bakes a snapshot of `.env.local` under the key `production`, including `DATABASE_URL` pointed at `localhost:5433` and the local S3/SMTP values. This is harmless because `populateProcessEnv` (`node_modules/@opennextjs/cloudflare/dist/cli/templates/init.js`) hard-assigns the Worker `env` first and only then fills gaps with `??=`. That ordering is also the only reason the baked always-pass Turnstile test secret was never a live security hole: had `TURNSTILE_SECRET` not been uploaded via `wrangler secret put`, server-side verification would have run against Cloudflare's always-pass secret and bot protection would have been silently disabled while appearing to work.
+
+Turnstile widget for the one public unauthenticated route (`/register`) was created with `wrangler turnstile widget create` — wrangler has a `turnstile` subcommand, so no hand-rolled API call is needed. Managed mode, scoped to `app.ismadani.sch.id` only, which means `/register` reached via the `workers.dev` URL fails verification by design. The secret was validated against siteverify rather than merely assumed present: the real secret with a bogus token returns `invalid-input-response`, where a deliberately wrong secret returns `invalid-input-secret`.
+
+Not verified: a complete human registration submitted end-to-end through the live widget. Everything up to the widget rendering with the correct key, and the secret validating against siteverify, is confirmed.
 
 ## Amendments
 
