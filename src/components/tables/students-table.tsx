@@ -12,7 +12,7 @@ import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ENROLLMENT_STATUS_LABELS, label } from "@/lib/labels";
+import { ENROLLMENT_STATUS_LABELS, DAY_TYPE_LABELS, label } from "@/lib/labels";
 
 type StudentRow = Awaited<ReturnType<typeof StudentService.listStudentsWithDetails>>[number];
 
@@ -67,6 +67,7 @@ export function StudentsTable({
             <TableHead>Nama</TableHead>
             <TableHead>Kelas</TableHead>
             <TableHead>Tgl Lahir</TableHead>
+            <TableHead>Tipe Hari</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Akses Portal</TableHead>
             <TableHead>Aksi</TableHead>
@@ -91,6 +92,7 @@ export function StudentsTable({
                 {row.className ? `${row.className}${row.classSection ? ` ${row.classSection}` : ""}` : "—"}
               </TableCell>
               <TableCell>{row.student.dateOfBirth}</TableCell>
+              <TableCell>{label(DAY_TYPE_LABELS, row.student.dayType)}</TableCell>
               <TableCell>{label(ENROLLMENT_STATUS_LABELS, row.student.enrollmentStatus)}</TableCell>
               <TableCell>
                 {row.student.userId ? (
@@ -118,7 +120,7 @@ export function StudentsTable({
           ))}
           {filtered.length === 0 && (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground">
+              <TableCell colSpan={8} className="text-center text-muted-foreground">
                 {rows.length === 0 ? "Belum ada siswa" : "Tidak ditemukan"}
               </TableCell>
             </TableRow>

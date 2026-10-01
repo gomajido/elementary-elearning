@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ENROLLMENT_STATUS_LABELS, GENDER_LABELS, label } from "@/lib/labels";
-import { ENROLLMENT_STATUSES, GENDERS, type EnrollmentStatus, type Gender } from "@/lib/db/schema";
+import { ENROLLMENT_STATUS_LABELS, GENDER_LABELS, DAY_TYPE_LABELS, label } from "@/lib/labels";
+import { ENROLLMENT_STATUSES, GENDERS, DAY_TYPES, type EnrollmentStatus, type Gender, type DayType } from "@/lib/db/schema";
 
 const initialState: UpdateStudentState = {};
 
@@ -30,6 +30,7 @@ export function EditStudentForm({
     currentClassId: string | null;
     enrollmentDate: string;
     enrollmentStatus: EnrollmentStatus;
+    dayType: DayType;
   };
   classes: { id: string; name: string; section: string | null }[];
   photoStorageKey?: string | null;
@@ -94,6 +95,27 @@ export function EditStudentForm({
         <div className="flex flex-col gap-2">
           <Label htmlFor="enrollmentDate">Tanggal masuk</Label>
           <Input id="enrollmentDate" name="enrollmentDate" type="date" defaultValue={student.enrollmentDate} required />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label>Tipe hari</Label>
+          <Select
+            key={student.dayType}
+            name="dayType"
+            required
+            defaultValue={student.dayType}
+            items={Object.fromEntries(DAY_TYPES.map((d) => [d, label(DAY_TYPE_LABELS, d)]))}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Pilih tipe hari" />
+            </SelectTrigger>
+            <SelectContent>
+              {DAY_TYPES.map((d) => (
+                <SelectItem key={d} value={d}>
+                  {label(DAY_TYPE_LABELS, d)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label>Kelas</Label>

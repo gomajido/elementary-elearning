@@ -2,7 +2,7 @@
 
 import { EditFeeStructureForm } from "@/components/forms/edit-fee-structure-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { FeeFrequency } from "@/lib/db/schema";
+import type { FeeFrequency, DayType } from "@/lib/db/schema";
 
 export function EditFeeStructureDialog({
   structure,
@@ -17,6 +17,7 @@ export function EditFeeStructureDialog({
     frequency: FeeFrequency;
     academicYearId: string;
     gradeLevel: number | null;
+    dayType: DayType | null;
   };
   academicYears: { id: string; name: string }[];
   open: boolean;

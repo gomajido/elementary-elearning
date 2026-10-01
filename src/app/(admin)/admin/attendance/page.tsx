@@ -14,6 +14,9 @@ export default async function AdminAttendanceOverviewPage() {
         <CardTitle>Kehadiran per kelas</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
+        <Link href="/admin/attendance/import" className="rounded-md border p-3 text-sm hover:bg-muted">
+          Impor kehadiran dari mesin fingerprint (Excel)
+        </Link>
         {classes.map((c) => (
           <Link
             key={c.id}

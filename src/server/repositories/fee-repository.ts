@@ -10,6 +10,7 @@ import {
   invoiceReminders,
   type ReminderChannel,
   type ReminderStatus,
+  type DayType,
 } from "@/lib/db/schema";
 
 export const FeeStructureRepository = {
@@ -24,6 +25,7 @@ export const FeeStructureRepository = {
     amountCents: number;
     frequency: "termly" | "annual" | "one_time" | "monthly";
     gradeLevel?: number;
+    dayType?: DayType | null;
   }) {
     const db = getDb();
     const [row] = await db.insert(feeStructures).values(input).returning();
@@ -38,6 +40,7 @@ export const FeeStructureRepository = {
       amountCents: number;
       frequency: "termly" | "annual" | "one_time" | "monthly";
       gradeLevel: number | null;
+      dayType: DayType | null;
     }>,
     tx: Queryable = getDb(),
   ) {

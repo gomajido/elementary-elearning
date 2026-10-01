@@ -6,6 +6,7 @@ import { MediaRepository } from "@/server/repositories/media-repository";
 import { StudentForm } from "@/components/forms/student-form";
 import { ActionDialog } from "@/components/dashboard/action-dialog";
 import { StudentsTable } from "@/components/tables/students-table";
+import { ExportStudentsButton } from "@/components/forms/export-students-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -31,6 +32,7 @@ export default async function StudentsPage() {
           <Button variant="outline" nativeButton={false} render={<Link href="/admin/students/import" />}>
             Impor CSV
           </Button>
+          <ExportStudentsButton />
           <ActionDialog triggerLabel="Siswa Baru" title="Daftarkan siswa" contentClassName="sm:max-w-2xl">
             <StudentForm classes={classes} academicYears={academicYears} />
           </ActionDialog>

@@ -78,6 +78,34 @@
       "when": 1785458609759,
       "tag": "0010_glossy_lethal_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790281189970,
+      "tag": "0011_deep_husk",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790576681939,
+      "tag": "0012_flashy_blizzard",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790581475508,
+      "tag": "0013_kind_stranger",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790590610619,
+      "tag": "0014_simple_puma",
+      "breakpoints": true
     }
   ]
 }

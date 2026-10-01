@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { EnrollmentStatus, Gender } from "@/lib/db/schema";
+import type { EnrollmentStatus, Gender, DayType } from "@/lib/db/schema";
 
 export function StudentRowActions({
   student,
@@ -34,6 +34,7 @@ export function StudentRowActions({
     currentClassId: string | null;
     enrollmentDate: string;
     enrollmentStatus: EnrollmentStatus;
+    dayType: DayType;
   };
   classes: { id: string; name: string; section: string | null }[];
   photoStorageKey?: string | null;

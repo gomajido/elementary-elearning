@@ -13,6 +13,7 @@ import {
   Settings,
   ArrowLeftRight,
   BarChart3,
+  ClipboardList,
 } from "lucide-react";
 
 import { requireRole } from "@/lib/auth/rbac";
@@ -25,6 +26,7 @@ const ICON_CLASS = "size-4 shrink-0";
 const NAV_ITEMS: RoleNavItem[] = [
   { href: "/admin/dashboard", label: "Beranda", icon: <LayoutDashboard className={ICON_CLASS} /> },
   { href: "/admin/students", label: "Siswa", icon: <GraduationCap className={ICON_CLASS} /> },
+  { href: "/admin/registrations", label: "Pendaftaran", icon: <ClipboardList className={ICON_CLASS} /> },
   { href: "/admin/guardians", label: "Wali", icon: <Users className={ICON_CLASS} /> },
   { href: "/admin/teachers", label: "Guru", icon: <UserCog className={ICON_CLASS} /> },
   { href: "/admin/classes", label: "Kelas", icon: <School className={ICON_CLASS} /> },

@@ -1,11 +1,15 @@
-import { pgTable, text, boolean, timestamp, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, boolean, timestamp, unique, type AnyPgColumn } from "drizzle-orm/pg-core";
 
 import { id, schoolId, timestamps, softDelete } from "./_shared";
 import { users } from "./users";
 import { classes, academicYears } from "./academics";
+import { studentRegistrationApplications } from "./registrations";
 
 export const GENDERS = ["male", "female"] as const;
 export type Gender = (typeof GENDERS)[number];
+
+export const DAY_TYPES = ["full_day", "half_day"] as const;
+export type DayType = (typeof DAY_TYPES)[number];
 
 export const ENROLLMENT_STATUSES = [
   "active",
@@ -39,7 +43,12 @@ export const students = pgTable("students", {
     .$type<EnrollmentStatus>()
     .default("active"),
   enrollmentDate: text("enrollment_date").notNull(), // YYYY-MM-DD
+  dayType: text("day_type").notNull().$type<DayType>().default("full_day"),
   medicalNotes: text("medical_notes"),
+  fingerprintId: text("fingerprint_id").unique(), // fingerprint-machine person ID, mapped once via attendance import
+  registrationApplicationId: text("registration_application_id").references(
+    (): AnyPgColumn => studentRegistrationApplications.id
+  ),
   schoolId: schoolId(),
   ...timestamps,
   deletedAt: timestamp("deleted_at", { mode: "date" }),

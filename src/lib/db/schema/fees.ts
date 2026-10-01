@@ -1,7 +1,7 @@
 import { pgTable, text, integer, boolean } from "drizzle-orm/pg-core";
 
 import { id, schoolId, timestamps, softDelete } from "./_shared";
-import { students, guardians } from "./people";
+import { students, guardians, type DayType } from "./people";
 import { academicYears } from "./academics";
 import { users } from "./users";
 
@@ -16,6 +16,7 @@ export const feeStructures = pgTable("fee_structures", {
     .notNull()
     .references(() => academicYears.id),
   gradeLevel: integer("grade_level"), // nullable — some fees apply to one grade only
+  dayType: text("day_type").$type<DayType>(), // nullable — null applies to both full_day and half_day
   amountCents: integer("amount_cents").notNull(),
   frequency: text("frequency").notNull().$type<FeeFrequency>(),
   schoolId: schoolId(),

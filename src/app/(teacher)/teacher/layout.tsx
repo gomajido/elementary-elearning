@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { LayoutDashboard, ClipboardCheck, BookOpen, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, ClipboardCheck, BookOpen, ShieldCheck, ClipboardList } from "lucide-react";
 
 import { requireRole } from "@/lib/auth/rbac";
 import { RoleShell, type RoleNavItem } from "@/components/layout/role-shell";
@@ -9,6 +9,7 @@ const ICON_CLASS = "size-4 shrink-0";
 const NAV_ITEMS: RoleNavItem[] = [
   { href: "/teacher/dashboard", label: "Beranda", icon: <LayoutDashboard className={ICON_CLASS} /> },
   { href: "/teacher/attendance", label: "Kehadiran", icon: <ClipboardCheck className={ICON_CLASS} /> },
+  { href: "/teacher/registrations", label: "Pendaftaran", icon: <ClipboardList className={ICON_CLASS} /> },
   { href: "/teacher/courses", label: "Modul", icon: <BookOpen className={ICON_CLASS} /> },
 ];
 

@@ -8,7 +8,7 @@ import { TablePagination, TABLE_PAGE_SIZE } from "@/components/tables/table-pagi
 import { FeeStructureRowActions } from "@/components/tables/fee-structure-row-actions";
 import { deleteFeeStructureAction } from "@/server/controllers/fee-controller";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FEE_FREQUENCY_LABELS, label } from "@/lib/labels";
+import { FEE_FREQUENCY_LABELS, DAY_TYPE_LABELS, label } from "@/lib/labels";
 
 type FeeStructure = Awaited<ReturnType<typeof FeeService.listFeeStructures>>[number];
 
@@ -65,6 +65,7 @@ export function FeeStructuresTable({
             <TableHead>Jumlah</TableHead>
             <TableHead>Frekuensi</TableHead>
             <TableHead>Tingkat</TableHead>
+            <TableHead>Tipe Hari</TableHead>
             <TableHead>Aksi</TableHead>
           </TableRow>
         </TableHeader>
@@ -75,6 +76,7 @@ export function FeeStructuresTable({
               <TableCell>{formatCents(s.amountCents)}</TableCell>
               <TableCell>{label(FEE_FREQUENCY_LABELS, s.frequency)}</TableCell>
               <TableCell>{s.gradeLevel ?? "Semua"}</TableCell>
+              <TableCell>{s.dayType ? label(DAY_TYPE_LABELS, s.dayType) : "Semua"}</TableCell>
               <TableCell>
                 <FeeStructureRowActions
                   structure={s}
@@ -86,7 +88,7 @@ export function FeeStructuresTable({
           ))}
           {filtered.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground">
+              <TableCell colSpan={6} className="text-center text-muted-foreground">
                 {rows.length === 0 ? "Belum ada biaya" : "Tidak ditemukan"}
               </TableCell>
             </TableRow>

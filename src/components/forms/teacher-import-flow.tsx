@@ -13,19 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ImportPreviewTable } from "@/components/tables/import-preview-table";
 import { ImportResultsTable } from "@/components/tables/import-results-table";
+import { downloadCsv } from "@/lib/csv";
 
 const TEMPLATE_HEADER = "email,firstName,lastName,employeeNumber,phone,hireDate";
 const TEMPLATE_EXAMPLE = "budi.guru@example.com,Budi,Santoso,T2026001,08123456789,2026-01-05";
-
-function downloadCsv(filename: string, rows: string[]) {
-  const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 export function TeacherImportFlow() {
   const router = useRouter();

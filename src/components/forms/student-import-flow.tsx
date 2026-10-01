@@ -14,21 +14,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImportPreviewTable } from "@/components/tables/import-preview-table";
 import { ImportResultsTable } from "@/components/tables/import-results-table";
+import { downloadCsv } from "@/lib/csv";
 
 const TEMPLATE_HEADER =
   "admissionNumber,firstName,lastName,dateOfBirth,gender,className,section,enrollmentDate,guardian1FirstName,guardian1LastName,guardian1Relationship,guardian1Phone,guardian1Email,guardian2FirstName,guardian2LastName,guardian2Relationship,guardian2Phone,guardian2Email";
 const TEMPLATE_EXAMPLE =
   "S2026001,Budi,Santoso,2015-05-10,male,Primary 3,A,2026-01-05,Siti,Santoso,mother,08123456789,siti@example.com,,,,,";
-
-function downloadCsv(filename: string, rows: string[]) {
-  const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 export function StudentImportFlow({ academicYears }: { academicYears: { id: string; name: string }[] }) {
   const router = useRouter();

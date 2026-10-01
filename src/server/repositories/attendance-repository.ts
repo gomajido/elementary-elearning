@@ -8,7 +8,10 @@ export type AttendanceUpsert = {
   classId: string;
   date: string;
   status: AttendanceStatus;
-  recordedByTeacherId: string;
+  recordedByTeacherId?: string;
+  checkInTime?: string;
+  checkOutTime?: string;
+  importedByUserId?: string;
   notes?: string;
 };
 
@@ -63,6 +66,9 @@ export const AttendanceRepository = {
           status: sql`excluded.status`,
           notes: sql`excluded.notes`,
           recordedByTeacherId: sql`excluded.recorded_by_teacher_id`,
+          checkInTime: sql`excluded.check_in_time`,
+          checkOutTime: sql`excluded.check_out_time`,
+          importedByUserId: sql`excluded.imported_by_user_id`,
         },
       });
   },

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/rbac";
 import { StudentService, StudentPortalError, type GuardianInput } from "@/server/services/student-service";
-import { ENROLLMENT_STATUSES, GENDERS } from "@/lib/db/schema";
+import { ENROLLMENT_STATUSES, GENDERS, DAY_TYPES } from "@/lib/db/schema";
 import { studentSchema } from "@/lib/validation/student";
 
 export type CreateStudentState = { error?: string };
@@ -52,6 +52,7 @@ export async function createStudentAction(_prev: CreateStudentState, formData: F
       classId: data.classId,
       academicYearId: data.academicYearId,
       enrollmentDate: data.enrollmentDate,
+      dayType: data.dayType,
       guardians,
     });
   } catch (err) {
@@ -77,6 +78,7 @@ const updateStudentSchema = z.object({
   classId: z.string().min(1),
   enrollmentDate: z.string().min(1),
   enrollmentStatus: z.enum(ENROLLMENT_STATUSES),
+  dayType: z.enum(DAY_TYPES),
 });
 
 export async function updateStudentAction(_prev: UpdateStudentState, formData: FormData): Promise<UpdateStudentState> {
@@ -97,6 +99,7 @@ export async function updateStudentAction(_prev: UpdateStudentState, formData: F
       currentClassId: data.classId,
       enrollmentDate: data.enrollmentDate,
       enrollmentStatus: data.enrollmentStatus,
+      dayType: data.dayType,
     });
   } catch (err) {
     if (err instanceof Error && /UNIQUE/i.test(err.message)) {

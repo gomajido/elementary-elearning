@@ -1,7 +1,18 @@
 import { eq, isNull, and } from "drizzle-orm";
 
 import { getDb, type Queryable } from "@/lib/db";
-import { students, guardians, studentGuardians, enrollments, classes, type EnrollmentStatus, type Gender } from "@/lib/db/schema";
+import {
+  students,
+  guardians,
+  studentGuardians,
+  enrollments,
+  classes,
+  studentRegistrationApplications,
+  type EnrollmentStatus,
+  type EnrollmentRecordStatus,
+  type Gender,
+  type DayType,
+} from "@/lib/db/schema";
 
 export type NewStudent = {
   id?: string;
@@ -10,8 +21,11 @@ export type NewStudent = {
   lastName: string;
   dateOfBirth: string;
   gender: Gender;
-  currentClassId?: string;
+  currentClassId?: string | null;
   enrollmentDate: string;
+  dayType?: DayType;
+  fingerprintId?: string;
+  registrationApplicationId?: string;
 };
 
 export type StudentUpdate = Partial<NewStudent> & { enrollmentStatus?: EnrollmentStatus };
@@ -26,9 +40,8 @@ export const StudentRepository = {
       .orderBy(students.lastName, students.firstName);
   },
 
-  async findById(id: string) {
-    const db = getDb();
-    const [row] = await db
+  async findById(id: string, tx: Queryable = getDb()) {
+    const [row] = await tx
       .select()
       .from(students)
       .where(and(eq(students.id, id), isNull(students.deletedAt)))
@@ -77,9 +90,11 @@ export const StudentRepository = {
         student: students,
         className: classes.name,
         classSection: classes.section,
+        registrationApplication: studentRegistrationApplications,
       })
       .from(students)
       .leftJoin(classes, eq(students.currentClassId, classes.id))
+      .leftJoin(studentRegistrationApplications, eq(students.registrationApplicationId, studentRegistrationApplications.id))
       .where(isNull(students.deletedAt))
       .orderBy(students.lastName, students.firstName);
   },
@@ -215,5 +230,18 @@ export const EnrollmentRepository = {
   async listAll() {
     const db = getDb();
     return db.select().from(enrollments);
+  },
+
+  async findByStudentAndYear(studentId: string, academicYearId: string, tx: Queryable = getDb()) {
+    const [row] = await tx
+      .select()
+      .from(enrollments)
+      .where(and(eq(enrollments.studentId, studentId), eq(enrollments.academicYearId, academicYearId)))
+      .limit(1);
+    return row ?? null;
+  },
+
+  async updateStatus(id: string, status: EnrollmentRecordStatus, tx: Queryable = getDb()) {
+    await tx.update(enrollments).set({ status }).where(eq(enrollments.id, id));
   },
 };

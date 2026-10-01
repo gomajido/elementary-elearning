@@ -6,7 +6,9 @@ import { ClassRepository } from "@/server/repositories/academic-repository";
 import type { GuardianInput } from "@/server/services/student-service";
 import type { Gender } from "@/lib/db/schema";
 
-const csvRowSchema = studentSchema.omit({ classId: true, academicYearId: true });
+// dayType isn't part of the CSV template — imported students take the schema
+// default (full_day) and can be flagged half_day afterward if needed.
+const csvRowSchema = studentSchema.omit({ classId: true, academicYearId: true, dayType: true });
 
 export type StudentImportRow = {
   rowNumber: number;

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { EllipsisVertical, Pencil, Trash2 } from "lucide-react";
+import { EllipsisVertical, Pencil, FileText, Trash2 } from "lucide-react";
 
 import { EditTeacherDialog } from "@/components/tables/edit-teacher-dialog";
+import { EditTeacherDapodikDialog } from "@/components/tables/edit-teacher-dapodik-dialog";
 import { DeleteEntityDialog } from "@/components/tables/delete-entity-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { teachers } from "@/lib/db/schema";
+
+type Teacher = typeof teachers.$inferSelect;
 
 export function TeacherRowActions({
   teacher,
@@ -19,19 +23,13 @@ export function TeacherRowActions({
   photoUpdatedAt,
   onDelete,
 }: {
-  teacher: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    employeeNumber: string;
-    phone: string | null;
-    hireDate: string | null;
-  };
+  teacher: Teacher;
   photoStorageKey?: string | null;
   photoUpdatedAt?: Date | null;
   onDelete: () => Promise<void>;
 }) {
   const [editOpen, setEditOpen] = useState(false);
+  const [dapodikOpen, setDapodikOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const name = `${teacher.firstName} ${teacher.lastName}`;
 
@@ -47,6 +45,10 @@ export function TeacherRowActions({
             <Pencil className="size-4" />
             Edit guru
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setDapodikOpen(true)}>
+            <FileText className="size-4" />
+            Data Dapodik
+          </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
             <Trash2 className="size-4" />
             Hapus
@@ -61,6 +63,7 @@ export function TeacherRowActions({
         open={editOpen}
         onOpenChange={setEditOpen}
       />
+      <EditTeacherDapodikDialog teacher={teacher} open={dapodikOpen} onOpenChange={setDapodikOpen} />
       <DeleteEntityDialog name={name} onDelete={onDelete} open={deleteOpen} onOpenChange={setDeleteOpen} />
     </>
   );
