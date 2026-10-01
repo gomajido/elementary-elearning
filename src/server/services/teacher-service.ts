@@ -23,6 +23,13 @@ export const TeacherService = {
   },
 
   /**
+   * Dapodik profile fields only — kept fully separate from updateTeacher so
+   * editing this data can never accidentally touch the employeeNumber ->
+   * username sync above.
+   */
+  updateDapodikProfile: (id: string, input: TeacherUpdate) => TeacherRepository.update(id, input),
+
+  /**
    * Creates the login (role=teacher, temp password) and teacher record in
    * one atomic transaction. Returns the temp password once; there's no
    * email delivery in MVP, so the admin must share it out-of-band.

@@ -1,7 +1,7 @@
 import { eq, isNull, and } from "drizzle-orm";
 
 import { getDb, type Queryable } from "@/lib/db";
-import { teachers } from "@/lib/db/schema";
+import { teachers, type MaritalStatus, type EmploymentStatus, type SalarySource } from "@/lib/db/schema";
 
 export const TeacherRepository = {
   async list() {
@@ -66,6 +66,53 @@ export type NewTeacher = {
   employeeNumber: string;
   phone?: string;
   hireDate?: string;
+  fingerprintId?: string;
+
+  dateOfBirth?: string;
+  placeOfBirth?: string;
+  motherName?: string;
+  addressDetail?: string;
+  dusun?: string;
+  rt?: string;
+  rw?: string;
+  kelurahan?: string;
+  postalCode?: string;
+  kecamatan?: string;
+  kabupaten?: string;
+  provinsi?: string;
+  nik?: string;
+  npwp?: string;
+  taxpayerName?: string;
+  maritalStatus?: MaritalStatus;
+  spouseName?: string;
+  spouseOccupation?: string;
+
+  employmentStatus?: EmploymentStatus;
+  niyNigk?: string;
+  nigb?: string;
+  nip?: string;
+  nuptk?: string;
+  ptkType?: string;
+  isActive?: boolean;
+  appointmentDecreeNumber?: string;
+  appointmentEffectiveDate?: string;
+  appointmentDecreeIssuer?: string;
+  cpnsDecreeNumber?: string;
+  cpnsEffectiveDate?: string;
+  pnsEffectiveDate?: string;
+  rankGrade?: string;
+  salarySource?: SalarySource;
+
+  assignmentLetterNumber?: string;
+  assignmentLetterDate?: string;
+  assignmentEffectiveDate?: string;
+  isHomeSchool?: boolean;
+
+  isPrincipalLicensed?: boolean;
+  vocationalProgramCode?: string;
+  specialNeedsTypesHandled?: string;
+  specialNeedsSpecialization?: string;
+  specialNeedsSkills?: string;
 };
 
 export type TeacherUpdate = Partial<Omit<NewTeacher, "userId">>;

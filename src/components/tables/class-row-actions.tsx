@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { EllipsisVertical, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { EllipsisVertical, Pencil, ArrowUpCircle, Trash2 } from "lucide-react";
 
 import { EditClassDialog } from "@/components/tables/edit-class-dialog";
 import { DeleteEntityDialog } from "@/components/tables/delete-entity-dialog";
@@ -50,6 +51,10 @@ export function ClassRowActions({
           <DropdownMenuItem onClick={() => setEditOpen(true)}>
             <Pencil className="size-4" />
             Edit kelas
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link href={`/admin/classes/${classRow.id}/promote`} />}>
+            <ArrowUpCircle className="size-4" />
+            Promosikan
           </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
             <Trash2 className="size-4" />

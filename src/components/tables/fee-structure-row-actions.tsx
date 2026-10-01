@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { FeeFrequency } from "@/lib/db/schema";
+import type { FeeFrequency, DayType } from "@/lib/db/schema";
 
 export function FeeStructureRowActions({
   structure,
@@ -26,6 +26,7 @@ export function FeeStructureRowActions({
     frequency: FeeFrequency;
     academicYearId: string;
     gradeLevel: number | null;
+    dayType: DayType | null;
   };
   academicYears: { id: string; name: string }[];
   onDelete: () => Promise<void>;

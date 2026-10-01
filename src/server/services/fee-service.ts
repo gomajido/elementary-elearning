@@ -1,6 +1,7 @@
 import { FeeStructureRepository, InvoiceRepository, PaymentRepository, type NewInvoiceLineItem } from "@/server/repositories/fee-repository";
 import { StudentRepository } from "@/server/repositories/student-repository";
 import { AcademicYearRepository } from "@/server/repositories/academic-repository";
+import type { DayType } from "@/lib/db/schema";
 
 export class FeeError extends Error {}
 
@@ -25,6 +26,22 @@ function generateInvoiceNumber(academicYearName: string) {
 function generateReceiptNumber() {
   const suffix = Date.now().toString(36).toUpperCase();
   return `RCT-${suffix}`;
+}
+
+/**
+ * Pure — a fee structure with a `dayType` only applies to students with that
+ * exact dayType; `dayType: null` means it applies to everyone (mirrors the
+ * existing nullable `gradeLevel` "applies to one grade only" convention).
+ */
+export function selectLineItemsForStudent(
+  structures: { id: string; name: string; amountCents: number; dayType: DayType | null }[],
+  feeStructureIds: string[],
+  studentDayType: DayType
+): NewInvoiceLineItem[] {
+  return feeStructureIds
+    .map((id) => structures.find((s) => s.id === id))
+    .filter((s): s is NonNullable<typeof s> => !!s && (s.dayType === null || s.dayType === studentDayType))
+    .map((s) => ({ feeStructureId: s.id, description: s.name, amountCents: s.amountCents }));
 }
 
 export const FeeService = {
@@ -58,32 +75,48 @@ export const FeeService = {
     });
   },
 
-  /** One invoice per active student in the class, each its own atomic write. */
+  /**
+   * One invoice per active student in the class, each its own atomic write.
+   * Line items are resolved per student from `feeStructureIds`, since a
+   * structure with a `dayType` only applies to matching students (see
+   * `selectLineItemsForStudent`) — a student with zero matching structures
+   * is skipped into `failed`, not aborting the rest of the class.
+   */
   async generateInvoicesForClass(input: {
     classId: string;
     academicYearId: string;
     issueDate: string;
     dueDate: string;
-    lineItems: NewInvoiceLineItem[];
+    feeStructureIds: string[];
   }) {
-    if (input.lineItems.length === 0) throw new FeeError("Tagihan memerlukan minimal satu item");
+    if (input.feeStructureIds.length === 0) throw new FeeError("Tagihan memerlukan minimal satu item");
     const year = await AcademicYearRepository.findById(input.academicYearId);
     if (!year) throw new FeeError("Tahun ajaran tidak ditemukan");
-    const classStudents = await StudentRepository.listByClass(input.classId);
-    const created = [];
+    const [classStudents, structures] = await Promise.all([
+      StudentRepository.listByClass(input.classId),
+      FeeStructureRepository.list(),
+    ]);
+
+    const created: NonNullable<Awaited<ReturnType<typeof InvoiceRepository.createWithLineItems>>>[] = [];
+    const failed: { studentId: string; error: string }[] = [];
+
     for (const student of classStudents) {
-      created.push(
-        await InvoiceRepository.createWithLineItems({
-          studentId: student.id,
-          academicYearId: input.academicYearId,
-          invoiceNumber: generateInvoiceNumber(year.name),
-          issueDate: input.issueDate,
-          dueDate: input.dueDate,
-          lineItems: input.lineItems,
-        })
-      );
+      const lineItems = selectLineItemsForStudent(structures, input.feeStructureIds, student.dayType);
+      if (lineItems.length === 0) {
+        failed.push({ studentId: student.id, error: "Tidak ada biaya yang cocok untuk tipe hari siswa ini" });
+        continue;
+      }
+      const invoice = await InvoiceRepository.createWithLineItems({
+        studentId: student.id,
+        academicYearId: input.academicYearId,
+        invoiceNumber: generateInvoiceNumber(year.name),
+        issueDate: input.issueDate,
+        dueDate: input.dueDate,
+        lineItems,
+      });
+      if (invoice) created.push(invoice);
     }
-    return created;
+    return { created, failed };
   },
 
   async recordPayment(input: {

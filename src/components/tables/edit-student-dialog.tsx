@@ -2,7 +2,7 @@
 
 import { EditStudentForm } from "@/components/forms/edit-student-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { EnrollmentStatus, Gender } from "@/lib/db/schema";
+import type { EnrollmentStatus, Gender, DayType } from "@/lib/db/schema";
 
 export function EditStudentDialog({
   student,
@@ -22,6 +22,7 @@ export function EditStudentDialog({
     currentClassId: string | null;
     enrollmentDate: string;
     enrollmentStatus: EnrollmentStatus;
+    dayType: DayType;
   };
   classes: { id: string; name: string; section: string | null }[];
   photoStorageKey?: string | null;

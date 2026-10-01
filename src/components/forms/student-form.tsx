@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GENDER_LABELS, label } from "@/lib/labels";
-import { GENDERS } from "@/lib/db/schema";
+import { GENDER_LABELS, DAY_TYPE_LABELS, label } from "@/lib/labels";
+import { GENDERS, DAY_TYPES } from "@/lib/db/schema";
 
 const initialState: CreateStudentState = {};
 
@@ -75,6 +75,26 @@ export function StudentForm({
         <div className="flex flex-col gap-2">
           <Label htmlFor="enrollmentDate">Tanggal masuk</Label>
           <Input id="enrollmentDate" name="enrollmentDate" type="date" required />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label>Tipe hari</Label>
+          <Select
+            name="dayType"
+            required
+            defaultValue="full_day"
+            items={Object.fromEntries(DAY_TYPES.map((d) => [d, label(DAY_TYPE_LABELS, d)]))}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Pilih tipe hari" />
+            </SelectTrigger>
+            <SelectContent>
+              {DAY_TYPES.map((d) => (
+                <SelectItem key={d} value={d}>
+                  {label(DAY_TYPE_LABELS, d)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label>Kelas</Label>

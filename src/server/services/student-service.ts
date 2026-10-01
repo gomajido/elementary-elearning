@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db";
+import { getDb, type Queryable } from "@/lib/db";
 import {
   StudentRepository,
   GuardianRepository,
@@ -8,7 +8,7 @@ import {
 import { UserRepository } from "@/server/repositories/user-repository";
 import { hashPassword, generateTempPassword } from "@/lib/auth/password";
 import { generateUsername } from "@/lib/auth/username";
-import type { Gender } from "@/lib/db/schema";
+import type { Gender, DayType } from "@/lib/db/schema";
 
 export class StudentPortalError extends Error {}
 
@@ -34,21 +34,25 @@ export const StudentService = {
    * user/login account is created here; guardian portal accounts are
    * granted separately (see GuardianService.grantPortalAccess).
    */
-  async registerStudent(input: {
-    admissionNumber: string;
-    firstName: string;
-    lastName: string;
-    dateOfBirth: string;
-    gender: Gender;
-    classId: string;
-    academicYearId: string;
-    enrollmentDate: string;
-    guardians: GuardianInput[];
-  }) {
-    const db = getDb();
+  async registerStudent(
+    input: {
+      admissionNumber: string;
+      firstName: string;
+      lastName: string;
+      dateOfBirth: string;
+      gender: Gender;
+      classId: string;
+      academicYearId: string;
+      enrollmentDate: string;
+      dayType?: DayType;
+      registrationApplicationId?: string;
+      guardians: GuardianInput[];
+    },
+    providedTx?: Queryable
+  ) {
     const studentId = crypto.randomUUID();
 
-    await db.transaction(async (tx) => {
+    const run = async (tx: Queryable) => {
       await StudentRepository.create(
         {
           id: studentId,
@@ -59,6 +63,8 @@ export const StudentService = {
           gender: input.gender,
           currentClassId: input.classId,
           enrollmentDate: input.enrollmentDate,
+          dayType: input.dayType,
+          registrationApplicationId: input.registrationApplicationId,
         },
         tx
       );
@@ -85,9 +91,24 @@ export const StudentService = {
           tx
         );
       }
-    });
+    };
 
-    return StudentRepository.findById(studentId);
+    // Reuses the caller's transaction when composed into a larger atomic
+    // operation (see RegistrationService.approveApplication) instead of
+    // always opening its own — postgres-js doesn't support nesting
+    // independent top-level transactions. The final findById must run on
+    // that same transaction too: a separate connection can't see this
+    // transaction's own uncommitted insert yet (read-committed isolation).
+    if (providedTx) {
+      await run(providedTx);
+      return StudentRepository.findById(studentId, providedTx);
+    }
+
+    const db = getDb();
+    return db.transaction(async (tx) => {
+      await run(tx);
+      return StudentRepository.findById(studentId, tx);
+    });
   },
 
   updateStudent: (id: string, input: StudentUpdate) => StudentRepository.update(id, input),

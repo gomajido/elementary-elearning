@@ -7,7 +7,7 @@ import { requireRole } from "@/lib/auth/rbac";
 import { FeeService, FeeError } from "@/server/services/fee-service";
 import { GuardianService, GuardianPortalError } from "@/server/services/guardian-service";
 import { presignUpload } from "@/lib/storage/client";
-import { FEE_FREQUENCIES, PAYMENT_METHODS } from "@/lib/db/schema";
+import { FEE_FREQUENCIES, PAYMENT_METHODS, DAY_TYPES } from "@/lib/db/schema";
 
 export type ActionState = { error?: string; success?: boolean };
 
@@ -17,6 +17,7 @@ const feeStructureSchema = z.object({
   amountCents: z.coerce.number().int().positive(),
   frequency: z.enum(FEE_FREQUENCIES),
   gradeLevel: z.coerce.number().int().min(0).max(12).optional(),
+  dayType: z.enum(DAY_TYPES).optional(),
 });
 
 export async function createFeeStructureAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -27,6 +28,7 @@ export async function createFeeStructureAction(_prev: ActionState, formData: For
     amountCents: Number(formData.get("amount")) * 100,
     frequency: formData.get("frequency"),
     gradeLevel: formData.get("gradeLevel") || undefined,
+    dayType: formData.get("dayType") || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
 
@@ -46,6 +48,7 @@ export async function updateFeeStructureAction(_prev: ActionState, formData: For
     amountCents: Number(formData.get("amount")) * 100,
     frequency: formData.get("frequency"),
     gradeLevel: formData.get("gradeLevel") || undefined,
+    dayType: formData.get("dayType") || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
   const { feeStructureId, ...input } = parsed.data;
@@ -99,15 +102,14 @@ export async function generateInvoiceAction(_prev: ActionState, formData: FormDa
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
   const data = parsed.data;
 
-  const structures = await FeeService.listFeeStructures();
-  const lineItems = data.feeStructureIds
-    .map((id) => structures.find((s) => s.id === id))
-    .filter((s): s is NonNullable<typeof s> => !!s)
-    .map((s) => ({ feeStructureId: s.id, description: s.name, amountCents: s.amountCents }));
-
   try {
     if (data.target === "student") {
       if (!data.studentId) return { error: "Pilih siswa" };
+      const structures = await FeeService.listFeeStructures();
+      const lineItems = data.feeStructureIds
+        .map((id) => structures.find((s) => s.id === id))
+        .filter((s): s is NonNullable<typeof s> => !!s)
+        .map((s) => ({ feeStructureId: s.id, description: s.name, amountCents: s.amountCents }));
       await FeeService.generateInvoiceForStudent({
         studentId: data.studentId,
         academicYearId: data.academicYearId,
@@ -117,13 +119,16 @@ export async function generateInvoiceAction(_prev: ActionState, formData: FormDa
       });
     } else {
       if (!data.classId) return { error: "Pilih kelas" };
-      await FeeService.generateInvoicesForClass({
+      const { failed } = await FeeService.generateInvoicesForClass({
         classId: data.classId,
         academicYearId: data.academicYearId,
         issueDate: data.issueDate,
         dueDate: data.dueDate,
-        lineItems,
+        feeStructureIds: data.feeStructureIds,
       });
+      if (failed.length > 0) {
+        return { error: `${failed.length} siswa dilewati (tidak ada biaya yang cocok dengan tipe hari siswa)` };
+      }
     }
   } catch (err) {
     if (err instanceof FeeError) return { error: err.message };

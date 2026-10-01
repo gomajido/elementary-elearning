@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { summarizeInvoice } from "@/server/services/fee-service";
+import { summarizeInvoice, selectLineItemsForStudent } from "@/server/services/fee-service";
 
 function verified(amountCents: number) {
   return { amountCents, isVerified: true };
@@ -81,5 +81,33 @@ describe("summarizeInvoice", () => {
       status: "paid",
       hasPendingVerification: false,
     });
+  });
+});
+
+describe("selectLineItemsForStudent", () => {
+  const fullDayOnly = { id: "s-full", name: "SPP Full Day", amountCents: 100000, dayType: "full_day" as const };
+  const halfDayOnly = { id: "s-half", name: "SPP Half Day", amountCents: 70000, dayType: "half_day" as const };
+  const appliesToBoth = { id: "s-both", name: "Uang Kegiatan", amountCents: 20000, dayType: null };
+  const structures = [fullDayOnly, halfDayOnly, appliesToBoth];
+  const selectedIds = [fullDayOnly.id, halfDayOnly.id, appliesToBoth.id];
+
+  it("gives a full_day student only the full_day and dayType-null structures", () => {
+    const result = selectLineItemsForStudent(structures, selectedIds, "full_day");
+    expect(result.map((r) => r.feeStructureId)).toEqual([fullDayOnly.id, appliesToBoth.id]);
+  });
+
+  it("gives a half_day student only the half_day and dayType-null structures", () => {
+    const result = selectLineItemsForStudent(structures, selectedIds, "half_day");
+    expect(result.map((r) => r.feeStructureId)).toEqual([halfDayOnly.id, appliesToBoth.id]);
+  });
+
+  it("excludes a structure not in feeStructureIds even if the dayType matches", () => {
+    const result = selectLineItemsForStudent(structures, [halfDayOnly.id], "full_day");
+    expect(result).toEqual([]);
+  });
+
+  it("returns an empty array when nothing matches", () => {
+    const result = selectLineItemsForStudent([fullDayOnly], [fullDayOnly.id], "half_day");
+    expect(result).toEqual([]);
   });
 });

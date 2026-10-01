@@ -42,6 +42,38 @@ export const GENDER_LABELS: Record<string, string> = {
   female: "Perempuan",
 };
 
+export const DAY_TYPE_LABELS: Record<string, string> = {
+  full_day: "Full Day",
+  half_day: "Half Day",
+};
+
+export const REGISTRATION_STATUS_LABELS: Record<string, string> = {
+  pending: "Menunggu",
+  approved: "Disetujui",
+  rejected: "Ditolak",
+};
+
+export const MARITAL_STATUS_LABELS: Record<string, string> = {
+  belum_kawin: "Belum Kawin",
+  kawin: "Kawin",
+  cerai_hidup: "Cerai Hidup",
+  cerai_mati: "Cerai Mati",
+};
+
+export const EMPLOYMENT_STATUS_LABELS: Record<string, string> = {
+  gty_pty: "GTY/PTY",
+  pns: "PNS",
+  honorer: "Honorer",
+};
+
+export const SALARY_SOURCE_LABELS: Record<string, string> = {
+  yayasan: "Yayasan",
+  apbn: "APBN",
+  apbd: "APBD",
+  komite: "Komite",
+  lainnya: "Lainnya",
+};
+
 export const ENROLLMENT_STATUS_LABELS: Record<string, string> = {
   active: "Aktif",
   inactive: "Tidak Aktif",

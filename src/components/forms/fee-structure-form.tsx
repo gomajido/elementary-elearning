@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FEE_FREQUENCIES } from "@/lib/db/schema";
-import { FEE_FREQUENCY_LABELS } from "@/lib/labels";
+import { FEE_FREQUENCIES, DAY_TYPES } from "@/lib/db/schema";
+import { FEE_FREQUENCY_LABELS, DAY_TYPE_LABELS } from "@/lib/labels";
 
 const initialState: ActionState = {};
 
@@ -74,6 +74,21 @@ export function FeeStructureForm({
       <div className="flex flex-col gap-2">
         <Label htmlFor="gradeLevel">Tingkat (opsional, kosongkan untuk semua)</Label>
         <Input id="gradeLevel" name="gradeLevel" type="number" min={0} max={12} />
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label>Tipe hari (opsional, kosongkan untuk semua)</Label>
+        <Select name="dayType" items={Object.fromEntries(DAY_TYPES.map((d) => [d, DAY_TYPE_LABELS[d]]))}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Semua tipe hari" />
+          </SelectTrigger>
+          <SelectContent>
+            {DAY_TYPES.map((d) => (
+              <SelectItem key={d} value={d}>
+                {DAY_TYPE_LABELS[d]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       {state.error && <p className="text-sm text-destructive sm:col-span-3">{state.error}</p>}
       <Button type="submit" disabled={pending} className="sm:w-fit">

@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FEE_FREQUENCIES, type FeeFrequency } from "@/lib/db/schema";
-import { FEE_FREQUENCY_LABELS } from "@/lib/labels";
+import { FEE_FREQUENCIES, DAY_TYPES, type FeeFrequency, type DayType } from "@/lib/db/schema";
+import { FEE_FREQUENCY_LABELS, DAY_TYPE_LABELS } from "@/lib/labels";
 
 const initialState: ActionState = {};
 
@@ -24,6 +24,7 @@ export function EditFeeStructureForm({
     frequency: FeeFrequency;
     academicYearId: string;
     gradeLevel: number | null;
+    dayType: DayType | null;
   };
   academicYears: { id: string; name: string }[];
   onSuccess?: () => void;
@@ -99,6 +100,26 @@ export function EditFeeStructureForm({
         <div className="flex flex-col gap-2">
           <Label htmlFor="gradeLevel">Tingkat (opsional, kosongkan untuk semua)</Label>
           <Input id="gradeLevel" name="gradeLevel" type="number" min={0} max={12} defaultValue={structure.gradeLevel ?? ""} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label>Tipe hari (opsional, kosongkan untuk semua)</Label>
+          <Select
+            key={structure.dayType}
+            name="dayType"
+            defaultValue={structure.dayType ?? undefined}
+            items={Object.fromEntries(DAY_TYPES.map((d) => [d, DAY_TYPE_LABELS[d]]))}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Semua tipe hari" />
+            </SelectTrigger>
+            <SelectContent>
+              {DAY_TYPES.map((d) => (
+                <SelectItem key={d} value={d}>
+                  {DAY_TYPE_LABELS[d]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}

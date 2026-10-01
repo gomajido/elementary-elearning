@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { GENDERS } from "@/lib/db/schema";
+import { GENDERS, DAY_TYPES } from "@/lib/db/schema";
 
 export const relationshipTypeSchema = z.enum(["mother", "father", "guardian", "other"]);
 
@@ -13,6 +13,7 @@ export const studentSchema = z.object({
   classId: z.string().min(1),
   academicYearId: z.string().min(1),
   enrollmentDate: z.string().min(1),
+  dayType: z.enum(DAY_TYPES),
   guardian1FirstName: z.string().min(1),
   guardian1LastName: z.string().min(1),
   guardian1Relationship: relationshipTypeSchema,

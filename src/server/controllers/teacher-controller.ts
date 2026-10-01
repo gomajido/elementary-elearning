@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/rbac";
 import { TeacherService, TeacherRegistrationError } from "@/server/services/teacher-service";
-import { teacherSchema } from "@/lib/validation/teacher";
+import { teacherSchema, teacherDapodikProfileSchema } from "@/lib/validation/teacher";
 
 export type CreateTeacherState = { error?: string; tempPassword?: string; email?: string };
 
@@ -69,4 +69,41 @@ export async function deleteTeacherAction(teacherId: string) {
   await requireRole(["admin"]);
   await TeacherService.deleteTeacher(teacherId);
   revalidatePath("/admin/teachers");
+}
+
+export type UpdateDapodikState = { error?: string; success?: boolean };
+
+/** Empty-string form fields mean "not filled in" here, not a literal empty value — normalize before persisting. */
+function blankToUndefined<T extends Record<string, unknown>>(input: T): T {
+  return Object.fromEntries(Object.entries(input).map(([k, v]) => [k, v === "" ? undefined : v])) as T;
+}
+
+export async function updateTeacherDapodikProfileAction(
+  _prev: UpdateDapodikState,
+  formData: FormData
+): Promise<UpdateDapodikState> {
+  await requireRole(["admin"]);
+  const teacherId = String(formData.get("teacherId"));
+  const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
+  delete raw.teacherId;
+  // Checkboxes are absent from FormData entirely when unchecked — read
+  // presence directly rather than relying on string coercion (same pattern
+  // as `isCurrent` in academic-controller.ts).
+  raw.isActive = formData.has("isActive");
+  raw.isHomeSchool = formData.has("isHomeSchool");
+  raw.isPrincipalLicensed = formData.has("isPrincipalLicensed");
+  const parsed = teacherDapodikProfileSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+
+  try {
+    await TeacherService.updateDapodikProfile(teacherId, blankToUndefined(parsed.data));
+  } catch (err) {
+    if (err instanceof Error && /unique/i.test(err.message)) {
+      return { error: "NIK/NIP/NUPTK ini sudah digunakan oleh guru lain" };
+    }
+    throw err;
+  }
+
+  revalidatePath("/admin/teachers");
+  return { success: true };
 }
