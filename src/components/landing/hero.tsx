@@ -39,10 +39,10 @@ export function Hero() {
           size="lg"
           variant="outline"
           nativeButton={false}
-          render={<Link href="#contact" />}
+          render={<Link href="/register" />}
           className="rounded-full border-2 border-[#0B6E4F] px-8 text-[#0B6E4F] hover:bg-[#0B6E4F]/10"
         >
-          Tanya Info Pendaftaran
+          Daftar Siswa Baru
         </Button>
       </div>
     </section>

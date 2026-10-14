@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 import { loginAction, type LoginState } from "@/server/controllers/auth-controller";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,12 @@ export default function LoginPage() {
               {pending ? "Sedang masuk…" : "Masuk"}
             </Button>
           </form>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Siswa baru?{" "}
+            <Link href="/register" className="font-medium text-primary underline-offset-4 hover:underline">
+              Daftar di sini
+            </Link>
+          </p>
         </CardContent>
       </Card>
     </div>

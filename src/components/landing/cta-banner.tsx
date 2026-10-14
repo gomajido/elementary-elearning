@@ -12,12 +12,21 @@ export function CtaBanner() {
       <p className="relative mx-auto mt-3 max-w-xl text-white/90">
         Sudah punya akun dari pihak sekolah? Masuk ke portal untuk memantau kehadiran, biaya, dan nilai anak Anda.
       </p>
-      <div className="relative mt-6">
+      <div className="relative mt-6 flex flex-wrap justify-center gap-3">
         <Button
           size="lg"
           nativeButton={false}
-          render={<Link href="/login" />}
+          render={<Link href="/register" />}
           className="rounded-full bg-[#8DC63F] px-8 text-[#0B6E4F] shadow-md hover:bg-[#8DC63F]/90"
+        >
+          Daftar Siswa Baru
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          nativeButton={false}
+          render={<Link href="/login" />}
+          className="rounded-full border-2 border-white px-8 text-white hover:bg-white/10"
         >
           Masuk ke Portal
         </Button>
