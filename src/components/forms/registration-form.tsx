@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { createContext, useContext, useRef, useState } from "react";
 
 import { submitRegistrationApplicationAction } from "@/server/controllers/registration-controller";
 import { TurnstileWidget } from "@/components/forms/turnstile-widget";
@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GENDER_LABELS, label } from "@/lib/labels";
 import { GENDERS } from "@/lib/db/schema";
+import { registrationApplicationSchema } from "@/lib/validation/registration";
 
 type Achievement = { type: string; level: string; name: string; year: string; organizer: string };
 type NonformalEducation = { type: string; organizerOrSource: string; startYear: string; endYear: string };
@@ -94,6 +95,11 @@ const INITIAL_FIELDS: Record<FieldName, string> = Object.fromEntries(
   [...TEXT_FIELD_NAMES, ...NUMERIC_FIELDS].map((name) => [name, ""])
 ) as Record<FieldName, string>;
 
+const FieldErrorsContext = createContext<{
+  errors: Partial<Record<FieldName, string>>;
+  onBlur: (name: FieldName) => void;
+}>({ errors: {}, onBlur: () => {} });
+
 function TextField({
   fieldLabel,
   name,
@@ -101,6 +107,7 @@ function TextField({
   onChange,
   required,
   type = "text",
+  maxLength,
 }: {
   fieldLabel: string;
   name: FieldName;
@@ -108,7 +115,10 @@ function TextField({
   onChange: (name: FieldName, value: string) => void;
   required?: boolean;
   type?: string;
+  maxLength?: number;
 }) {
+  const { errors, onBlur } = useContext(FieldErrorsContext);
+  const fieldError = errors[name];
   return (
     <div className="flex flex-col gap-2">
       <Label htmlFor={name}>
@@ -121,8 +131,12 @@ function TextField({
         type={type}
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
+        onBlur={() => onBlur(name)}
         required={required}
+        maxLength={maxLength}
+        aria-invalid={!!fieldError}
       />
+      {fieldError && <p className="text-sm text-destructive">{fieldError}</p>}
     </div>
   );
 }
@@ -139,24 +153,28 @@ export function RegistrationForm() {
   const resetTurnstile = useRef<(() => void) | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [applicationId, setApplicationId] = useState<string | null>(null);
 
   function set(name: FieldName, value: string) {
     setFields((prev) => ({ ...prev, [name]: value }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!token) {
-      setError("Selesaikan verifikasi keamanan terlebih dahulu");
-      return;
-    }
-    setPending(true);
-    setError(null);
+  function validateField(name: FieldName) {
+    const payload = buildApplicationPayload() as Record<string, unknown>;
+    const fieldSchema = registrationApplicationSchema.shape[name as keyof typeof registrationApplicationSchema.shape];
+    if (!fieldSchema) return;
+    const result = fieldSchema.safeParse(payload[name]);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      if (result.success) delete next[name];
+      else next[name] = result.error.issues[0]?.message;
+      return next;
+    });
+  }
 
-    try {
-      const result = await submitRegistrationApplicationAction({
-        application: {
+  function buildApplicationPayload() {
+    return {
           appliedGradeLevel: fields.appliedGradeLevel || undefined,
           appliedProgram: fields.appliedProgram || undefined,
           fullName: fields.fullName,
@@ -221,7 +239,35 @@ export function RegistrationForm() {
           distanceToSchoolKm: Number(fields.distanceToSchoolKm),
           travelTimeMinutes: Number(fields.travelTimeMinutes),
           siblingCount: Number(fields.siblingCount),
-        },
+    };
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!token) {
+      setError("Selesaikan verifikasi keamanan terlebih dahulu");
+      return;
+    }
+
+    const applicationPayload = buildApplicationPayload();
+    const validated = registrationApplicationSchema.safeParse(applicationPayload);
+    if (!validated.success) {
+      const nextFieldErrors: Partial<Record<FieldName, string>> = {};
+      for (const issue of validated.error.issues) {
+        const name = issue.path[0] as FieldName;
+        if (!nextFieldErrors[name]) nextFieldErrors[name] = issue.message;
+      }
+      setFieldErrors(nextFieldErrors);
+      setError("Periksa kembali data yang ditandai merah di bawah");
+      return;
+    }
+    setFieldErrors({});
+    setPending(true);
+    setError(null);
+
+    try {
+      const result = await submitRegistrationApplicationAction({
+        application: validated.data,
         achievements,
         nonformalEducations,
         turnstileToken: token,
@@ -254,6 +300,7 @@ export function RegistrationForm() {
   }
 
   return (
+    <FieldErrorsContext value={{ errors: fieldErrors, onBlur: validateField }}>
     <form onSubmit={handleSubmit} className="flex flex-col gap-8">
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField fieldLabel="Tingkat yang dituju" name="appliedGradeLevel" value={fields.appliedGradeLevel} onChange={set} />
@@ -285,9 +332,9 @@ export function RegistrationForm() {
             </SelectContent>
           </Select>
         </div>
-        <TextField fieldLabel="NISN" name="nisn" value={fields.nisn} onChange={set} required />
+        <TextField fieldLabel="NISN" name="nisn" value={fields.nisn} onChange={set} required maxLength={10} />
         <TextField fieldLabel="NIS" name="nis" value={fields.nis} onChange={set} />
-        <TextField fieldLabel="NIK" name="nik" value={fields.nik} onChange={set} required />
+        <TextField fieldLabel="NIK" name="nik" value={fields.nik} onChange={set} required maxLength={16} />
         <TextField fieldLabel="No Registrasi Akta Lahir" name="birthCertNumber" value={fields.birthCertNumber} onChange={set} required />
         <TextField fieldLabel="Tempat Lahir" name="placeOfBirth" value={fields.placeOfBirth} onChange={set} required />
         <TextField fieldLabel="Tanggal Lahir" name="dateOfBirth" type="date" value={fields.dateOfBirth} onChange={set} required />
@@ -309,17 +356,17 @@ export function RegistrationForm() {
       <div className="grid gap-4 sm:grid-cols-3">
         <TextField fieldLabel="Alamat Tempat Tinggal" name="addressDetail" value={fields.addressDetail} onChange={set} required />
         <TextField fieldLabel="Dusun" name="dusun" value={fields.dusun} onChange={set} />
-        <TextField fieldLabel="RT" name="rt" value={fields.rt} onChange={set} required />
-        <TextField fieldLabel="RW" name="rw" value={fields.rw} onChange={set} required />
+        <TextField fieldLabel="RT" name="rt" value={fields.rt} onChange={set} required maxLength={3} />
+        <TextField fieldLabel="RW" name="rw" value={fields.rw} onChange={set} required maxLength={3} />
         <TextField fieldLabel="Kelurahan/Desa" name="kelurahan" value={fields.kelurahan} onChange={set} required />
-        <TextField fieldLabel="Kode Pos" name="postalCode" value={fields.postalCode} onChange={set} />
+        <TextField fieldLabel="Kode Pos" name="postalCode" value={fields.postalCode} onChange={set} maxLength={5} />
         <TextField fieldLabel="Kecamatan" name="kecamatan" value={fields.kecamatan} onChange={set} required />
         <TextField fieldLabel="Kabupaten/Kota" name="kabupaten" value={fields.kabupaten} onChange={set} required />
         <TextField fieldLabel="Propinsi" name="provinsi" value={fields.provinsi} onChange={set} required />
         <TextField fieldLabel="Alat Transportasi ke Sekolah" name="transportMode" value={fields.transportMode} onChange={set} required />
         <TextField fieldLabel="Jenis Tinggal" name="livingArrangement" value={fields.livingArrangement} onChange={set} required />
-        <TextField fieldLabel="No Telepon Rumah" name="homePhone" value={fields.homePhone} onChange={set} />
-        <TextField fieldLabel="No. Hp" name="mobilePhone" value={fields.mobilePhone} onChange={set} />
+        <TextField fieldLabel="No Telepon Rumah" name="homePhone" value={fields.homePhone} onChange={set} maxLength={15} />
+        <TextField fieldLabel="No. Hp" name="mobilePhone" value={fields.mobilePhone} onChange={set} maxLength={13} />
         <TextField fieldLabel="Email Pribadi" name="personalEmail" type="email" value={fields.personalEmail} onChange={set} />
         <TextField fieldLabel="Lintang (GPS)" name="latitude" value={fields.latitude} onChange={set} />
         <TextField fieldLabel="Bujur (GPS)" name="longitude" value={fields.longitude} onChange={set} />
@@ -429,5 +476,6 @@ export function RegistrationForm() {
         {pending ? "Mengirim…" : "Kirim Pendaftaran"}
       </Button>
     </form>
+    </FieldErrorsContext>
   );
 }
