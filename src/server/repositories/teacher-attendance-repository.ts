@@ -1,7 +1,7 @@
-import { eq, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
-import { teacherAttendanceRecords, type AttendanceStatus } from "@/lib/db/schema";
+import { teacherAttendanceRecords, teachers, type AttendanceStatus } from "@/lib/db/schema";
 
 export type TeacherAttendanceUpsert = {
   teacherId: string;
@@ -40,5 +40,14 @@ export const TeacherAttendanceRepository = {
       .from(teacherAttendanceRecords)
       .where(eq(teacherAttendanceRecords.teacherId, teacherId))
       .orderBy(teacherAttendanceRecords.date);
+  },
+
+  async listAllWithTeacher() {
+    const db = getDb();
+    return db
+      .select({ record: teacherAttendanceRecords, teacherName: sql<string>`${teachers.firstName} || ' ' || ${teachers.lastName}` })
+      .from(teacherAttendanceRecords)
+      .innerJoin(teachers, eq(teacherAttendanceRecords.teacherId, teachers.id))
+      .orderBy(desc(teacherAttendanceRecords.date));
   },
 };

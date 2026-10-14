@@ -1,4 +1,5 @@
 import { AttendanceRepository, type AttendanceUpsert } from "@/server/repositories/attendance-repository";
+import { TeacherAttendanceRepository } from "@/server/repositories/teacher-attendance-repository";
 import { TeacherRepository } from "@/server/repositories/teacher-repository";
 import { ClassRepository } from "@/server/repositories/academic-repository";
 
@@ -8,6 +9,8 @@ export const AttendanceService = {
   rosterForClassAndDate: (classId: string, date: string) => AttendanceRepository.rosterForClassAndDate(classId, date),
 
   historyForStudent: (studentId: string) => AttendanceRepository.listForStudent(studentId),
+
+  listTeacherAttendance: () => TeacherAttendanceRepository.listAllWithTeacher(),
 
   /** Homeroom classes for the teacher account making the request. */
   async classesForTeacherUser(userId: string) {
