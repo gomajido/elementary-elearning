@@ -93,7 +93,7 @@ export function TeacherDapodikForm({ teacher, onSuccess }: { teacher: Teacher; o
   }, [state, onSuccess]);
 
   return (
-    <form action={formAction} className="flex max-h-[70vh] flex-col gap-6 overflow-y-auto pr-1">
+    <form action={formAction} className="flex flex-col gap-6">
       <input type="hidden" name="teacherId" value={teacher.id} />
 
       <p className="text-sm font-semibold">Identitas Pendidik</p>
