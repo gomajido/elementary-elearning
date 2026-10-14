@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
   approveApplicationAction,
   rejectApplicationAction,
+  getApplicationDetailAction,
   type ApproveApplicationState,
   type RejectApplicationState,
 } from "@/server/controllers/registration-controller";
@@ -16,8 +17,30 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RegistrationDetailSections } from "@/components/shared/registration-detail-sections";
 
 type Application = Awaited<ReturnType<typeof RegistrationService.listPending>>[number];
+type ApplicationDetail = Awaited<ReturnType<typeof getApplicationDetailAction>>;
+
+function ApplicationDetailDialog({ application, open, onOpenChange }: { application: Application; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [detail, setDetail] = useState<ApplicationDetail | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    getApplicationDetailAction(application.id).then(setDetail);
+  }, [open, application.id]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Detail pendaftaran — {application.fullName}</DialogTitle>
+        </DialogHeader>
+        <RegistrationDetailSections application={application} subRecords={detail} />
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function splitFullName(fullName: string): { firstName: string; lastName: string } {
   const parts = fullName.trim().split(/\s+/);
@@ -171,6 +194,7 @@ export function RegistrationQueueTable({
 }) {
   const [approveTarget, setApproveTarget] = useState<Application | null>(null);
   const [rejectTarget, setRejectTarget] = useState<Application | null>(null);
+  const [detailTarget, setDetailTarget] = useState<Application | null>(null);
 
   return (
     <>
@@ -193,6 +217,9 @@ export function RegistrationQueueTable({
               <TableCell>{app.submittedAt.toLocaleDateString("id-ID")}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setDetailTarget(app)}>
+                    Detail
+                  </Button>
                   <Button size="sm" onClick={() => setApproveTarget(app)}>
                     Setujui
                   </Button>
@@ -224,6 +251,9 @@ export function RegistrationQueueTable({
       )}
       {rejectTarget && (
         <RejectDialog application={rejectTarget} open={!!rejectTarget} onOpenChange={(open) => !open && setRejectTarget(null)} />
+      )}
+      {detailTarget && (
+        <ApplicationDetailDialog application={detailTarget} open={!!detailTarget} onOpenChange={(open) => !open && setDetailTarget(null)} />
       )}
     </>
   );

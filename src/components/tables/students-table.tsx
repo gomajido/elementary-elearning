@@ -112,6 +112,7 @@ export function StudentsTable({
                     photoStorageKey={photoByStudentId[row.student.id]?.storageKey}
                     photoUpdatedAt={photoByStudentId[row.student.id]?.updatedAt}
                     hasPortalAccess={!!row.student.userId}
+                    registrationApplication={row.registrationApplication}
                     onDelete={() => deleteStudentAction(row.student.id)}
                   />
                 </div>

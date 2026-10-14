@@ -52,6 +52,11 @@ export async function listPendingApplicationsAction() {
   return RegistrationService.listPending();
 }
 
+export async function getApplicationDetailAction(applicationId: string) {
+  await requireRole(["teacher", "admin"]);
+  return RegistrationService.getApplicationDetail(applicationId);
+}
+
 const placementSchema = z.object({
   applicationId: z.string().min(1),
   classId: z.string().min(1),

@@ -97,6 +97,14 @@ export const RegistrationService = {
 
   listPending: () => RegistrationRepository.listByStatus("pending"),
 
+  async getApplicationDetail(applicationId: string) {
+    const [achievements, nonformalEducations] = await Promise.all([
+      RegistrationRepository.listAchievements(applicationId),
+      RegistrationRepository.listNonformalEducations(applicationId),
+    ]);
+    return { achievements, nonformalEducations };
+  },
+
   /**
    * Approves a pending application: creates the real student record (with
    * guardians derived from the application's father/mother data — the
